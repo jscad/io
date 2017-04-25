@@ -2,6 +2,8 @@ import { CSG } from '@jscad/csg'
 import { makeBlob } from '../utils/Blob'
 const Blob = makeBlob()
 
+export const mimeType = 'image/svg+xml'
+
 export default function CAGToSvg (cagObject) {
   var decimals = 1000
 
@@ -20,7 +22,7 @@ export default function CAGToSvg (cagObject) {
   svg += PathsToSvg(paths, bounds)
   svg += '</svg>'
   return new Blob([svg], {
-    type: 'image/svg+xml'
+    type: mimeType
   })
 }
 

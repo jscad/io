@@ -1,6 +1,8 @@
 import { makeBlob } from '../utils/Blob'
 const Blob = makeBlob()
 
+export const mimeType = 'application/dxf'
+
 export default function CAGToDxf (cagObject) {
   var paths = cagObject.getOutlinePaths()
   return PathsToDxf(paths)
@@ -35,6 +37,6 @@ function PathsToDxf (paths) {
   })
   str += '  0\nENDSEC\n  0\nEOF\n'
   return new Blob([str], {
-    type: 'application/dxf'
+    type: mimeType
   })
 }

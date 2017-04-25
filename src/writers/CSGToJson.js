@@ -1,6 +1,8 @@
 import { makeBlob } from '../utils/Blob'
 const Blob = makeBlob()
 
+export const mimeType = 'application/json'
+
 export default function CSGToJson () {
   var str = '{ "type": "csg","polygons": ['
   var comma = ''
@@ -16,6 +18,6 @@ export default function CSGToJson () {
   str += '"isRetesselated": ' + JSON.stringify(this.isRetesselated)
   str += '}'
   return new Blob([str], {
-    type: 'application/json'
+    type: mimeType
   })
 }

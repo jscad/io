@@ -1,6 +1,8 @@
 import { makeBlob } from '../utils/Blob'
 const Blob = makeBlob()
 
+export const mimeType = 'application/sla'
+
 export default function CSGToStla (CSG) {
   var result = 'solid csg.js\n'
   CSG.polygons.map(function (p) {
@@ -8,7 +10,7 @@ export default function CSGToStla (CSG) {
   })
   result += 'endsolid csg.js\n'
   return new Blob([result], {
-    type: 'application/sla'
+    type: mimeType
   })
 }
 

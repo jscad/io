@@ -1,6 +1,8 @@
 import { makeBlob } from '../utils/Blob'
 const Blob = makeBlob()
 
+export const mimeType = 'application/sla'
+
 // see http://en.wikipedia.org/wiki/STL_%28file_format%29#Binary_STL
 export default function CSGToStlb (CSG) {
   // first check if the host is little-endian:
@@ -59,6 +61,6 @@ export default function CSGToStlb (CSG) {
     }
   })
   return new Blob([headerarray.buffer, ar1.buffer, allTrianglesBuffer], {
-    type: 'application/sla'
+    type: mimeType
   })
 }
