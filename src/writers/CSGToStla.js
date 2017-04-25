@@ -3,7 +3,7 @@ const Blob = makeBlob()
 
 export const mimeType = 'application/sla'
 
-export default function CSGToStla (CSG) {
+export function CSGToStla (CSG) {
   var result = 'solid csg.js\n'
   CSG.polygons.map(function (p) {
     result += CSGPolygontoStlString(p)

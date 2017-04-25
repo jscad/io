@@ -4,7 +4,7 @@ const Blob = makeBlob()
 
 export const mimeType = 'image/svg+xml'
 
-export default function CAGToSvg (cagObject) {
+export function CAGToSvg (cagObject) {
   var decimals = 1000
 
   // mirror the CAG about the X axis in order to generate paths into the POSITIVE direction

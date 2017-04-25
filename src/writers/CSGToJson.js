@@ -3,7 +3,7 @@ const Blob = makeBlob()
 
 export const mimeType = 'application/json'
 
-export default function CSGToJson () {
+export function CSGToJson () {
   var str = '{ "type": "csg","polygons": ['
   var comma = ''
   CSG.polygons.map(

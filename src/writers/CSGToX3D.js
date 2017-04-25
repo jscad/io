@@ -7,7 +7,7 @@ export const mimeType = 'model/x3d+xml'
 const XMLSerializer = xmldom.XMLSerializer
 // NOTE: might be useful :https://github.com/jindw/xmldom/pull/152/commits/be5176ece6fa1591daef96a5f361aaacaa445175
 
-export default function CSGToX3D (CSG) {
+export function CSGToX3D (CSG) {
   const DOMImplementation = typeof document !== 'undefined' ? document.implementation : new xmldom.DOMImplementation()
   // materialPolygonLists
   // key: a color string (e.g. "0 1 1" for yellow)

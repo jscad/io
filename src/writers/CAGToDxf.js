@@ -3,7 +3,7 @@ const Blob = makeBlob()
 
 export const mimeType = 'application/dxf'
 
-export default function CAGToDxf (cagObject) {
+export function CAGToDxf (cagObject) {
   var paths = cagObject.getOutlinePaths()
   return PathsToDxf(paths)
 }
