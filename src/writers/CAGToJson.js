@@ -1,8 +1,5 @@
-import { makeBlob } from '../utils/Blob'
-const Blob = makeBlob()
-
 export const mimeType = 'application/json'
-export function CAGToJson (CAG) {
+export function write (CAG) {
   var str = '{ "type": "cag","sides": ['
   var comma = ''
   CAG.sides.map(
@@ -13,7 +10,5 @@ export function CAGToJson (CAG) {
     }
   )
   str += '] }'
-  return new Blob([str], {
-    type: mimeType
-  })
+  return [str]
 }
