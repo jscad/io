@@ -1,4 +1,4 @@
-export {makeBlob, revokeBlobUrl} from './utils/Blob'
+export {makeBlob} from './utils/Blob'
 
 import * as CAGToDxf from './writers/CAGToDxf'
 import * as CAGToJson from './writers/CAGToJson'
