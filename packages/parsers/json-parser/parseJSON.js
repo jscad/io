@@ -12,7 +12,8 @@ Notes:
 1) All functions extend other objects in order to maintain namespaces.
 */
 
-import { CSG } from '@jscad/csg'
+//import { CSG } from '@jscad/csg'
+const {CSG} = require('@jscad/csg')
 
 // //////////////////////////////////////////
 //
@@ -80,7 +81,7 @@ function toSource (obj) {
 //
 // fn (optional) original filename of JSON source
 //
-export function parseJSON (src, fn, options) {
+function parse (src, fn, options) {
   fn = fn || 'amf'
   const defaults = {version: '0.0.0'}
   options = Object.assign({}, defaults, options)
@@ -101,5 +102,6 @@ export function parseJSON (src, fn, options) {
   return code
 };
 
-// export the extended prototypes
-// module.CAG = CAG;
+module.exports = {
+  parse
+}

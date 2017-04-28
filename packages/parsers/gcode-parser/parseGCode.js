@@ -1,5 +1,5 @@
 
-export function parseGCode (gcode, fn, options) {   // http://reprap.org/wiki/G-code
+function parse (gcode, fn, options) {   // http://reprap.org/wiki/G-code
   const defaults = {version: '0.0.0'}
   options = Object.assign({}, defaults, options)
   const {version} = options
@@ -86,4 +86,8 @@ export function parseGCode (gcode, fn, options) {   // http://reprap.org/wiki/G-
   src += srci
   src += '\n\t];\n}\n'
   return src
+}
+
+module.exports = {
+  parse
 }

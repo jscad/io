@@ -697,7 +697,7 @@ function codify (amf, data) {
 // options (optional) anonymous object with:
 //   pxPmm: pixels per milimeter for calcuations
 // FIXME: add openjscad version in a cleaner manner ?
-export function parseAMF (src, fn, options) {
+function parse (src, fn, options) {
   fn = fn || 'amf'
   const defaults = {version: '0.0.0'}
   options = Object.assign({}, defaults, options)
@@ -720,4 +720,8 @@ export function parseAMF (src, fn, options) {
     console.log('Warning: AMF parsing failed')
   }
   return code
+}
+
+module.exports = {
+  parse
 }

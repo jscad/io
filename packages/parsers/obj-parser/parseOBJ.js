@@ -1,6 +1,7 @@
-import { vt2jscad } from './vt2jscad'
+//import { vt2jscad } from './vt2jscad'
+const { vt2jscad } = require('./vt2jscad')
 
-export function parseOBJ (obj, fn, options) {   // http://en.wikipedia.org/wiki/Wavefront_.obj_file
+function parse (obj, fn, options) {   // http://en.wikipedia.org/wiki/Wavefront_.obj_file
   const defaults = {version: '0.0.0'}
   options = Object.assign({}, defaults, options)
   const {version} = options
@@ -48,4 +49,8 @@ export function parseOBJ (obj, fn, options) {   // http://en.wikipedia.org/wiki/
   src += vt2jscad(v, f)
   src += '; }'
   return src
+}
+
+module.exports = {
+  parse
 }

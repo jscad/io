@@ -8,8 +8,9 @@ All code released under MIT license
 Notes:
 1) All functions extend other objects in order to maintain namespaces.
 */
-import { CSG, CAG } from '@jscad/csg'
-var sax = require('sax')
+//import { CSG, CAG } from '@jscad/csg'
+const { CAG } = require('@jscad/csg')
+const sax = require('sax')
 
 // //////////////////////////////////////////
 //
@@ -1345,7 +1346,7 @@ function createSvgParser (src, pxPmm) {
 // options (optional) anonymous object with:
 //   pxPmm: pixels per milimeter for calcuations
 //
-export function parseSVG (src, fn, options) {
+function parse (src, fn, options) {
   var fn = fn || 'svg'
   const defaults = {pxPmm: undefined, version: '0.0.0'}
   options = Object.assign({}, defaults, options)
@@ -1391,3 +1392,7 @@ function fromSVG (src, options) {
   }
   return cag
 };
+
+module.exports = {
+  parse
+}

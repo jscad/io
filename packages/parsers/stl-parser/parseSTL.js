@@ -1,5 +1,8 @@
-import { CSG } from '@jscad/csg'
-import { vt2jscad } from './vt2jscad'
+//import { CSG } from '@jscad/csg'
+//import { vt2jscad } from './vt2jscad'
+const { CSG } = require('@jscad/csg')
+const { vt2jscad } = require('./vt2jscad')
+
 // STL function from http://jsfiddle.net/Riham/yzvGD/35/
 // CC BY-SA by Riham
 // changes by Rene K. Mueller <spiritdude@gmail.com>
@@ -8,7 +11,7 @@ import { vt2jscad } from './vt2jscad'
 // 2013/03/18: renamed functions, creating .jscad source direct via polyhedron()
 const echo = console.info
 
-export function parseSTL (stl, fn, options) {
+function parseSTL (stl, fn, options) {
   const defaults = {version: '0.0.0'}
   options = Object.assign({}, defaults, options)
   const {version} = options
@@ -30,7 +33,7 @@ export function parseSTL (stl, fn, options) {
   return src
 }
 
-export function parseBinarySTL (stl, fn, version) {
+function parseBinarySTL (stl, fn, version) {
     // -- This makes more sense if you read http://en.wikipedia.org/wiki/STL_(file_format)#Binary_STL
   var vertices = []
   var triangles = []
@@ -406,4 +409,9 @@ BinaryReader.prototype = {
          // throw new Error("Index out of bound");
     }
   }
+}
+
+module.exports = {
+  parseSTL,
+  parseBinarySTL
 }

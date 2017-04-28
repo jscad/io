@@ -1,4 +1,4 @@
-export function vt2jscad (v, t, n, c) {     // vertices, triangles, normals and colors
+function vt2jscad (v, t, n, c) {     // vertices, triangles, normals and colors
   var src = ''
   src += 'polyhedron({ points: [\n\t'
   for (var i = 0, j = 0; i < v.length; i++) {
@@ -19,4 +19,8 @@ export function vt2jscad (v, t, n, c) {     // vertices, triangles, normals and 
   }
   src += '] })\n'
   return src
+}
+
+module.exports = {
+  vt2jscad
 }

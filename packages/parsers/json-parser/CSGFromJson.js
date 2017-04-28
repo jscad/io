@@ -1,8 +1,9 @@
-import { CSG } from '@jscad/csg'
+//import { CSG } from '@jscad/csg'
+const {CSG} = require('@jscad/csg')
 
 // convert the given (anonymous JSON) object into CSG
 // Note: Any issues during conversion will result in exceptions
-export function CSGfromJSON (o) {
+function parse (o) {
   // verify the object IS convertable
   if (o.type === 'csg') {
     Object.setPrototypeOf(o, CSG.prototype)
@@ -19,4 +20,8 @@ export function CSGfromJSON (o) {
     o.properties = new CSG.Properties()
   }
   return o
+}
+
+module.exports = {
+  parse
 }
