@@ -1,6 +1,6 @@
-export const mimeType = 'application/dxf'
+const mimeType = 'application/dxf'
 
-export function write (cagObject) {
+function write (cagObject) {
   var paths = cagObject.getOutlinePaths()
   return PathsToDxf(paths)
 }
@@ -34,4 +34,9 @@ function PathsToDxf (paths) {
   })
   str += '  0\nENDSEC\n  0\nEOF\n'
   return [str]
+}
+
+module.exports = {
+  write,
+  mimeType
 }

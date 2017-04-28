@@ -1,8 +1,9 @@
-import { CSG } from '@jscad/csg'
+// import { CSG } from '@jscad/csg'
+const {CSG} = require('@jscad/csg')
 
-export const mimeType = 'image/svg+xml'
+const mimeType = 'image/svg+xml'
 
-export function write (cagObject) {
+function write (cagObject) {
   var decimals = 1000
 
   // mirror the CAG about the X axis in order to generate paths into the POSITIVE direction
@@ -45,4 +46,9 @@ function PathsToSvg (paths, bounds) {
   })
   str += '</g>\n'
   return str
+}
+
+module.exports = {
+  write,
+  mimeType
 }

@@ -1,6 +1,6 @@
-export const mimeType = 'application/amf+xml'
+const mimeType = 'application/amf+xml'
 
-export function write (CSG, m) {
+function write (CSG, m) {
   var result = '<?xml version="1.0" encoding="UTF-8"?>\n<amf' + (m && m.unit ? ' unit="+m.unit"' : '') + '>\n'
   for (var k in m) {
     result += '<metadata type="' + k + '">' + m[k] + '</metadata>\n'
@@ -61,3 +61,8 @@ CSG.Vector3D.prototype.toAMFString = function () {
 CSG.Vertex.prototype.toAMFString = function () {
   return '<vertex><coordinates>' + this.pos.toAMFString() + '</coordinates></vertex>\n'
 } */
+
+module.exports = {
+  write,
+  mimeType
+}

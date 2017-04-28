@@ -1,11 +1,12 @@
-import xmldom from 'xmldom'
+// import xmldom from 'xmldom'
+const xmldom = require('xmldom')
 
-export const mimeType = 'model/x3d+xml'
+const mimeType = 'model/x3d+xml'
 
 const XMLSerializer = xmldom.XMLSerializer
 // NOTE: might be useful :https://github.com/jindw/xmldom/pull/152/commits/be5176ece6fa1591daef96a5f361aaacaa445175
 
-export function write (CSG) {
+function write (CSG) {
   const DOMImplementation = typeof document !== 'undefined' ? document.implementation : new xmldom.DOMImplementation()
   // materialPolygonLists
   // key: a color string (e.g. "0 1 1" for yellow)
@@ -109,4 +110,9 @@ export function write (CSG) {
 
   const x3dstring = (new XMLSerializer()).serializeToString(exportDoc)
   return [x3dstring]
+}
+
+module.exports = {
+  write,
+  mimeType
 }

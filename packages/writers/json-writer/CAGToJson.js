@@ -1,5 +1,5 @@
-export const mimeType = 'application/json'
-export function write (CAG) {
+const mimeType = 'application/json'
+function write (CAG) {
   var str = '{ "type": "cag","sides": ['
   var comma = ''
   CAG.sides.map(
@@ -11,4 +11,9 @@ export function write (CAG) {
   )
   str += '] }'
   return [str]
+}
+
+module.exports = {
+  write,
+  mimeType
 }

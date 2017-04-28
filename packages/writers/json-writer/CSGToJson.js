@@ -1,6 +1,6 @@
-export const mimeType = 'application/json'
+const mimeType = 'application/json'
 
-export function write () {
+function write () {
   var str = '{ "type": "csg","polygons": ['
   var comma = ''
   CSG.polygons.map(
@@ -15,4 +15,9 @@ export function write () {
   str += '"isRetesselated": ' + JSON.stringify(this.isRetesselated)
   str += '}'
   return [str]
+}
+
+module.exports = {
+  write,
+  mimeType
 }

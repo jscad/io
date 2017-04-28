@@ -1,6 +1,6 @@
-export const mimeType = 'application/sla'
+const mimeType = 'application/sla'
 
-export function write (CSG) {
+function write (CSG) {
   var result = 'solid csg.js\n'
   CSG.polygons.map(function (p) {
     result += CSGPolygontoStlString(p)
@@ -33,4 +33,9 @@ function CSGPolygontoStlString (polygon) {
     }
   }
   return result
+}
+
+module.exports = {
+  write,
+  mimeType
 }

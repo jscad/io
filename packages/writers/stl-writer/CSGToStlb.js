@@ -1,7 +1,7 @@
-export const mimeType = 'application/sla'
+const mimeType = 'application/sla'
 
 // see http://en.wikipedia.org/wiki/STL_%28file_format%29#Binary_STL
-export function write (CSG) {
+function write (CSG) {
   // first check if the host is little-endian:
   var buffer = new ArrayBuffer(4)
   var int32buffer = new Int32Array(buffer, 0, 1)
@@ -61,4 +61,9 @@ export function write (CSG) {
   /*return new Blob([headerarray.buffer, ar1.buffer, allTrianglesBuffer], {
     type: mimeType
   })*/
+}
+
+module.exports = {
+  write,
+  mimeType
 }
