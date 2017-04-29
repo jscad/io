@@ -11,9 +11,9 @@ import * as CSGToX3D from './writers/CSGToX3D'
 
 export {CAGToDxf, CAGToJson, CAGToSvg, CSGToAMF, CSGToJson, CSGToStla, CSGToStlb, CSGToX3D}
 
-export {parseAMF} from './parsers/parseAMF'
-export {parseGCode} from './parsers/parseGCode'
-export {parseJSON} from './parsers/parseJSON'
-export {parseOBJ} from './parsers/parseOBJ'
-export {parseSTL} from './parsers/parseSTL'
-export {parseSVG} from './parsers/parseSVG'
+export {parseAMF} from './deserializers/parseAMF'
+export {parseGCode} from './deserializers/parseGCode'
+export {parseJSON} from './deserializers/parseJSON'
+export {parseOBJ} from './deserializers/parseOBJ'
+export {parseSTL} from './deserializers/parseSTL'
+export {parseSVG} from './deserializers/parseSVG'
