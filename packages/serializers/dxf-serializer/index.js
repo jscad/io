@@ -1,6 +1,6 @@
 const mimeType = 'application/dxf'
 
-function write (cagObject) {
+function serialize (cagObject) {
   var paths = cagObject.getOutlinePaths()
   return PathsToDxf(paths)
 }
@@ -37,6 +37,6 @@ function PathsToDxf (paths) {
 }
 
 module.exports = {
-  write,
+  serialize,
   mimeType
 }

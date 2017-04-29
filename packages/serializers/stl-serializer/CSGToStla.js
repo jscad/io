@@ -1,6 +1,5 @@
-const mimeType = 'application/sla'
 
-function write (CSG) {
+function serialize (CSG) {
   var result = 'solid csg.js\n'
   CSG.polygons.map(function (p) {
     result += CSGPolygontoStlString(p)
@@ -36,6 +35,5 @@ function CSGPolygontoStlString (polygon) {
 }
 
 module.exports = {
-  write,
-  mimeType
+  serialize
 }

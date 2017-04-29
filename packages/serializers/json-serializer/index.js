@@ -1,6 +1,22 @@
+const {CSG} = require('@jscad/csg')
+
 const mimeType = 'application/json'
 
-function write () {
+function fromCAG (CAG) {
+  var str = '{ "type": "cag","sides": ['
+  var comma = ''
+  CAG.sides.map(
+    function (side) {
+      str += comma
+      str += JSON.stringify(side)
+      comma = ','
+    }
+  )
+  str += '] }'
+  return [str]
+}
+
+function fromCSG (CSG) {
   var str = '{ "type": "csg","polygons": ['
   var comma = ''
   CSG.polygons.map(
@@ -17,7 +33,11 @@ function write () {
   return [str]
 }
 
+function serialize (data, options) {
+  return typeof data === CSG ? fromCSG(data) : fromCAG(data)
+}
+
 module.exports = {
-  write,
+  serialize,
   mimeType
 }

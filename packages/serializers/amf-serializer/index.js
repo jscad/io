@@ -1,6 +1,6 @@
 const mimeType = 'application/amf+xml'
 
-function write (CSG, m) {
+function serialize (CSG, m) {
   var result = '<?xml version="1.0" encoding="UTF-8"?>\n<amf' + (m && m.unit ? ' unit="+m.unit"' : '') + '>\n'
   for (var k in m) {
     result += '<metadata type="' + k + '">' + m[k] + '</metadata>\n'
@@ -63,6 +63,6 @@ CSG.Vertex.prototype.toAMFString = function () {
 } */
 
 module.exports = {
-  write,
+  serialize,
   mimeType
 }
