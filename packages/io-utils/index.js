@@ -16,7 +16,7 @@
  * 2015/07/02: 0.0.1: contributed to OpenJSCAD.org CLI openjscad
  */
 
-export function makeBlob (contents, options) {
+function makeBlob (contents, options) {
   const blob = typeof window !== 'undefined' ? window.Blob : Blob
   return blob
 }
@@ -110,3 +110,5 @@ Blob.prototype = {
     return 'blob blob blob'
   }
 }
+
+module.exports = makeBlob
