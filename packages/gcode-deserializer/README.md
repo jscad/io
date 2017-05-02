@@ -7,7 +7,7 @@
 
 ## Overview
 
-This deserializer converts raw gcode data to CSG/CAG.
+This deserializer converts raw gcode data to jscad code (that can be evaluated to CSG/CAG). 
 
 ## Table of Contents
 

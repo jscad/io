@@ -10,7 +10,9 @@ This repository includes all the input/output format handling for the jscad proj
 
 ### Inputs / deserializers
 
-iefile data => CSG/CAG
+ie: file data => jscad code (that can be evaluated to CSG/CAG)
+> note : currently serializers & deserializers are NOT symetrical as deserializers
+do not generate CSG/CAG objects
 
 Following formats are supported as inputs
  - [AMF](https://github.com/jscad/io/blob/master/packages/amf-deserializer)
