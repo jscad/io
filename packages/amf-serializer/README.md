@@ -1,13 +1,13 @@
-## @jscad/amf-writer
+## @jscad/amf-serializer
 
-> amf writer for the jscad project (from CSG)
+> amf serializer for the jscad project (from CSG)
 
-[![GitHub version](https://badge.fury.io/gh/jscad%2Fio.svg)](https://badge.fury.io/gh/jscad%2Famf-writer)
-[![Build Status](https://travis-ci.org/jscad/io.svg)](https://travis-ci.org/jscad/amf-writer)
+[![GitHub version](https://badge.fury.io/gh/jscad%2Fio.svg)](https://badge.fury.io/gh/jscad%2Famf-serializer)
+[![Build Status](https://travis-ci.org/jscad/io.svg)](https://travis-ci.org/jscad/amf-serializer)
 
 ## Overview
 
-This writer outputs a 'blobable' array of data (from a CSG object)
+This serializer outputs a 'blobable' array of data (from a CSG object)
 ie an array that can either be passed directly to a Blob (`new Blob(blobable)`)
 or converted to a Node.js buffer.
 
@@ -22,16 +22,16 @@ or converted to a Node.js buffer.
 ## Installation
 
 ```
-npm install @jscad/amf-writer
+npm install @jscad/amf-serializer
 ```
 
 ## Usage
 
 
 ```javascript
-const amfWriter = require('@jscad/amf-writer')
+const amfSerializer = require('@jscad/amf-serializer')
 
-const rawData = amfWriter(CSGObject)
+const rawData = amfSerializer(CSGObject)
 
 //in browser (with browserify etc)
 const blob = new Blob(rawData)

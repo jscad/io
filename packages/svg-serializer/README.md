@@ -1,13 +1,13 @@
-## @jscad/svg-writer
+## @jscad/svg-serializer
 
-> svg writer for the jscad project (from CSG)
+> svg serializer for the jscad project (from CSG)
 
-[![GitHub version](https://badge.fury.io/gh/jscad%2Fio.svg)](https://badge.fury.io/gh/jscad%2Fsvg-writer)
-[![Build Status](https://travis-ci.org/jscad/io.svg)](https://travis-ci.org/jscad/svg-writer)
+[![GitHub version](https://badge.fury.io/gh/jscad%2Fio.svg)](https://badge.fury.io/gh/jscad%2Fsvg-serializer)
+[![Build Status](https://travis-ci.org/jscad/io.svg)](https://travis-ci.org/jscad/svg-serializer)
 
 ## Overview
 
-This writer outputs a 'blobable' array of data (from a CAG object)
+This serializer outputs a 'blobable' array of data (from a CAG object)
 ie an array that can either be passed directly to a Blob (`new Blob(blobable)`)
 or converted to a Node.js buffer.
 
@@ -23,16 +23,16 @@ or converted to a Node.js buffer.
 ## Installation
 
 ```
-npm install @jscad/svg-writer
+npm install @jscad/svg-serializer
 ```
 
 ## Usage
 
 
 ```javascript
-const svgWriter = require('@jscad/svg-writer')
+const svgSerializer = require('@jscad/svg-serializer')
 
-const rawData = svgWriter(CAGObject)
+const rawData = svgSerializer(CAGObject)
 
 //in browser (with browserify etc)
 const blob = new Blob(rawData)

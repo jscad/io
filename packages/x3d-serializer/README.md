@@ -1,13 +1,13 @@
-## @jscad/x3d-writer
+## @jscad/x3d-serializer
 
-> x3d writer for the jscad project (from CSG)
+> x3d serializer for the jscad project (from CSG)
 
-[![GitHub version](https://badge.fury.io/gh/jscad%2Fio.svg)](https://badge.fury.io/gh/jscad%2Fx3d-writer)
-[![Build Status](https://travis-ci.org/jscad/io.svg)](https://travis-ci.org/jscad/x3d-writer)
+[![GitHub version](https://badge.fury.io/gh/jscad%2Fio.svg)](https://badge.fury.io/gh/jscad%2Fx3d-serializer)
+[![Build Status](https://travis-ci.org/jscad/io.svg)](https://travis-ci.org/jscad/x3d-serializer)
 
 ## Overview
 
-This writer outputs a 'blobable' array of data (from a CSG object)
+This serializer outputs a 'blobable' array of data (from a CSG object)
 ie an array that can either be passed directly to a Blob (`new Blob(blobable)`)
 or converted to a Node.js buffer.
 
@@ -22,16 +22,16 @@ or converted to a Node.js buffer.
 ## Installation
 
 ```
-npm install @jscad/x3d-writer
+npm install @jscad/x3d-serializer
 ```
 
 ## Usage
 
 
 ```javascript
-const x3dWriter = require('@jscad/x3d-writer')
+const x3dSerializer = require('@jscad/x3d-serializer')
 
-const rawData = x3dWriter(CSGObject)
+const rawData = x3dSerializer(CSGObject)
 
 //in browser (with browserify etc)
 const blob = new Blob(rawData)
