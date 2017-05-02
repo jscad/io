@@ -2,7 +2,7 @@
 
 > json serializer for the jscad project (from CSG)
 
-[![GitHub version](https://badge.fury.io/gh/jscad%2Fio.svg)](https://badge.fury.io/gh/jscad%2Fjson-serializer)
+[![GitHub version](https://badge.fury.io/gh/jscad%40jscad%2Fjson-serializer.svg)](https://badge.fury.io/gh/jscad%40jscad%2Fjson-serializer)
 [![Build Status](https://travis-ci.org/jscad/io.svg)](https://travis-ci.org/jscad/json-serializer)
 
 ## Overview
@@ -50,5 +50,5 @@ Small Note: If editing this README, please conform to the [standard-readme](http
 
 ## License
 
-[The MIT License (MIT)](https://github.com/jscad/io/blob/master/LICENSE)
+[The MIT License (MIT)](./LICENSE)
 (unless specified otherwise)
