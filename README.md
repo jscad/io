@@ -3,36 +3,34 @@
 ## input output formats handling for the jscad project
 
 [![GitHub version](https://badge.fury.io/gh/jscad%2Fio.svg)](https://badge.fury.io/gh/jscad%2Fio)
-[![Build Status](https://travis-ci.org/jscad/io.svg)](https://travis-ci.org/jscad/io)
 
 ## Overview
 
 This repository includes all the input/output format handling for the jscad projects, and can also be used seperatly.
 
-### Inputs
+### Inputs / deserializers
 
 iefile data => CSG/CAG
 
 Following formats are supported as inputs
- - [AMF](https://github.com/jscad/io/blob/master/src/parsers/parseAMF.js)
- - [gcode](https://github.com/jscad/io/blob/master/src/parsers/parseGCode.js)
- - [JSON](https://github.com/jscad/io/blob/master/src/parsers/parseJSON.js)
- - [OBJ](https://github.com/jscad/io/blob/master/src/parsers/parseOBJ.js)
- - [STL (binary, ASCII)](https://github.com/jscad/io/blob/master/src/parsers/parseSTL.js)
- - [SVG](https://github.com/jscad/io/blob/master/src/parsers/parseSVG.js)
+ - [AMF](https://github.com/jscad/io/blob/master/packages/amf-deserializer)
+ - [gcode](https://github.com/jscad/io/blob/master/packages/gcode-deserializer)
+ - [JSON](https://github.com/jscad/io/blob/master/packages/json-deserializer)
+ - [OBJ](https://github.com/jscad/io/blob/master/packages/obj-deserializer)
+ - [STL (binary, ASCII)](https://github.com/jscad/io/blob/master/packages/stl-deserializer)
+ - [SVG](https://github.com/jscad/io/blob/master/packages/svg-deserializer)
 
-### Outputs
+### Outputs/ serializers
 
 ie: CSG/CAG => blob
 
 Following formats are supported as outputs
-  - [DXF](https://github.com/jscad/io/blob/master/src/writers/CAGToDxf.js)
-  - [AMF](https://github.com/jscad/io/blob/master/src/writers/CSGToAMF.js)
-  - [JSON(from CSG)](https://github.com/jscad/io/blob/master/src/writers/CSGToJson.js)
-  - [JSON(from CAG)](https://github.com/jscad/io/blob/master/src/writers/CAGToJson.js)
-  - [STL (ASCII)](https://github.com/jscad/io/blob/master/src/writers/CSGToStla.js)
-  - [STL (binary)](https://github.com/jscad/io/blob/master/src/writers/CSGToStlb.js)
-  - [X3D](https://github.com/jscad/io/blob/master/src/writers/CSGToX3D.js)
+  - [AMF](https://github.com/jscad/io/blob/master/packages/amf-serializer)
+  - [DXF](https://github.com/jscad/io/blob/master/packages/dxf-serializer)
+  - [JSON](https://github.com/jscad/io/blob/master/packages/json-serializer)
+  - [STL (binary, ASCII)](https://github.com/jscad/io/blob/master/packages/stl-serializer)
+  - [SVG](https://github.com/jscad/io/blob/master/packages/svg-serializer)
+  - [X3D](https://github.com/jscad/io/blob/master/packages/x3d-serializer)
 
 >Note: this repository would very likely benefit from becoming a monorepo (a repository containing multiple packages) for the various file formats.
 
