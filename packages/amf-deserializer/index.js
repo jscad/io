@@ -8,7 +8,7 @@ Copyright (c) 2016 by Z3D Development
 All code released under MIT license
 
 History:
-  2016/06/27: 0.5.1: rewrote using SAX XML deserializer, enhanced for multiple objects, materials, units by Z3Dev
+  2016/06/27: 0.5.1: rewrote using SAX XML parser, enhanced for multiple objects, materials, units by Z3Dev
   2013/04/11: 0.018: added alpha support to AMF export
 
 */
@@ -207,13 +207,13 @@ function amfU3 (element) {
 }
 
 function createAmfParser (src, pxPmm) {
-  // create a deserializer for the XML
-  var deserializer = sax.deserializer(false, {trim: true, lowercase: false, position: true})
+  // create a parser for the XML
+  var parser = sax.parser(false, {trim: true, lowercase: false, position: true})
 
-  deserializer.onerror = function (e) {
+  parser.onerror = function (e) {
     console.log('error: line ' + e.line + ', column ' + e.column + ', bad character [' + e.c + ']')
   }
-  deserializer.onopentag = function (node) {
+  parser.onopentag = function (node) {
     // console.log('opentag: '+node.name+' at line '+this.line+' position '+this.column);
     // for (x in node.attributes) {
     //  console.log('    '+x+'='+node.attributes[x]);
@@ -400,7 +400,7 @@ function createAmfParser (src, pxPmm) {
     }
   }
 
-  deserializer.onclosetag = function (node) {
+  parser.onclosetag = function (node) {
 // console.log('onclosetag: '+this.amfDefinition);
     switch (node) {
     // list those which have objects
@@ -473,7 +473,7 @@ function createAmfParser (src, pxPmm) {
     }
   }
 
-  deserializer.ontext = function (value) {
+  parser.ontext = function (value) {
     if (value !== null) {
       if (this.amfLast && this.amfDefinition !== 0) {
         this.amfLast.value = value
@@ -482,14 +482,14 @@ function createAmfParser (src, pxPmm) {
     }
   }
 
-  deserializer.onend = function () {
+  parser.onend = function () {
     // console.log('AMF parsing completed');
   }
 
-// start the deserializer
-  deserializer.write(src).close()
+// start the parser
+  parser.write(src).close()
 
-  return deserializer
+  return parser
 }
 
 //
@@ -704,7 +704,7 @@ function deserialize (src, fn, options) {
   const {version} = options
 
   // parse the AMF source
-  const deserializer = createAmfParser(src)
+  const parser = createAmfParser(src)
   // convert the internal objects to JSCAD code
   var code = ''
   code += '//\n'
@@ -712,10 +712,10 @@ function deserialize (src, fn, options) {
   code += '// date: ' + (new Date()) + '\n'
   code += '// source: ' + fn + '\n'
   code += '//\n'
-  if (deserializer.amfObj !== null) {
-    // console.log(JSON.stringify(deserializer.amfObj))
-    // console.log(JSON.stringify(deserializer.amfMaterials))
-    code += codify(deserializer.amfObj, deserializer)
+  if (parser.amfObj !== null) {
+    // console.log(JSON.stringify(parser.amfObj))
+    // console.log(JSON.stringify(parser.amfMaterials))
+    code += codify(parser.amfObj, parser)
   } else {
     console.log('Warning: AMF parsing failed')
   }
