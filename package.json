@@ -42,6 +42,7 @@
   "dependencies": {
   },
   "devDependencies": {
-    "ava": "^0.19.1"
+    "ava": "^0.19.1",
+    "@jscad/csg":"latest"
   }
 }
