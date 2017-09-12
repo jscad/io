@@ -5,6 +5,7 @@
   "description": "Input , output and formats handling for jscad project",
   "repository": "https://github.com/jscad/io",
   "scripts": {
+    "test": "ava './**/test/*.js' --verbose --timeout 10000",
     "release-patch": "git checkout master && npm version patch && git commit -a -m 'chore(dist): built dist/'; git push origin master --tags ",
     "release-minor": "git checkout master && npm version minor && git commit -a -m 'chore(dist): built dist/'; git push origin master --tags ",
     "release-major": "git checkout master && npm version major && git commit -a -m 'chore(dist): built dist/'; git push origin master --tags "
@@ -41,5 +42,6 @@
   "dependencies": {
   },
   "devDependencies": {
+    "ava": "^0.19.1"
   }
 }
