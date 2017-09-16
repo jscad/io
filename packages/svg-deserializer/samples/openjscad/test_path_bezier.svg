@@ -1,0 +1,11 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="10cm" height="10cm" viewBox="0 0 1000 1000"
+     xmlns="http://www.w3.org/2000/svg" version="1.1">
+  <title>Example triangle01- simple example of a 'path'</title>
+  <desc>A path that draws a triangle</desc>
+<!-- bezier curves -->
+  <path strokeWidth="3" class="SamplePath" d="M600,800 C625,700 725,700 750,800
+                                       S875,900 900,800" />
+</svg>

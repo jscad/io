@@ -7,7 +7,7 @@
 
 ## Overview
 
-This deserializer converts raw svg data to jscad code (that can be evaluated to CSG/CAG). 
+This deserializer converts raw svg data to jscad code (that can be evaluated to CSG/CAG).
 
 ## Table of Contents
 
@@ -30,7 +30,7 @@ npm install @jscad/svg-deserializer
 const svgDeSerializer = require('@jscad/svg-deserializer')
 
 const rawData = fs.readFileSync('PATH/TO/file.svg')
-const csgData = svgDeSerializer(rawData)
+const csgData = svgDeSerializer.deserialize(rawData)
 
 ```
 

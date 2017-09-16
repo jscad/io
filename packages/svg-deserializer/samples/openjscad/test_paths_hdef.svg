@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1 Tiny//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11-tiny.dtd">
+
+<svg version="1.1" baseProfile="tiny" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  id="svg-root" width="100%" height="100%" viewBox="0 0 500 500">
+  <g>
+    <path id="Triangle_stroke_mlz" fill="none" stroke="#000000"  d="   m   62.00000  190.00000    l   51.96152   90.00000   l -103.92304    0.00000    l   51.96152  -90.00000   z    m    0.00000   15.00000   l   38.97114   67.50000   l  -77.94228    0.00000   l   38.97114  -67.50000   z  "/>
+    <path id="Triangle_fill_mlz" fill="#00C000" stroke="none" fill-rule="evenodd"  d="   m  177.00000  190.00000    l   51.96152   90.00000   l -103.92304    0.00000    l   51.96152  -90.00000   z    m    0.00000   15.00000   l   38.97114   67.50000   l  -77.94228    0.00000   l   38.97114  -67.50000   z  "/>
+   </g>
+</svg>
+
