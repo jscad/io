@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="700" height="600" xml:space="preserve"><desc>Created with Fabric.js 1.6.0-rc.1</desc><defs/><g style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: none; fill-rule: nonzero; opacity: 1;" transform="translate(185 89) rotate(7)">
+<path d="M 80 80 A 45 45 0 0 0 125 125 L 125 80 Z" style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: green; fill-rule: nonzero; opacity: 1;" transform="" stroke-linecap="round"/>
+<path d="M 230 80 A 45 45 0 1 0 275 125 L 275 80 Z" style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: red; fill-rule: nonzero; opacity: 1;" transform="" stroke-linecap="round"/>
+<path d="M 80 230 A 45 45 0 0 1 125 275 L 125 230 Z" style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: purple; fill-rule: nonzero; opacity: 1;" transform="" stroke-linecap="round"/>
+<path d="M 230 230 A 45 45 0 1 1 275 275 L 275 230 Z" style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: blue; fill-rule: nonzero; opacity: 1;" transform="" stroke-linecap="round"/>
+</g>
+</svg>

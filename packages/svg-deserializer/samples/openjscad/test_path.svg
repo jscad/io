@@ -1,0 +1,16 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="5cm" height="5cm" viewBox="0 0 500 500"
+     xmlns="http://www.w3.org/2000/svg" version="1.1">
+  <title>Example triangle01- simple example of a 'path'</title>
+  <desc>A path that draws a triangle</desc>
+<!-- different kinds of compression -->
+  <path d="M 100 100 L 300 100 L 200 300 z" fill="red" stroke="blue" stroke-width="3" />
+  <path d="M200 200 L400 200 L300 400 z" fill="green" stroke="red" stroke-width="3" />
+  <path d="M300 300L500 300L400 500z" fill="blue" stroke="green" stroke-width="3" />
+<!-- different kinds of numbers -->
+  <path d="M10 10L20 500" stroke="black" stroke-width="3" />
+  <path d="M30.0 30.0L40.0 500.0" stroke="black" stroke-width="3" />
+  <path d="M0.5.5L0.75,500.0 500.0.50" fill="none" stroke="black" stroke-width="3" />
+</svg>
