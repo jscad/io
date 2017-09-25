@@ -1,6 +1,6 @@
 {
   "name": "@jscad/io",
-  "private":"true",
+  "private": "true",
   "version": "0.1.0",
   "description": "Input , output and formats handling for jscad project",
   "repository": "https://github.com/jscad/io",
@@ -38,8 +38,8 @@
     "deserializer"
   ],
   "license": "MIT",
-  "dependencies": {
-  },
   "devDependencies": {
+    "ava": "^0.22.0",
+    "lerna": "2.1.2"
   }
 }
