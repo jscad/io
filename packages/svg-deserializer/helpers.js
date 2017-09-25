@@ -1,68 +1,57 @@
 const svgColors = require('./svg-colors')
 const {inchMM, ptMM, pcMM} = require('./constants')
 
-module.exports = {
-  svg2cagX,
-  svg2cagY,
-  cagLengthX,
-  cagLengthY,
-  cagLengthP,
-  css2cag,
-  cagColor,
-  cssStyle,
-  svgCore
-}
 // Calculate the CAG length/size from the given SVG value (float)
-const svg2cagX = function (v) {
-  return (v / this.svgUnitsPmm[0])
+const svg2cagX = function (v, svgUnitsPmm) {
+  return (v / svgUnitsPmm[0])
 }
 
-const svg2cagY = function (v) {
-  return 0 - (v / this.svgUnitsPmm[1])
+const svg2cagY = function (v, svgUnitsPmm) {
+  return 0 - (v / svgUnitsPmm[1])
 }
 
 // Calculate the CAG length/size from the given CSS value (string)
-const cagLengthX = function (css) {
+const cagLengthX = function (css, svgUnitsPmm, svgUnitsX) {
   if (css.indexOf('%') < 0) {
-    return this.css2cag(css, this.svgUnitsPmm[0])
+    return css2cag(css, svgUnitsPmm[0])
   }
 // calculate the units as a percentage of the width
   var v = parseFloat(css) // number part
   if (isNaN(v)) { return 0.0 }
   if (v === 0) return v
-  v = (v / 100) * this.svgUnitsX
+  v = (v / 100) * svgUnitsX
 // convert the units to mm
-  v = v / this.svgUnitsPmm[0]
+  v = v / svgUnitsPmm[0]
   // return v;
   return Math.round(v / -100000) * -100000
 }
 
-const cagLengthY = function (css) {
+const cagLengthY = function (css, svgUnitsPmm, svgUnitsY) {
   if (css.indexOf('%') < 0) {
-    return this.css2cag(css, this.svgUnitsPmm[1])
+    return css2cag(css, svgUnitsPmm[1])
   }
 // calculate the units as a percentage of the width
   var v = parseFloat(css) // number part
   if (isNaN(v)) { return 0.0 }
   if (v === 0) return v
-  v = (v / 100) * this.svgUnitsY
+  v = (v / 100) * svgUnitsY
 // convert the units to mm
-  v = v / this.svgUnitsPmm[1]
+  v = v / svgUnitsPmm[1]
   // return v;
   return Math.round(v / -100000) * -100000
 }
 
-const cagLengthP = function (css) {
+const cagLengthP = function (css, svgUnitsPmm, svgUnitsV) {
   if (css.indexOf('%') < 0) {
-    return this.css2cag(css, this.svgUnitsPmm[1])
+    return css2cag(css, svgUnitsPmm[1])
   }
 // calculate the units as a percentage of the viewport
   var v = parseFloat(css) // number part
   if (isNaN(v)) { return 0.0 }
   if (v === 0) return v
-  v = (v / 100) * this.svgUnitsV
+  v = (v / 100) * svgUnitsV
 // convert the units to mm
-  v = v / this.svgUnitsPmm[0] // FIXME should this use X units?
+  v = v / svgUnitsPmm[0] // FIXME should this use X units?
   return v
 }
 
@@ -156,4 +145,15 @@ const cssStyle = function (element, name) {
     }
   }
   return null
+}
+
+module.exports = {
+  svg2cagX,
+  svg2cagY,
+  cagLengthX,
+  cagLengthY,
+  cagLengthP,
+  css2cag,
+  cagColor,
+  cssStyle
 }
