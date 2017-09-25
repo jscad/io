@@ -9,59 +9,64 @@ Sponsored by Copenhagen Fabrication Aps
 All code released under MIT license
 */
 
-// standard pixel size at arms length on 90dpi screens
-const cssPxUnit = 0.2822222
-const svgColors = require('./svg-colors.js')
+const sax = require('sax')
 
-sax.SAXParser.prototype.svgPresentation = function (obj, element) {
-// presentation attributes for all
+const {cagColor, cssStyle, css2cag} = require('./helpers')
+const {pxPmm} = require('./constants')
+
+const svgCore = function (obj, element) {
+  if ('ID' in element) { obj.id = element.ID }
+}
+
+const svgPresentation = function (obj, element) {
+  // presentation attributes for all
   if ('DISPLAY' in element) { obj.visible = element.DISPLAY }
-// presentation attributes for solids
-  if ('COLOR' in element) { obj.fill = this.cagColor(element.COLOR) }
+  // presentation attributes for solids
+  if ('COLOR' in element) { obj.fill = cagColor(element.COLOR) }
   if ('OPACITY' in element) { obj.opacity = element.OPACITY }
   if ('FILL' in element) {
-    obj.fill = this.cagColor(element.FILL)
+    obj.fill = cagColor(element.FILL)
   } else {
-    var s = this.cssStyle(element, 'fill')
+    var s = cssStyle(element, 'fill')
     if (s !== null) {
-      obj.fill = this.cagColor(s)
+      obj.fill = cagColor(s)
     }
   }
   if ('FILL-OPACITY' in element) { obj.opacity = element['FILL-OPACITY'] }
-// presentation attributes for lines
+  // presentation attributes for lines
   if ('STROKE-WIDTH' in element) {
     obj.strokeWidth = element['STROKE-WIDTH']
   } else {
-    var sw = this.cssStyle(element, 'stroke-width')
+    var sw = cssStyle(element, 'stroke-width')
     if (sw !== null) {
       obj.strokeWidth = sw
     }
   }
   if ('STROKE' in element) {
-    obj.stroke = this.cagColor(element.STROKE)
+    obj.stroke = cagColor(element.STROKE)
   } else {
-    var s = this.cssStyle(element, 'stroke')
+    let s = cssStyle(element, 'stroke')
     if (s !== null) {
-      obj.stroke = this.cagColor(s)
+      obj.stroke = cagColor(s)
     }
   }
   if ('STROKE-OPACITY' in element) { obj.strokeOpacity = element['STROKE-OPACITY'] }
 }
 
-sax.SAXParser.prototype.svgTransforms = function (cag, element) {
+const svgTransforms = function (cag, element) {
   var list = null
   if ('TRANSFORM' in element) {
     list = element.TRANSFORM
   } else {
-    var s = this.cssStyle(element, 'transform')
+    var s = cssStyle(element, 'transform')
     if (s !== null) { list = s }
   }
   if (list !== null) {
     cag.transforms = []
-    var exp = new RegExp('\\w+\\(.+\\)', 'i')
+    let exp = new RegExp('\\w+\\(.+\\)', 'i')
     var v = exp.exec(list)
     while (v !== null) {
-      var s = exp.lastIndex
+      let s = exp.lastIndex
       var e = list.indexOf(')') + 1
       var t = list.slice(s, e) // the transform
       t = t.trim()
@@ -70,18 +75,19 @@ sax.SAXParser.prototype.svgTransforms = function (cag, element) {
       var n = t.slice(0, t.indexOf('('))
       var a = t.slice(t.indexOf('(') + 1, t.indexOf(')')).trim()
       if (a.indexOf(',') > 0) { a = a.split(',') } else { a = a.split(' ') }
+      let o
       switch (n) {
         case 'translate':
-          var o = {translate: [a[0], a[1]]}
+          o = {translate: [a[0], a[1]]}
           cag.transforms.push(o)
           break
         case 'scale':
-          if (a.length == 1) a.push(a[0]) // as per SVG
-          var o = {scale: [a[0], a[1]]}
+          if (a.length === 1) a.push(a[0]) // as per SVG
+          o = {scale: [a[0], a[1]]}
           cag.transforms.push(o)
           break
         case 'rotate':
-          var o = {rotate: a}
+          o = {rotate: a}
           cag.transforms.push(o)
           break
         // case 'matrix':
@@ -97,12 +103,12 @@ sax.SAXParser.prototype.svgTransforms = function (cag, element) {
   }
 }
 
-sax.SAXParser.prototype.svgSvg = function (element) {
+const svgSvg = function (element) {
 // default SVG with no viewport
   var obj = {type: 'svg', x: 0, y: 0, width: '100%', height: '100%', strokeWidth: '1'}
 
 // default units per mm
-  obj.unitsPmm = [this.pxPmm, this.pxPmm]
+  obj.unitsPmm = [pxPmm, pxPmm]
 
   if ('PXPMM' in element) {
   // WOW! a supplied value for pixels per milimeter!!!
@@ -124,26 +130,26 @@ sax.SAXParser.prototype.svgSvg = function (element) {
   // apply the viewbox
     if (obj.width.indexOf('%') < 0) {
     // calculate a scaling from width and viewW
-      var s = this.css2cag(obj.width, this.pxPmm) // width in millimeters
+      var s = css2cag(obj.width, this.pxPmm) // width in millimeters
       s = obj.viewW / s
     // scale the default units
       // obj.unitsPmm[0] = obj.unitsPmm[0] * s;
       obj.unitsPmm[0] = s
     } else {
     // scale the default units by the width (%)
-      var u = obj.unitsPmm[0] * (parseFloat(obj.width) / 100.0)
+      const u = obj.unitsPmm[0] * (parseFloat(obj.width) / 100.0)
       obj.unitsPmm[0] = u
     }
     if (obj.height.indexOf('%') < 0) {
     // calculate a scaling from height and viewH
-      var s = this.css2cag(obj.height, this.pxPmm) // height in millimeters
+      let s = css2cag(obj.height, this.pxPmm) // height in millimeters
       s = obj.viewH / s
     // scale the default units
       // obj.unitsPmm[1] = obj.unitsPmm[1] * s;
       obj.unitsPmm[1] = s
     } else {
     // scale the default units by the width (%)
-      var u = obj.unitsPmm[1] * (parseFloat(obj.height) / 100.0)
+      const u = obj.unitsPmm[1] * (parseFloat(obj.height) / 100.0)
       obj.unitsPmm[1] = u
     }
   } else {
@@ -155,46 +161,46 @@ sax.SAXParser.prototype.svgSvg = function (element) {
   obj.viewP = Math.sqrt((obj.viewW * obj.viewW) + (obj.viewH * obj.viewH)) / Math.SQRT2
 
 // core attributes
-  this.svgCore(obj, element)
+  svgCore(obj, element)
 // presentation attributes
-  this.svgPresentation(obj, element)
+  svgPresentation(obj, element)
 
   obj.objects = []
   // console.log(JSON.stringify(obj));
   return obj
 }
 
-sax.SAXParser.prototype.svgEllipse = function (element) {
+const svgEllipse = function (element) {
   var obj = {type: 'ellipse', cx: '0', cy: '0', rx: '0', ry: '0'}
   if ('CX' in element) { obj.cx = element.CX }
   if ('CY' in element) { obj.cy = element.CY }
   if ('RX' in element) { obj.rx = element.RX }
   if ('RY' in element) { obj.ry = element.RY }
-// transforms
-  this.svgTransforms(obj, element)
-// core attributes
-  this.svgCore(obj, element)
-// presentation attributes
-  this.svgPresentation(obj, element)
+  // transforms
+  svgTransforms(obj, element)
+  // core attributes
+  svgCore(obj, element)
+  // presentation attributes
+  svgPresentation(obj, element)
   return obj
 }
 
-sax.SAXParser.prototype.svgLine = function (element) {
+const svgLine = function (element) {
   var obj = {type: 'line', x1: '0', y1: '0', x2: '0', y2: '0'}
   if ('X1' in element) { obj.x1 = element.X1 }
   if ('Y1' in element) { obj.y1 = element.Y1 }
   if ('X2' in element) { obj.x2 = element.X2 }
   if ('Y2' in element) { obj.y2 = element.Y2 }
 // transforms
-  this.svgTransforms(obj, element)
+  svgTransforms(obj, element)
 // core attributes
-  this.svgCore(obj, element)
+  svgCore(obj, element)
 // presentation attributes
-  this.svgPresentation(obj, element)
+  svgPresentation(obj, element)
   return obj
 }
 
-sax.SAXParser.prototype.svgListOfPoints = function (list) {
+const svgListOfPoints = function (list) {
   var points = []
   var exp = new RegExp('([\\d\\-\\+\\.]+)[\\s,]+([\\d\\-\\+\\.]+)[\\s,]*', 'i')
   list = list.trim()
@@ -210,17 +216,17 @@ sax.SAXParser.prototype.svgListOfPoints = function (list) {
   return points
 }
 
-sax.SAXParser.prototype.svgPolyline = function (element) {
+const svgPolyline = function (element) {
   var obj = {type: 'polyline'}
 // transforms
-  this.svgTransforms(obj, element)
+  svgTransforms(obj, element)
 // core attributes
-  this.svgCore(obj, element)
+  svgCore(obj, element)
 // presentation attributes
-  this.svgPresentation(obj, element)
+  svgPresentation(obj, element)
 
   if ('POINTS' in element) {
-    obj.points = this.svgListOfPoints(element.POINTS)
+    obj.points = svgListOfPoints(element.POINTS)
   }
   return obj
 }
@@ -228,14 +234,14 @@ sax.SAXParser.prototype.svgPolyline = function (element) {
 sax.SAXParser.prototype.svgPolygon = function (element) {
   var obj = {type: 'polygon'}
 // transforms
-  this.svgTransforms(obj, element)
+  svgTransforms(obj, element)
 // core attributes
-  this.svgCore(obj, element)
+  svgCore(obj, element)
 // presentation attributes
-  this.svgPresentation(obj, element)
+  svgPresentation(obj, element)
 
   if ('POINTS' in element) {
-    obj.points = this.svgListOfPoints(element.POINTS)
+    obj.points = svgListOfPoints(element.POINTS)
   }
   return obj
 }
@@ -259,11 +265,11 @@ sax.SAXParser.prototype.svgRect = function (element) {
   if ('WIDTH' in element) { obj.width = element.WIDTH }
   if ('HEIGHT' in element) { obj.height = element.HEIGHT }
 // transforms
-  this.svgTransforms(obj, element)
+  svgTransforms(obj, element)
 // core attributes
-  this.svgCore(obj, element)
+  svgCore(obj, element)
 // presentation attributes
-  this.svgPresentation(obj, element)
+  svgPresentation(obj, element)
   return obj
 }
 
@@ -274,22 +280,22 @@ sax.SAXParser.prototype.svgCircle = function (element) {
   if ('CY' in element) { obj.y = element.CY }
   if ('R' in element) { obj.radius = element.R }
 // transforms
-  this.svgTransforms(obj, element)
+  svgTransforms(obj, element)
 // core attributes
-  this.svgCore(obj, element)
+  svgCore(obj, element)
 // presentation attributes
-  this.svgPresentation(obj, element)
+  svgPresentation(obj, element)
   return obj
 }
 
 sax.SAXParser.prototype.svgGroup = function (element) {
   var obj = {type: 'group'}
 // transforms
-  this.svgTransforms(obj, element)
+  svgTransforms(obj, element)
 // core attributes
-  this.svgCore(obj, element)
+  svgCore(obj, element)
 // presentation attributes
-  this.svgPresentation(obj, element)
+  svgPresentation(obj, element)
 
   obj.objects = []
   return obj
@@ -301,11 +307,11 @@ sax.SAXParser.prototype.svgGroup = function (element) {
 sax.SAXParser.prototype.svgPath = function (element) {
   var obj = {type: 'path'}
 // transforms
-  this.svgTransforms(obj, element)
+  svgTransforms(obj, element)
 // core attributes
-  this.svgCore(obj, element)
+  svgCore(obj, element)
 // presentation attributes
-  // this.svgPresentation(obj,element);
+  // svgPresentation(obj,element);
 
   obj.commands = []
   if ('D' in element) {
@@ -410,12 +416,12 @@ sax.SAXParser.prototype.svgPath = function (element) {
 // - clone using JSON.parse(JSON.stringify(obj))
 sax.SAXParser.prototype.svgUse = function (element) {
   var obj = {type: 'group'}
-// transforms
-  this.svgTransforms(obj, element)
-// core attributes
-  this.svgCore(obj, element)
-// presentation attributes
-  this.svgPresentation(obj, element)
+  // transforms
+  svgTransforms(obj, element)
+  // core attributes
+  svgCore(obj, element)
+  // presentation attributes
+  svgPresentation(obj, element)
 
   if ('X' in element && 'Y' in element) {
     if (!('transforms' in obj)) obj.transforms = []
@@ -438,12 +444,12 @@ sax.SAXParser.prototype.svgUse = function (element) {
 }
 
 // processing controls
-let  vgObjects = []    // named objects
-let  vgGroups = []    // groups of objects
-let  vgInDefs = false // svg DEFS element in process
-let  vgObj = null  // svg in object form
-let  vgUnitsPmm = [1, 1]
-let  vgUnitsPer = 0
+let vgObjects = []    // named objects
+let vgGroups = []    // groups of objects
+let vgInDefs = false // svg DEFS element in process
+let vgObj = null  // svg in object form
+let vgUnitsPmm = [1, 1]
+let vgUnitsPer = 0
 
 sax.SAXParser.prototype.reflect = function (x, y, px, py) {
   var ox = x - px
@@ -914,7 +920,7 @@ function createSvgParser (src, pxPmm) {
     var obj = null
     switch (node.name) {
       case 'SVG':
-        obj = this.svgSvg(node.attributes)
+        obj = svgSvg(node.attributes)
         break
       case 'G':
         obj = this.svgGroup(node.attributes)
@@ -926,13 +932,13 @@ function createSvgParser (src, pxPmm) {
         obj = this.svgCircle(node.attributes)
         break
       case 'ELLIPSE':
-        obj = this.svgEllipse(node.attributes)
+        obj = svgEllipse(node.attributes)
         break
       case 'LINE':
-        obj = this.svgLine(node.attributes)
+        obj = svgLine(node.attributes)
         break
       case 'POLYLINE':
-        obj = this.svgPolyline(node.attributes)
+        obj = svgPolyline(node.attributes)
         break
       case 'POLYGON':
         obj = this.svgPolygon(node.attributes)

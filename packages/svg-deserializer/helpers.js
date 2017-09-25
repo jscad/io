@@ -157,7 +157,3 @@ const cssStyle = function (element, name) {
   }
   return null
 }
-
-const svgCore = function (obj, element) {
-  if ('ID' in element) { obj.id = element.ID }
-}
