@@ -367,10 +367,9 @@ function path (obj, groupValue, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, sv
     }
     // console.log('postion: ['+cx+','+cy+'] after '+co.c);
   }
-  if (pi > 0) {
-    if (pc === false) {
-      paths[pathName] = paths[pathName].expandToCAG(r, CSG.defaultResolution2D)
-      pathCag = pathCag.union(paths[pathName])
-    }
+  if (pi > 0 && pc === false) {
+    paths[pathName] = paths[pathName].expandToCAG(r, CSG.defaultResolution2D)
+    pathCag = pathCag.union(paths[pathName])
   }
+  return pathCag
 }
