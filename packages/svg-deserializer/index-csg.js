@@ -462,7 +462,6 @@ sax.SAXParser.prototype.svgObjects = []    // named objects
 sax.SAXParser.prototype.svgGroups = []    // groups of objects
 sax.SAXParser.prototype.svgInDefs = false // svg DEFS element in process
 sax.SAXParser.prototype.svgUnitsPmm = [1, 1]
-sax.SAXParser.prototype.svgUnitsPer = 0
 
 const reflect = function (x, y, px, py) {
   var ox = x - px
@@ -499,16 +498,10 @@ const codify = function (group) {
   }
 // pre-code
 
-  var code = ''
-  if (level === 0) {
-    code += 'function main(params) {\n'
-  }
-  var ln = 'cag' + level
-  code += indent + 'var ' + ln + ' = new CAG();\n'
+  let rootCAG = new CAG()
 
   // rootObject
   let objects = []
-
 
 // generate code for all objects
   for (i = 0; i < group.objects.length; i++) {
@@ -517,8 +510,8 @@ const codify = function (group) {
     var on = ln + i
     switch (obj.type) {
       case 'group':
-        code += codify(obj)
-        code += indent + 'var ' + on + ' = cag' + (level + 1) + ';\n'
+        rootCAG = rootCAG.union(codify(obj))
+        // code += indent + 'var ' + on + ' = cag' + (level + 1) + ';\n'
         break
       case 'rect':
         var x = cagLengthX(obj.x, svgUnitsPmm, svgUnitsX)
@@ -614,7 +607,9 @@ const codify = function (group) {
       }
         break
       case 'path':
-        code += indent + 'var ' + on + ' = new CAG();\n'
+        var pathCag = new CAG()
+        let currentPath
+        let paths = {}
 
         var r = cssPxUnit // default
         if ('strokeWidth' in obj) {
@@ -650,7 +645,8 @@ const codify = function (group) {
               }
             // close the previous path
               if (pi > 0 && pc === false) {
-                code += indent + pn + ' = ' + pn + '.expandToCAG(' + r + ',CSG.defaultResolution2D);\n'
+                paths[pn].expandToCAG(CSG.defaultResolution2D)
+                // code += indent + pn + ' = ' + pn + '.expandToCAG(' + r + ',CSG.defaultResolution2D);\n'
               }
             // open a new path
               if (pts.length >= 2) {
@@ -659,20 +655,20 @@ const codify = function (group) {
                 pi++
                 pn = on + pi
                 pc = false
-                code += indent + 'var ' + pn + ' = new CSG.Path2D([[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']],false);\n'
+                paths[pn] = new CSG.Path2D([[svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]], false)
                 sx = cx; sy = cy
               }
             // optional implicit relative lineTo (cf SVG spec 8.3.2)
               while (pts.length >= 2) {
                 cx = cx + parseFloat(pts.shift())
                 cy = cy + parseFloat(pts.shift())
-                code += indent + pn + ' = ' + pn + '.appendPoint([' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']);\n'
+                paths[pn].appendPoint([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)])
               }
               break
             case 'M': // absolute move to X,Y
             // close the previous path
               if (pi > 0 && pc === false) {
-                code += indent + pn + ' = ' + pn + '.expandToCAG(' + r + ',CSG.defaultResolution2D);\n'
+                paths[pn] = paths[pn].expandToCAG(CSG.defaultResolution2D)
               }
             // open a new path
               if (pts.length >= 2) {
@@ -681,14 +677,14 @@ const codify = function (group) {
                 pi++
                 pn = on + pi
                 pc = false
-                code += indent + 'var ' + pn + ' = new CSG.Path2D([[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']],false);\n'
+                paths[pn] = new CSG.Path2D([[svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]], false)
                 sx = cx; sy = cy
               }
             // optional implicit absolute lineTo (cf SVG spec 8.3.2)
               while (pts.length >= 2) {
                 cx = parseFloat(pts.shift())
                 cy = parseFloat(pts.shift())
-                code += indent + pn + ' = ' + pn + '.appendPoint([' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']);\n'
+                paths[pn].appendPoint([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)])
               }
               break
             case 'a': // relative elliptical arc
@@ -700,7 +696,7 @@ const codify = function (group) {
                 var sf = (pts.shift() === '1')
                 cx = cx + parseFloat(pts.shift())
                 cy = cy + parseFloat(pts.shift())
-                code += indent + pn + ' = ' + pn + '.appendArc([' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + '],{xradius: ' + svg2cagX(rx) + ',yradius: ' + svg2cagY(ry) + ',xaxisrotation: ' + ro + ',clockwise: ' + sf + ',large: ' + lf + '});\n'
+                paths[pn].appendArc([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)], {xradius: svg2cagX(rx), yradius: svg2cagY(ry), xaxisrotation: ro, clockwise: sf, large: lf})
               }
               break
             case 'A': // absolute elliptical arc
@@ -712,7 +708,7 @@ const codify = function (group) {
                 var sf = (pts.shift() === '1')
                 cx = parseFloat(pts.shift())
                 cy = parseFloat(pts.shift())
-                code += indent + pn + ' = ' + pn + '.appendArc([' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + '],{xradius: ' + svg2cagX(rx) + ',yradius: ' + svg2cagY(ry) + ',xaxisrotation: ' + ro + ',clockwise: ' + sf + ',large: ' + lf + '});\n'
+                paths[pn].appendArc([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)], {xradius: svg2cagX(rx), yradius: svg2cagY(ry), xaxisrotation: ro, clockwise: sf, large: lf})
               }
               break
             case 'c': // relative cubic Bézier
@@ -723,7 +719,7 @@ const codify = function (group) {
                 by = cy + parseFloat(pts.shift())
                 cx = cx + parseFloat(pts.shift())
                 cy = cy + parseFloat(pts.shift())
-                code += indent + pn + ' = ' + pn + '.appendBezier([[' + svg2cagX(x1) + ',' + svg2cagY(y1) + '],[' + svg2cagX(bx) + ',' + svg2cagY(by) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
+                paths[pn] = paths[pn].appendBezier([[svg2cagX(x1), svg2cagY(y1)], [svg2cagX(bx), svg2cagY(by)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
                 var rf = reflect(bx, by, cx, cy)
                 bx = rf[0]
                 by = rf[1]
@@ -737,7 +733,7 @@ const codify = function (group) {
                 by = parseFloat(pts.shift())
                 cx = parseFloat(pts.shift())
                 cy = parseFloat(pts.shift())
-                code += indent + pn + ' = ' + pn + '.appendBezier([[' + svg2cagX(x1) + ',' + svg2cagY(y1) + '],[' + svg2cagX(bx) + ',' + svg2cagY(by) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
+                paths[pn] = paths[pn].appendBezier([[svg2cagX(x1), svg2cagY(y1)], [svg2cagX(bx), svg2cagY(by)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
                 var rf = reflect(bx, by, cx, cy)
                 bx = rf[0]
                 by = rf[1]
@@ -749,7 +745,7 @@ const codify = function (group) {
                 qy = cy + parseFloat(pts.shift())
                 cx = cx + parseFloat(pts.shift())
                 cy = cy + parseFloat(pts.shift())
-                code += indent + pn + ' = ' + pn + '.appendBezier([[' + svg2cagX(qx) + ',' + svg2cagY(qy) + '],[' + svg2cagX(qx) + ',' + svg2cagY(qy) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
+                paths[pn] = paths[pn].appendBezier([[svg2cagX(qx), svg2cagY(qy)], [svg2cagX(qx), svg2cagY(qy)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
                 var rf = reflect(qx, qy, cx, cy)
                 qx = rf[0]
                 qy = rf[1]
@@ -761,7 +757,7 @@ const codify = function (group) {
                 qy = parseFloat(pts.shift())
                 cx = parseFloat(pts.shift())
                 cy = parseFloat(pts.shift())
-                code += indent + pn + ' = ' + pn + '.appendBezier([[' + svg2cagX(qx) + ',' + svg2cagY(qy) + '],[' + svg2cagX(qx) + ',' + svg2cagY(qy) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
+                paths[pn] = paths[pn].appendBezier([[svg2cagX(qx), svg2cagY(qy)], [svg2cagX(qx), svg2cagY(qy)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
                 var rf = reflect(qx, qy, cx, cy)
                 qx = rf[0]
                 qy = rf[1]
@@ -771,7 +767,7 @@ const codify = function (group) {
               while (pts.length >= 2) {
                 cx = cx + parseFloat(pts.shift())
                 cy = cy + parseFloat(pts.shift())
-                code += indent + pn + ' = ' + pn + '.appendBezier([[' + svg2cagX(qx) + ',' + svg2cagY(qy) + '],[' + svg2cagX(qx) + ',' + svg2cagY(qy) + '],[' + cx + ',' + cy + ']]);\n'
+                paths[pn] = paths[pn].appendBezier([[svg2cagX(qx), svg2cagY(qy)], [svg2cagX(qx), svg2cagY(qy)], [cx, cy]])
                 var rf = reflect(qx, qy, cx, cy)
                 qx = rf[0]
                 qy = rf[1]
@@ -781,7 +777,7 @@ const codify = function (group) {
               while (pts.length >= 2) {
                 cx = parseFloat(pts.shift())
                 cy = parseFloat(pts.shift())
-                code += indent + pn + ' = ' + pn + '.appendBezier([[' + svg2cagX(qx) + ',' + svg2cagY(qy) + '],[' + svg2cagX(qx) + ',' + svg2cagY(qy) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
+                paths[pn] = paths[pn].appendBezier([[svg2cagX(qx), svg2cagY(qy)], [svg2cagX(qx), svg2cagY(qy)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
                 var rf = reflect(qx, qy, cx, cy)
                 qx = rf[0]
                 qy = rf[1]
@@ -795,7 +791,7 @@ const codify = function (group) {
                 by = cy + parseFloat(pts.shift())
                 cx = cx + parseFloat(pts.shift())
                 cy = cy + parseFloat(pts.shift())
-                code += indent + pn + ' = ' + pn + '.appendBezier([[' + svg2cagX(x1) + ',' + svg2cagY(y1) + '],[' + svg2cagX(bx) + ',' + svg2cagY(by) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
+                paths[pn] = paths[pn].appendBezier([[svg2cagX(x1), svg2cagY(y1)], [svg2cagX(bx), svg2cagY(by)], [svg2cagX(cx,svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
                 var rf = reflect(bx, by, cx, cy)
                 bx = rf[0]
                 by = rf[1]
@@ -809,7 +805,7 @@ const codify = function (group) {
                 by = parseFloat(pts.shift())
                 cx = parseFloat(pts.shift())
                 cy = parseFloat(pts.shift())
-                code += indent + pn + ' = ' + pn + '.appendBezier([[' + svg2cagX(x1) + ',' + svg2cagY(y1) + '],[' + svg2cagX(bx) + ',' + svg2cagY(by) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
+                paths[pn] = paths[pn].appendBezier([[svg2cagX(x1), svg2cagY(y1)], [svg2cagX(bx), svg2cagY(by)], [svg2cagX(cx,svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
                 var rf = reflect(bx, by, cx, cy)
                 bx = rf[0]
                 by = rf[1]
@@ -818,39 +814,39 @@ const codify = function (group) {
             case 'h': // relative Horzontal line to
               while (pts.length >= 1) {
                 cx = cx + parseFloat(pts.shift())
-                code += indent + pn + ' = ' + pn + '.appendPoint([' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']);\n'
+                paths[pn] = paths[pn].appendPoint([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)])
               }
               break
             case 'H': // absolute Horzontal line to
               while (pts.length >= 1) {
                 cx = parseFloat(pts.shift())
-                code += indent + pn + ' = ' + pn + '.appendPoint([' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']);\n'
+                paths[pn] = paths[pn].appendPoint([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)])
               }
               break
             case 'l': // relative line to
               while (pts.length >= 2) {
                 cx = cx + parseFloat(pts.shift())
                 cy = cy + parseFloat(pts.shift())
-                code += indent + pn + ' = ' + pn + '.appendPoint([' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']);\n'
+                paths[pn] = paths[pn].appendPoint([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)])
               }
               break
             case 'L': // absolute line to
               while (pts.length >= 2) {
                 cx = parseFloat(pts.shift())
                 cy = parseFloat(pts.shift())
-                code += indent + pn + ' = ' + pn + '.appendPoint([' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']);\n'
+                paths[pn] = paths[pn].appendPoint([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)])
               }
               break
             case 'v': // relative Vertical line to
               while (pts.length >= 1) {
                 cy = cy + parseFloat(pts.shift())
-                code += indent + pn + ' = ' + pn + '.appendPoint([' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']);\n'
+                paths[pn] = paths[pn].appendPoint([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)])
               }
               break
             case 'V': // absolute Vertical line to
               while (pts.length >= 1) {
                 cy = parseFloat(pts.shift())
-                code += indent + pn + ' = ' + pn + '.appendPoint([' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']);\n'
+                paths[pn] = paths[pn].appendPoint([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)])
               }
               break
             case 'z': // close current line
@@ -869,8 +865,8 @@ const codify = function (group) {
         }
         if (pi > 0) {
           if (pc === false) {
-            code += indent + pn + ' = ' + pn + '.expandToCAG(' + r + ',CSG.defaultResolution2D);\n'
-            code += indent + on + ' = ' + on + '.union(' + pn + ');\n'
+            paths[pn] = paths[pn].expandToCAG(r, CSG.defaultResolution2D)
+            pathCag = pathCag.union(paths[pn])
           }
         }
         break
@@ -896,31 +892,30 @@ const codify = function (group) {
         if ('translate' in t) { tt = t }
       }
       if (ts !== null) {
-        var x = ts.scale[0]
-        var y = ts.scale[1]
-        code += indent + on + ' = ' + on + '.scale([' + x + ',' + y + ']);\n'
+        const x = ts.scale[0]
+        const y = ts.scale[1]
+        //FIXME : rootCAG or pathCag ?
+        rootCAG = rootCAG.scale([x, y])
       }
       if (tr !== null) {
-        var z = 0 - tr.rotate
-        code += indent + on + ' = ' + on + '.rotateZ(' + z + ');\n'
+        const z = 0 - tr.rotate
+        rootCAG = rootCAG.rotateZ(z)
       }
       if (tt !== null) {
-        var x = cagLengthX(tt.translate[0], svgUnitsPmm, svgUnitsX)
-        var y = (0 - cagLengthY(tt.translate[1], svgUnitsPmm, svgUnitsY))
-        code += indent + on + ' = ' + on + '.translate([' + x + ',' + y + ']);\n'
+        const x = cagLengthX(tt.translate[0], svgUnitsPmm, svgUnitsX)
+        const y = (0 - cagLengthY(tt.translate[1], svgUnitsPmm, svgUnitsY))
+        rootCAG = rootCAG.translate([x, y])
+        // code += indent + on + ' = ' + on + '.translate([' + x + ',' + y + ']);\n'
       }
     }
-    code += indent + ln + ' = ' + ln + '.union(' + on + ');\n'
+
+    ln = ln.union(rootCAG)
   }
-// post-code
-  if (level === 0) {
-    code += indent + 'return ' + ln + ';\n'
-    code += '}\n'
-  }
-// remove this group from the hiearchy
+
+  // remove this group from the hiearchy
   svgGroups.pop()
 
-  //temporary hack
+  // temporary hack
   let tmp = new CAG()
   objects.forEach(x => tmp = tmp.union(x))
   return tmp
