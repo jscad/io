@@ -485,6 +485,40 @@ const groupValue = function (name) {
   return null
 }
 
+let typesMap = {
+  group: (obj, onCAG) => {
+    const subCag = codify(obj)
+    onCAG = onCAG.union(subCag)
+    return onCAG
+  },
+  rectangle: (obj, svgUnitsPmm, svgUnitsX, svgUnitsY) => {
+    const x = cagLengthX(obj.x, svgUnitsPmm, svgUnitsX)
+    const y = (0 - cagLengthY(obj.y, svgUnitsPmm, svgUnitsY))
+    const w = cagLengthX(obj.width, svgUnitsPmm, svgUnitsX)
+    const h = cagLengthY(obj.height, svgUnitsPmm, svgUnitsY)
+    const rx = cagLengthX(obj.rx, svgUnitsPmm, svgUnitsX)
+    const ry = cagLengthY(obj.ry, svgUnitsPmm, svgUnitsY)
+    if (w > 0 && h > 0) {
+      x = (x + (w / 2)).toFixed(4)  // position the object via the center
+      y = (y - (h / 2)).toFixed(4)  // position the object via the center
+      if (rx === 0) {
+        return CAG.rectangle({center: [x, y], radius: [w / 2, h / 2]})
+      } else {
+        return CAG.roundedRectangle({center: [x, y], radius: [w / 2, h / 2], roundradius: rx})
+      }
+    }
+  },
+  circle: (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV) => {
+    const x = cagLengthX(obj.x, svgUnitsPmm, svgUnitsX)
+    const y = (0 - cagLengthY(obj.y, svgUnitsPmm, svgUnitsY))
+    const r = cagLengthP(obj.radius, svgUnitsPmm, svgUnitsV)
+    if (r > 0) {
+      return CAG.circle({center: [x, y], radius: [r]})
+    }
+  }
+
+}
+
 const codify = function (group) {
   const level = svgGroups.length
   // add this group to the heiarchy
@@ -496,9 +530,8 @@ const codify = function (group) {
     indent += '  '
     i--
   }
-// pre-code
-
-  let rootCAG = new CAG()
+  // pre-code
+  let lnCAG = new CAG()
 
   // rootObject
   let objects = []
@@ -507,11 +540,12 @@ const codify = function (group) {
   for (i = 0; i < group.objects.length; i++) {
     console.log('bla', group.objects)
     var obj = group.objects[i]
-    var on = ln + i
+    const onCAG = new CAG() //
     switch (obj.type) {
       case 'group':
-        rootCAG = rootCAG.union(codify(obj))
-        // code += indent + 'var ' + on + ' = cag' + (level + 1) + ';\n'
+        //cag from nested element
+        const subCag = codify(obj)
+        onCAG = onCAG.union(subCag)
         break
       case 'rect':
         var x = cagLengthX(obj.x, svgUnitsPmm, svgUnitsX)
