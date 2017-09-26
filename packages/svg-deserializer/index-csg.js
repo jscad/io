@@ -506,15 +506,14 @@ const codify = function (group) {
     //  code += indent+on+' = '+on+'.setColor(['+obj.fill[0]+','+obj.fill[1]+','+obj.fill[2]+']);\n';
     }
     if ('transforms' in obj) {
-    // NOTE: SVG specifications require that transforms are applied in the order given.
-    // But these are applied in the order as required by CSG/CAG
-      var tr = null
-      var ts = null
-      var tt = null
+      // NOTE: SVG specifications require that transforms are applied in the order given.
+      // But these are applied in the order as required by CSG/CAG
+      let tr
+      let ts
+      let tt
 
-      var j = 0
-      for (j = 0; j < obj.transforms.length; j++) {
-        var t = obj.transforms[j]
+      for (let j = 0; j < obj.transforms.length; j++) {
+        const t = obj.transforms[j]
         if ('rotate' in t) { tr = t }
         if ('scale' in t) { ts = t }
         if ('translate' in t) { tt = t }
@@ -541,20 +540,16 @@ const codify = function (group) {
   // remove this group from the hiearchy
   svgGroups.pop()
 
-  // temporary hack
-  /*let tmp = new CAG()
-  objects.forEach(x => tmp = tmp.union(x))
-  return tmp*/
   return lnCAG
 }
 
 function createSvgParser (src, pxPmm) {
-// create a parser for the XML
+  // create a parser for the XML
   var parser = sax.parser(false, {trim: true, lowercase: false, position: true})
   if (pxPmm !== undefined) {
     if (pxPmm > parser.pxPmm) parser.pxPmm = pxPmm
   }
-// extend the parser with functions
+  // extend the parser with functions
   parser.onerror = function (e) {
     console.log('error: line ' + e.line + ', column ' + e.column + ', bad character [' + e.c + ']')
   }
@@ -567,61 +562,36 @@ function createSvgParser (src, pxPmm) {
     // for (x in node.attributes) {
     //  console.log('    '+x+'='+node.attributes[x]);
     // }
-    var obj = null
-    switch (node.name) {
-      case 'SVG':
-        obj = svgSvg(node.attributes)
-        break
-      case 'G':
-        obj = svgGroup(node.attributes)
-        break
-      case 'RECT':
-        obj = svgRect(node.attributes)
-        break
-      case 'CIRCLE':
-        obj = svgCircle(node.attributes)
-        break
-      case 'ELLIPSE':
-        obj = svgEllipse(node.attributes)
-        break
-      case 'LINE':
-        obj = svgLine(node.attributes)
-        break
-      case 'POLYLINE':
-        obj = svgPolyline(node.attributes)
-        break
-      case 'POLYGON':
-        obj = svgPolygon(node.attributes)
-        break
-      // case 'SYMBOL':
-      // this is just like an embedded SVG but does NOT render directly, only named
-      // this requires another set of control objects
-      // only add to named objects for later USE
-      //  break;
-      case 'PATH':
-        obj = svgPath(node.attributes)
-        break
-      case 'USE':
-        obj = svgUse(node.attributes)
-        break
-      case 'DEFS':
-        svgInDefs = true
-        break
-      case 'DESC':
-      case 'TITLE':
-      case 'STYLE':
-      // ignored by design
-        break
-      default:
-        console.log('Warning: Unsupported SVG element: ' + node.name)
-        break
+    const objMap = {
+      SVG: svgSvg,
+      G: svgGroup,
+      RECT: svgRect,
+      CIRCLE: svgCircle,
+      ELLIPSE: svgEllipse,
+      LINE: svgLine,
+      POLYLINE: svgPolyline,
+      POLYGON: svgPolygon,
+      PATH: svgPath,
+      USE: svgUse,
+      DEFS: () => { svgInDefs = true },
+      DESC: () => undefined, // ignored by design
+      TITLE: () => undefined, // ignored by design
+      STYLE: () => undefined, // ignored by design
+      undefined: () => console.log('Warning: Unsupported SVG element: ' + node.name)
     }
 
+    let obj = objMap[node.name](node.attributes)
+
+    // case 'SYMBOL':
+    // this is just like an embedded SVG but does NOT render directly, only named
+    // this requires another set of control objects
+    // only add to named objects for later USE
+    //  break;
+
     if (obj !== null) {
-    // add to named objects if necessary
+      // add to named objects if necessary
       if ('id' in obj) {
         svgObjects[obj.id] = obj
-        // console.log('saved object ['+obj.id+','+obj.type+']');
       }
       if (obj.type === 'svg') {
       // initial SVG (group)
@@ -643,7 +613,7 @@ function createSvgParser (src, pxPmm) {
           svgGroups.push(group)
         }
         if (obj.type === 'group') {
-        // add GROUPs to the stack
+          // add GROUPs to the stack
           svgGroups.push(obj)
         }
       }
@@ -652,7 +622,7 @@ function createSvgParser (src, pxPmm) {
 
   parser.onclosetag = function (node) {
     // console.log('closetag: '+node);
-    var obj = null
+    let obj = null
     switch (node) {
       case 'SVG':
         obj = svgGroups.pop()
@@ -672,7 +642,7 @@ function createSvgParser (src, pxPmm) {
       default:
         break
     }
-  // check for completeness
+    // check for completeness
     if (svgGroups.length === 0) {
       svgObj = obj
     }
@@ -706,12 +676,12 @@ function deserialize (src, filename, options) {
   // parse the SVG source
   const parser = createSvgParser(src, pxPmm)
   // convert the internal objects to JSCAD code
-  let code = addMetaData ? `//
-  // producer: OpenJSCAD.org ${version} SVG Importer
-  // date: ${new Date()}
-  // source: ${filename}
-  //
-  ` : ''
+  const metadata = {
+    producer: `OpenJSCAD.org ${version} SVG Importer`,
+    date: new Date(),
+    source: filename
+  }
+
   let cag
   if (svgObj !== null) {
     cag = codify(svgObj)
