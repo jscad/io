@@ -24,10 +24,8 @@ const shapesMap = function (obj, codify, groupValue, svgUnitsPmm, svgUnitsX, svg
         y = (y - (h / 2)).toFixed(4)  // position the object via the center
         if (rx === 0) {
           return indent + 'var ' + on + ' = CAG.rectangle({center: [' + x + ',' + y + '], radius: [' + w / 2 + ',' + h / 2 + ']});\n'
-
         } else {
           return indent + 'var ' + on + ' = CAG.roundedRectangle({center: [' + x + ',' + y + '], radius: [' + w / 2 + ',' + h / 2 + '], roundradius: ' + rx + '});\n'
-
         }
       }
     },
@@ -116,6 +114,8 @@ const shapesMap = function (obj, codify, groupValue, svgUnitsPmm, svgUnitsX, svg
   }
   return types[obj.type](obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, params)
 }
+
+module.exports = shapesMap
 
 function path (obj, groupValue, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, params) {
   let tmpCode = indent + 'var ' + on + ' = new CAG();\n'
@@ -374,10 +374,9 @@ function path (obj, groupValue, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, sv
     }
     // console.log('postion: ['+cx+','+cy+'] after '+co.c);
   }
-  if (pi > 0) {
-    if (pc === false) {
-      paths[pathName] = paths[pathName].expandToCAG(r, CSG.defaultResolution2D)
-      pathCag = pathCag.union(paths[pathName])
-    }
+  if (pi > 0 && pc === false) {
+    tmpCode += indent + pn + ' = ' + pn + '.expandToCAG(' + r + ',CSG.defaultResolution2D);\n'
+    tmpCode += indent + on + ' = ' + on + '.union(' + pn + ');\n'
   }
+  return tmpCode
 }
