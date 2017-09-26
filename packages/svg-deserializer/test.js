@@ -40,7 +40,6 @@ test('deserialize svg to cag/csg objects', function (t) {
 
   // const sourceSvg = fs.readFileSync('PATH/TO/file.svg')
 
-  const expected = ``
   const observed = deserializer.deserialize(sourceSvg, undefined, {addMetaData: false})
-  t.equal(observed, expected)
+  t.equal(observed.sides.length, 56)
 })
