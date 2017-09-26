@@ -488,7 +488,6 @@ const groupValue = function (name) {
 }
 
 const codify = function (group) {
-  console.log('MERDE')
   const level = svgGroups.length
   // add this group to the heiarchy
   svgGroups.push(group)
@@ -1094,9 +1093,7 @@ function deserialize (src, filename, options) {
   ` : ''
   let cag
   if (parser.svgObj !== null) {
-    console.log('MERDE')
     cag = codify(parser.svgObj)
-    console.log('FOOO')
   } else {
     console.log('Warning: SVG parsing failed')
   }
