@@ -112,8 +112,8 @@ module.exports = shapesMap
 
 function path (obj, groupValue, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV) {
   let pathCag = new CAG()
-  let currentPath
   let paths = {}
+  const on = '' // not sure
 
   let r = cssPxUnit // default
   if ('strokeWidth' in obj) {
