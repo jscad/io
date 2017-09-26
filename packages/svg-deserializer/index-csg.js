@@ -439,8 +439,8 @@ const svgUse = function (element) {
   // lookup the named object
     var ref = element['XLINK:HREF']
     if (ref[0] === '#') { ref = ref.slice(1, ref.length) }
-    if (this.svgObjects[ref] !== undefined) {
-      ref = this.svgObjects[ref]
+    if (svgObjects[ref] !== undefined) {
+      ref = svgObjects[ref]
       ref = JSON.parse(JSON.stringify(ref))
       obj.objects.push(ref)
     }
@@ -461,7 +461,6 @@ let rootObject = new CAG()
 sax.SAXParser.prototype.svgObjects = []    // named objects
 sax.SAXParser.prototype.svgGroups = []    // groups of objects
 sax.SAXParser.prototype.svgInDefs = false // svg DEFS element in process
-sax.SAXParser.prototype.svgObj = null  // svg in object form
 sax.SAXParser.prototype.svgUnitsPmm = [1, 1]
 sax.SAXParser.prototype.svgUnitsPer = 0
 
@@ -984,7 +983,7 @@ function createSvgParser (src, pxPmm) {
         obj = svgUse(node.attributes)
         break
       case 'DEFS':
-        this.svgInDefs = true
+        svgInDefs = true
         break
       case 'DESC':
       case 'TITLE':
@@ -999,7 +998,7 @@ function createSvgParser (src, pxPmm) {
     if (obj !== null) {
     // add to named objects if necessary
       if ('id' in obj) {
-        this.svgObjects[obj.id] = obj
+        svgObjects[obj.id] = obj
         // console.log('saved object ['+obj.id+','+obj.type+']');
       }
       if (obj.type === 'svg') {
@@ -1011,7 +1010,7 @@ function createSvgParser (src, pxPmm) {
         svgUnitsV = obj.viewP
       } else {
       // add the object to the active group if necessary
-        if (svgGroups.length > 0 && this.svgInDefs === false) {
+        if (svgGroups.length > 0 && svgInDefs === false) {
           var group = svgGroups.pop()
           if ('objects' in group) {
             // console.log('push object ['+obj.type+']');
@@ -1038,7 +1037,7 @@ function createSvgParser (src, pxPmm) {
         // console.log("groups: "+groups.length);
         break
       case 'DEFS':
-        this.svgInDefs = false
+        svgInDefs = false
         break
       case 'USE':
         obj = svgGroups.pop()
@@ -1053,7 +1052,7 @@ function createSvgParser (src, pxPmm) {
     }
   // check for completeness
     if (svgGroups.length === 0) {
-      this.svgObj = obj
+      svgObj = obj
     }
   }
 
@@ -1092,8 +1091,8 @@ function deserialize (src, filename, options) {
   //
   ` : ''
   let cag
-  if (parser.svgObj !== null) {
-    cag = codify(parser.svgObj)
+  if (svgObj !== null) {
+    cag = codify(svgObj)
   } else {
     console.log('Warning: SVG parsing failed')
   }
