@@ -10,10 +10,10 @@ All code released under MIT license
 */
 
 const sax = require('sax')
-const {CSG, CAG} = require('@jscad/csg')
+const {CAG} = require('@jscad/csg')
 
-const {cagColor, cssStyle, css2cag, svg2cagX, svg2cagY, cagLengthX, cagLengthY, cagLengthP} = require('./helpers')
-const {pxPmm, cssPxUnit} = require('./constants')
+const {cagColor, cssStyle, css2cag, cagLengthX, cagLengthY} = require('./helpers')
+const {pxPmm} = require('./constants')
 
 let svgUnitsX
 let svgUnitsY
@@ -489,23 +489,17 @@ const codify = function (group) {
   // add this group to the heiarchy
   svgGroups.push(group)
   // create an indent for the generated code
-  var indent = '  '
-  var i = level
+  let i = level
   while (i > 0) {
-    indent += '  '
     i--
   }
-  // pre-code
+
   let lnCAG = new CAG()
 
-  // rootObject
-  let objects = []
-
-// generate code for all objects
+  // generate code for all objects
   for (i = 0; i < group.objects.length; i++) {
-    console.log('bla', group.objects)
     const obj = group.objects[i]
-    const onCAG = require('./shapesMapCsg')(obj, codify, groupValue, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV)
+    let onCAG = require('./shapesMapCsg')(obj, codify, groupValue, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV)
 
     if ('fill' in obj) {
     // FIXME when CAG supports color
@@ -528,31 +522,30 @@ const codify = function (group) {
       if (ts !== null) {
         const x = ts.scale[0]
         const y = ts.scale[1]
-        //FIXME : rootCAG or pathCag ?
-        rootCAG = rootCAG.scale([x, y])
+        onCAG = onCAG.scale([x, y])
       }
       if (tr !== null) {
         const z = 0 - tr.rotate
-        rootCAG = rootCAG.rotateZ(z)
+        onCAG = onCAG.rotateZ(z)
       }
       if (tt !== null) {
         const x = cagLengthX(tt.translate[0], svgUnitsPmm, svgUnitsX)
         const y = (0 - cagLengthY(tt.translate[1], svgUnitsPmm, svgUnitsY))
-        rootCAG = rootCAG.translate([x, y])
-        // code += indent + on + ' = ' + on + '.translate([' + x + ',' + y + ']);\n'
+        onCAG = onCAG.translate([x, y])
       }
     }
 
-    ln = ln.union(rootCAG)
+    lnCAG = lnCAG.union(onCAG)
   }
 
   // remove this group from the hiearchy
   svgGroups.pop()
 
   // temporary hack
-  let tmp = new CAG()
+  /*let tmp = new CAG()
   objects.forEach(x => tmp = tmp.union(x))
-  return tmp
+  return tmp*/
+  return lnCAG
 }
 
 function createSvgParser (src, pxPmm) {

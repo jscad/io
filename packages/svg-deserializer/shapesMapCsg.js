@@ -103,7 +103,7 @@ const shapesMap = function (obj, codify, groupValue, svgUnitsPmm, svgUnitsX, svg
       return tmpObj
     },
 
-    //path: path
+    path
   }
   return types[obj.type](obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV)
 }
