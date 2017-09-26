@@ -14,12 +14,12 @@ const cagLengthX = function (css, svgUnitsPmm, svgUnitsX) {
   if (css.indexOf('%') < 0) {
     return css2cag(css, svgUnitsPmm[0])
   }
-// calculate the units as a percentage of the width
+  // calculate the units as a percentage of the width
   var v = parseFloat(css) // number part
   if (isNaN(v)) { return 0.0 }
   if (v === 0) return v
   v = (v / 100) * svgUnitsX
-// convert the units to mm
+  // convert the units to mm
   v = v / svgUnitsPmm[0]
   // return v;
   return Math.round(v / -100000) * -100000
