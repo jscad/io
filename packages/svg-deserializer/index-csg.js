@@ -504,8 +504,8 @@ const codify = function (group) {
 // generate code for all objects
   for (i = 0; i < group.objects.length; i++) {
     console.log('bla', group.objects)
-    var obj = group.objects[i]
-    const onCAG = require('./shapesMapCsg')(codify, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV)
+    const obj = group.objects[i]
+    const onCAG = require('./shapesMapCsg')(obj, codify, groupValue, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV)
 
     if ('fill' in obj) {
     // FIXME when CAG supports color
