@@ -501,103 +501,14 @@ const codify = function (group) {
   code += indent + 'var ' + ln + ' = new CAG();\n'
 // generate code for all objects
   for (i = 0; i < group.objects.length; i++) {
-    var obj = group.objects[i]
+    const obj = group.objects[i]
     var on = ln + i
+    const params = {level, indent, ln, on}
+
     switch (obj.type) {
-      case 'group':
-        code += codify(obj)
-        code += indent + 'var ' + on + ' = cag' + (level + 1) + ';\n'
-        break
-      case 'rect':
-        var x = cagLengthX(obj.x, svgUnitsPmm, svgUnitsX)
-        var y = (0 - cagLengthY(obj.y, svgUnitsPmm, svgUnitsY))
-        var w = cagLengthX(obj.width, svgUnitsPmm, svgUnitsX)
-        var h = cagLengthY(obj.height, svgUnitsPmm, svgUnitsY)
-        var rx = cagLengthX(obj.rx, svgUnitsPmm, svgUnitsX)
-        var ry = cagLengthY(obj.ry, svgUnitsPmm, svgUnitsY)
-        if (w > 0 && h > 0) {
-          x = (x + (w / 2)).toFixed(4)  // position the object via the center
-          y = (y - (h / 2)).toFixed(4)  // position the object via the center
-          if (rx === 0) {
-            code += indent + 'var ' + on + ' = CAG.rectangle({center: [' + x + ',' + y + '], radius: [' + w / 2 + ',' + h / 2 + ']});\n'
-          } else {
-            code += indent + 'var ' + on + ' = CAG.roundedRectangle({center: [' + x + ',' + y + '], radius: [' + w / 2 + ',' + h / 2 + '], roundradius: ' + rx + '});\n'
-          }
-        }
-        break
-      case 'circle':
-        var x = cagLengthX(obj.x, svgUnitsPmm, svgUnitsX)
-        var y = (0 - cagLengthY(obj.y, svgUnitsPmm, svgUnitsY))
-        var r = cagLengthP(obj.radius, svgUnitsPmm, svgUnitsV)
-        if (r > 0) {
-          code += indent + 'var ' + on + ' = CAG.circle({center: [' + x + ',' + y + '], radius: ' + r + '});\n'
-        }
-        break
-      case 'ellipse':
-        var rx = cagLengthX(obj.rx, svgUnitsPmm, svgUnitsX)
-        var ry = cagLengthY(obj.ry, svgUnitsPmm, svgUnitsY)
-        var cx = cagLengthX(obj.cx, svgUnitsPmm, svgUnitsX)
-        var cy = (0 - cagLengthY(obj.cy, svgUnitsPmm, svgUnitsY))
-        if (rx > 0 && ry > 0) {
-          code += indent + 'var ' + on + ' = CAG.ellipse({center: [' + cx + ',' + cy + '], radius: [' + rx + ',' + ry + ']});\n'
-        }
-        break
-      case 'line':
-        var x1 = cagLengthX(obj.x1, svgUnitsPmm, svgUnitsX)
-        var y1 = (0 - cagLengthY(obj.y1), svgUnitsPmm, svgUnitsY)
-        var x2 = cagLengthX(obj.x2, svgUnitsPmm, svgUnitsX)
-        var y2 = (0 - cagLengthY(obj.y2, svgUnitsPmm, svgUnitsY))
-        var r = cssPxUnit // default
-        if ('strokeWidth' in obj) {
-          r = cagLengthP(obj.strokeWidth, svgUnitsPmm, svgUnitsV) / 2
-        } else {
-          var v = groupValue('strokeWidth')
-          if (v !== null) {
-            r = cagLengthP(v, svgUnitsPmm, svgUnitsV) / 2
-          }
-        }
-        code += indent + 'var ' + on + ' = new CSG.Path2D([[' + x1 + ',' + y1 + '],[' + x2 + ',' + y2 + ']],false);\n'
-        code += indent + on + ' = ' + on + '.expandToCAG(' + r + ',CSG.defaultResolution2D);\n'
-        break
-      case 'polygon':
-        code += indent + 'var ' + on + ' = new CSG.Path2D([\n'
-        var j = 0
-        for (j = 0; j < obj.points.length; j++) {
-          var p = obj.points[j]
-          if ('x' in p && 'y' in p) {
-            var x = cagLengthX(p.x, svgUnitsPmm, svgUnitsX)
-            var y = (0 - cagLengthY(p.y, svgUnitsPmm, svgUnitsY))
-            code += indent + '  [' + x + ',' + y + '],\n'
-          }
-        }
-        code += indent + '],true);\n'
-        code += indent + on + ' = ' + on + '.innerToCAG();\n'
-        break
-      case 'polyline':
-        var r = cssPxUnit // default
-        if ('strokeWidth' in obj) {
-          r = cagLengthP(obj.strokeWidth, svgUnitsPmm, svgUnitsV) / 2
-        } else {
-          var v = groupValue('strokeWidth')
-          if (v !== null) {
-            r = cagLengthP(v, svgUnitsPmm, svgUnitsV) / 2
-          }
-        }
-        code += indent + 'var ' + on + ' = new CSG.Path2D([\n'
-        var j = 0
-        for (j = 0; j < obj.points.length; j++) {
-          var p = obj.points[j]
-          if ('x' in p && 'y' in p) {
-            var x = cagLengthX(p.x, svgUnitsPmm, svgUnitsX)
-            var y = (0 - cagLengthY(p.y, svgUnitsPmm, svgUnitsY))
-            code += indent + '  [' + x + ',' + y + '],\n'
-          }
-        }
-        code += indent + '],false);\n'
-        code += indent + on + ' = ' + on + '.expandToCAG(' + r + ',CSG.defaultResolution2D);\n'
-        break
+
       case 'path':
-        code += indent + 'var ' + on + ' = new CAG();\n'
+        
 
         var r = cssPxUnit // default
         if ('strokeWidth' in obj) {
