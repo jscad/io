@@ -1,6 +1,5 @@
 const test = require('tape')
 const {CSG, CAG} = require('@jscad/csg')
-const svgDeSerializer = require('./index-jscad.js').deserialize
 
 test('simple test svg to jscad code', function (t) {
   t.plan(1)
@@ -23,7 +22,7 @@ test('simple test svg to jscad code', function (t) {
   return cag0;
 }
 `
-  const observed = svgDeSerializer(sourceSvg, undefined, {addMetaData: false})
+  const observed = require('./index-jscad.js').deserialize(sourceSvg, undefined, {addMetaData: false})
   t.equal(observed, expected)
 })
 
