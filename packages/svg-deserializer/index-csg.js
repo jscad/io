@@ -310,11 +310,11 @@ const svgGroup = function (element) {
 //
 const svgPath = function (element) {
   var obj = {type: 'path'}
-// transforms
+  // transforms
   svgTransforms(obj, element)
-// core attributes
+  // core attributes
   svgCore(obj, element)
-// presentation attributes
+  // presentation attributes
   // svgPresentation(obj,element);
 
   obj.commands = []
@@ -1043,36 +1043,36 @@ function createSvgParser (src, pxPmm) {
   // };
 
   parser.onend = function () {
-  //  console.log('SVG parsing completed');
+  //  console.log('SVG parsing completed')
   }
   // start the parser
   parser.write(src).close()
 
   return parser
-};
+}
 
 //
 // Parse the given SVG source and return a JSCAD script
 //
 // fn (optional) original filename of SVG source
 // options (optional) anonymous object with:
-//   pxPmm: pixels per milimeter for calcuations
+// pxPmm: pixels per milimeter for calcuations
 //
-function deserialize (src, fn, options) {
-  fn = fn || 'svg'
-  const defaults = {pxPmm: undefined, version: '0.0.0'}
+function deserialize (src, filename, options) {
+  filename = filename || 'svg'
+  const defaults = {pxPmm: undefined, version: '0.0.0', addMetaData: true}
   options = Object.assign({}, defaults, options)
-  const {version, pxPmm} = options
+  const {version, pxPmm, addMetaData} = options
 
   // parse the SVG source
-  var parser = createSvgParser(src, pxPmm)
+  const parser = createSvgParser(src, pxPmm)
   // convert the internal objects to JSCAD code
-  var code = ''
-  code += '//\n'
-  code += '// producer: OpenJSCAD.org ' + version + ' SVG Importer\n'
-  code += '// date: ' + (new Date()) + '\n'
-  code += '// source: ' + fn + '\n'
-  code += '//\n'
+  let code = addMetaData ? `//
+  // producer: OpenJSCAD.org ${version} SVG Importer
+  // date: ${new Date()}
+  // source: ${filename}
+  //
+  ` : ''
   if (parser.svgObj !== null) {
     // console.log(JSON.stringify(parser.svgObj));
     code += parser.codify(parser.svgObj)
