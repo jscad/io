@@ -1074,8 +1074,8 @@ function deserialize (src, filename, options) {
   //
   ` : ''
   if (parser.svgObj !== null) {
-    // console.log(JSON.stringify(parser.svgObj));
-    code += parser.codify(parser.svgObj)
+    const scadCode = parser.codify(parser.svgObj)
+    code += scadCode
   } else {
     console.log('Warning: SVG parsing failed')
   }
