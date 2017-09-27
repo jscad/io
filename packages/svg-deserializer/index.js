@@ -15,6 +15,7 @@ const {CAG} = require('@jscad/csg')
 const {cagLengthX, cagLengthY} = require('./helpers')
 const {svgSvg, svgRect, svgCircle, svgGroup, svgLine, svgPath, svgEllipse, svgPolygon, svgPolyline, svgUse} = require('./svgElementHelpers')
 
+// FIXE: should these be kept here ? any risk of side effects ?
 let svgUnitsX
 let svgUnitsY
 let svgUnitsV
@@ -91,7 +92,7 @@ const objectify = function (group) {
   return lnCAG
 }
 
-const codify = function (group) {
+const codify = function (group, {svgGroups}) {
   const level = svgGroups.length
   // add this group to the heiarchy
   svgGroups.push(group)
@@ -164,12 +165,12 @@ const codify = function (group) {
     }
     code += indent + ln + ' = ' + ln + '.union(' + on + ');\n'
   }
-// post-code
+  // post-code
   if (level === 0) {
     code += indent + 'return ' + ln + ';\n'
     code += '}\n'
   }
-// remove this group from the hiearchy
+  // remove this group from the hiearchy
   svgGroups.pop()
 
   return code
@@ -203,7 +204,7 @@ function createSvgParser (src, pxPmm) {
       STYLE: () => undefined, // ignored by design
       undefined: () => console.log('Warning: Unsupported SVG element: ' + node.name)
     }
-    let obj = objMap[node.name](node.attributes, {svgObjects, customPxPmm: pxPmm})
+    let obj = objMap[node.name] ? objMap[node.name](node.attributes, {svgObjects, customPxPmm: pxPmm}) : null
 
     // case 'SYMBOL':
     // this is just like an embedded SVG but does NOT render directly, only named
@@ -226,7 +227,7 @@ function createSvgParser (src, pxPmm) {
         svgUnitsY = obj.viewH
         svgUnitsV = obj.viewP
       } else {
-      // add the object to the active group if necessary
+        // add the object to the active group if necessary
         if (svgGroups.length > 0 && svgInDefs === false) {
           var group = svgGroups.pop()
           if ('objects' in group) {
@@ -246,27 +247,17 @@ function createSvgParser (src, pxPmm) {
   }
 
   parser.onclosetag = function (node) {
-    // console.log('closetag: '+node);
-    let obj = null
-    switch (node) {
-      case 'SVG':
-        obj = svgGroups.pop()
-        // console.log("groups: "+groups.length);
-        break
-      case 'DEFS':
-        svgInDefs = false
-        break
-      case 'USE':
-        obj = svgGroups.pop()
-        // console.log("groups: "+groups.length);
-        break
-      case 'G':
-        obj = svgGroups.pop()
-        // console.log("groups: "+groups.length);
-        break
-      default:
-        break
+    // console.log('closetag: '+node)
+    const popGroup = () => svgGroups.pop()
+    const objMap = {
+      SVG: popGroup,
+      DEFS: () => { svgInDefs = false },
+      USE: popGroup,
+      G: popGroup,
+      undefined: () => {}
     }
+    const obj = objMap[node] ? objMap[node]() : undefined
+
     // check for completeness
     if (svgGroups.length === 0) {
       svgObj = obj
