@@ -396,6 +396,40 @@ const svgPath = function (element) {
   return obj
 }
 
+// generate GROUP with attributes from USE element
+// - except X,Y,HEIGHT,WIDTH,XLINK:HREF
+// - append translate(x,y) if X,Y available
+// deep clone the referenced OBJECT and add to group
+// - clone using JSON.parse(JSON.stringify(obj))
+const svgUse = function (element, {svgObjects}) {
+  var obj = {type: 'group'}
+  // transforms
+  svgTransforms(obj, element)
+  // core attributes
+  svgCore(obj, element)
+  // presentation attributes
+  svgPresentation(obj, element)
+
+  if ('X' in element && 'Y' in element) {
+    if (!('transforms' in obj)) obj.transforms = []
+    var o = {translate: [element.X, element.Y]}
+    obj.transforms.push(o)
+  }
+
+  obj.objects = []
+  if ('XLINK:HREF' in element) {
+  // lookup the named object
+    var ref = element['XLINK:HREF']
+    if (ref[0] === '#') { ref = ref.slice(1, ref.length) }
+    if (svgObjects[ref] !== undefined) {
+      ref = svgObjects[ref]
+      ref = JSON.parse(JSON.stringify(ref))
+      obj.objects.push(ref)
+    }
+  }
+  return obj
+}
+
 module.exports = {
   svgCore,
   svgPresentation,
@@ -407,5 +441,6 @@ module.exports = {
   svgPolyline,
   svgPolygon,
   svgGroup,
-  svgPath
+  svgPath,
+  svgUse
 }
