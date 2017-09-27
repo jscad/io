@@ -2,7 +2,7 @@ const test = require('tape')
 const {CSG, CAG} = require('@jscad/csg')
 const deserializer = require('./index.js')
 
-test('translate svg to jscad code', function (t) {
+test('translate svg (rect) to jscad code', function (t) {
   t.plan(1)
 
   const sourceSvg = `
@@ -28,7 +28,23 @@ test('translate svg to jscad code', function (t) {
 })
 
 
-test('deserialize svg to cag/csg objects', function (t) {
+test('deserialize svg (polygon) to jscad code', function (t) {
+  t.plan(1)
+
+  const sourceSvg = `<svg width="120" height="120" viewBox="0 0 120 120"
+    xmlns="http://www.w3.org/2000/svg">
+
+  <polygon points="60,20 100,40 100,80 60,100 20,80 20,40"/>
+</svg>`
+
+  const expected = ''
+  const observed = deserializer.translate(sourceSvg, undefined, {addMetaData: false})
+  t.equal(observed, expected)
+})
+
+
+
+test('deserialize svg (rect) to cag/csg objects', function (t) {
   t.plan(1)
 
   const sourceSvg = `
@@ -39,7 +55,32 @@ test('deserialize svg to cag/csg objects', function (t) {
 </svg>`
 
   // const sourceSvg = fs.readFileSync('PATH/TO/file.svg')
-
   const observed = deserializer.deserialize(sourceSvg, undefined, {addMetaData: false})
   t.equal(observed.sides.length, 56)
+})
+
+test('deserialize svg (polyline) to cag/csg objects', function (t) {
+  t.plan(1)
+
+  const sourceSvg = `
+  <svg width="120" height="120" xmlns="http://www.w3.org/2000/svg">
+    <polyline fill="none" stroke="black"
+        points="20,100 40,60 70,80 100,20"/>
+  </svg>`
+
+  const observed = deserializer.deserialize(sourceSvg, undefined, {addMetaData: false})
+  t.equal(observed.sides.length, 62)
+})
+
+test('deserialize svg (polygon) to cag/csg objects', function (t) {
+  t.plan(1)
+
+  const sourceSvg = `<svg width="120" height="120" viewBox="0 0 120 120"
+    xmlns="http://www.w3.org/2000/svg">
+
+  <polygon points="60,20 100,40 100,80 60,100 20,80 20,40"/>
+</svg>`
+
+  const observed = deserializer.deserialize(sourceSvg, undefined, {addMetaData: false})
+  t.equal(observed.sides.length, 62)
 })
