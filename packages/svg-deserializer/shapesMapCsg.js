@@ -107,7 +107,7 @@ const shapesMap = function (obj, codify, params) {
 
     path // paths are a lot more complex, handled seperatly , see below
   }
-  return types[obj.type](obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV)
+  return types[obj.type](obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups)
 }
 
 module.exports = shapesMap
@@ -202,7 +202,7 @@ function path (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups) {
           var sf = (pts.shift() === '1')
           cx = cx + parseFloat(pts.shift())
           cy = cy + parseFloat(pts.shift())
-          paths[pathName].appendArc([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)], {xradius: svg2cagX(rx), yradius: svg2cagY(ry), xaxisrotation: ro, clockwise: sf, large: lf})
+          paths[pathName].appendArc([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)], {xradius: svg2cagX(rx, svgUnitsPmm), yradius: svg2cagY(ry, svgUnitsPmm), xaxisrotation: ro, clockwise: sf, large: lf})
         }
         break
       case 'A': // absolute elliptical arc
@@ -214,7 +214,7 @@ function path (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups) {
           var sf = (pts.shift() === '1')
           cx = parseFloat(pts.shift())
           cy = parseFloat(pts.shift())
-          paths[pathName].appendArc([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)], {xradius: svg2cagX(rx), yradius: svg2cagY(ry), xaxisrotation: ro, clockwise: sf, large: lf})
+          paths[pathName].appendArc([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)], {xradius: svg2cagX(rx, svgUnitsPmm), yradius: svg2cagY(ry, svgUnitsPmm), xaxisrotation: ro, clockwise: sf, large: lf})
         }
         break
       case 'c': // relative cubic Bézier
@@ -225,7 +225,7 @@ function path (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups) {
           by = cy + parseFloat(pts.shift())
           cx = cx + parseFloat(pts.shift())
           cy = cy + parseFloat(pts.shift())
-          paths[pathName] = paths[pathName].appendBezier([[svg2cagX(x1), svg2cagY(y1)], [svg2cagX(bx), svg2cagY(by)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
+          paths[pathName] = paths[pathName].appendBezier([[svg2cagX(x1, svgUnitsPmm), svg2cagY(y1, svgUnitsPmm)], [svg2cagX(bx, svgUnitsPmm), svg2cagY(by, svgUnitsPmm)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
           var rf = reflect(bx, by, cx, cy)
           bx = rf[0]
           by = rf[1]
@@ -239,7 +239,7 @@ function path (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups) {
           by = parseFloat(pts.shift())
           cx = parseFloat(pts.shift())
           cy = parseFloat(pts.shift())
-          paths[pathName] = paths[pathName].appendBezier([[svg2cagX(x1), svg2cagY(y1)], [svg2cagX(bx), svg2cagY(by)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
+          paths[pathName] = paths[pathName].appendBezier([[svg2cagX(x1, svgUnitsPmm), svg2cagY(y1, svgUnitsPmm)], [svg2cagX(bx, svgUnitsPmm), svg2cagY(by, svgUnitsPmm)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
           var rf = reflect(bx, by, cx, cy)
           bx = rf[0]
           by = rf[1]
@@ -251,7 +251,7 @@ function path (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups) {
           qy = cy + parseFloat(pts.shift())
           cx = cx + parseFloat(pts.shift())
           cy = cy + parseFloat(pts.shift())
-          paths[pathName] = paths[pathName].appendBezier([[svg2cagX(qx), svg2cagY(qy)], [svg2cagX(qx), svg2cagY(qy)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
+          paths[pathName] = paths[pathName].appendBezier([[svg2cagX(qx, svgUnitsPmm), svg2cagY(qy, svgUnitsPmm)], [svg2cagX(qx, svgUnitsPmm), svg2cagY(qy, svgUnitsPmm)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
           var rf = reflect(qx, qy, cx, cy)
           qx = rf[0]
           qy = rf[1]
@@ -263,7 +263,7 @@ function path (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups) {
           qy = parseFloat(pts.shift())
           cx = parseFloat(pts.shift())
           cy = parseFloat(pts.shift())
-          paths[pathName] = paths[pathName].appendBezier([[svg2cagX(qx), svg2cagY(qy)], [svg2cagX(qx), svg2cagY(qy)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
+          paths[pathName] = paths[pathName].appendBezier([[svg2cagX(qx, svgUnitsPmm), svg2cagY(qy, svgUnitsPmm)], [svg2cagX(qx, svgUnitsPmm), svg2cagY(qy, svgUnitsPmm)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
           var rf = reflect(qx, qy, cx, cy)
           qx = rf[0]
           qy = rf[1]
@@ -273,7 +273,7 @@ function path (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups) {
         while (pts.length >= 2) {
           cx = cx + parseFloat(pts.shift())
           cy = cy + parseFloat(pts.shift())
-          paths[pathName] = paths[pathName].appendBezier([[svg2cagX(qx), svg2cagY(qy)], [svg2cagX(qx), svg2cagY(qy)], [cx, cy]])
+          paths[pathName] = paths[pathName].appendBezier([[svg2cagX(qx, svgUnitsPmm), svg2cagY(qy, svgUnitsPmm)], [svg2cagX(qx, svgUnitsPmm), svg2cagY(qy, svgUnitsPmm)], [cx, cy]])
           var rf = reflect(qx, qy, cx, cy)
           qx = rf[0]
           qy = rf[1]
@@ -283,7 +283,7 @@ function path (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups) {
         while (pts.length >= 2) {
           cx = parseFloat(pts.shift())
           cy = parseFloat(pts.shift())
-          paths[pathName] = paths[pathName].appendBezier([[svg2cagX(qx), svg2cagY(qy)], [svg2cagX(qx), svg2cagY(qy)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
+          paths[pathName] = paths[pathName].appendBezier([[svg2cagX(qx, svgUnitsPmm), svg2cagY(qy, svgUnitsPmm)], [svg2cagX(qx, svgUnitsPmm), svg2cagY(qy, svgUnitsPmm)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
           var rf = reflect(qx, qy, cx, cy)
           qx = rf[0]
           qy = rf[1]
@@ -297,7 +297,7 @@ function path (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups) {
           by = cy + parseFloat(pts.shift())
           cx = cx + parseFloat(pts.shift())
           cy = cy + parseFloat(pts.shift())
-          paths[pathName] = paths[pathName].appendBezier([[svg2cagX(x1), svg2cagY(y1)], [svg2cagX(bx), svg2cagY(by)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
+          paths[pathName] = paths[pathName].appendBezier([[svg2cagX(x1, svgUnitsPmm), svg2cagY(y1, svgUnitsPmm)], [svg2cagX(bx, svgUnitsPmm), svg2cagY(by, svgUnitsPmm)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
           var rf = reflect(bx, by, cx, cy)
           bx = rf[0]
           by = rf[1]
@@ -311,7 +311,7 @@ function path (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups) {
           by = parseFloat(pts.shift())
           cx = parseFloat(pts.shift())
           cy = parseFloat(pts.shift())
-          paths[pathName] = paths[pathName].appendBezier([[svg2cagX(x1), svg2cagY(y1)], [svg2cagX(bx), svg2cagY(by)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
+          paths[pathName] = paths[pathName].appendBezier([[svg2cagX(x1, svgUnitsPmm), svg2cagY(y1, svgUnitsPmm)], [svg2cagX(bx, svgUnitsPmm), svg2cagY(by, svgUnitsPmm)], [svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)]])
           var rf = reflect(bx, by, cx, cy)
           bx = rf[0]
           by = rf[1]
