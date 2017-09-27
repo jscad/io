@@ -146,6 +146,28 @@ const cssStyle = function (element, name) {
   return null
 }
 
+const reflect = function (x, y, px, py) {
+  var ox = x - px
+  var oy = y - py
+  if (x === px && y === px) return [x, y]
+  if (x === px) return [x, py + (-oy)]
+  if (y === py) return [px + (-ox), y]
+  return [px + (-ox), py + (-oy)]
+}
+
+// Return the value for the given attribute from the group hiearchy
+const groupValue = function (svgGroups, name) {
+  var i = svgGroups.length
+  while (i > 0) {
+    const g = svgGroups[i - 1]
+    if (name in g) {
+      return g[name]
+    }
+    i--
+  }
+  return null
+}
+
 module.exports = {
   svg2cagX,
   svg2cagY,
@@ -154,5 +176,7 @@ module.exports = {
   cagLengthP,
   css2cag,
   cagColor,
-  cssStyle
+  cssStyle,
+  reflect,
+  groupValue
 }

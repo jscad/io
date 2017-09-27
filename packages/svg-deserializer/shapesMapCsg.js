@@ -1,13 +1,14 @@
 const {CSG, CAG} = require('@jscad/csg')
-const {svg2cagX, svg2cagY, cagLengthX, cagLengthY, cagLengthP} = require('./helpers')
+const {svg2cagX, svg2cagY, cagLengthX, cagLengthY, cagLengthP, reflect, groupValue} = require('./helpers')
 const {cssPxUnit} = require('./constants')
 
-const shapesMap = function (obj, codify, groupValue, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV) {
+const shapesMap = function (obj, codify, params) {
+  const {svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups} = params
+
   const types = {
     group: (obj) => {
       // cag from nested element
-      const subCag = codify(obj)
-      return subCag
+      return codify(obj)
     },
 
     rect: (obj, svgUnitsPmm, svgUnitsX, svgUnitsY) => {
@@ -56,7 +57,7 @@ const shapesMap = function (obj, codify, groupValue, svgUnitsPmm, svgUnitsX, svg
       if ('strokeWidth' in obj) {
         r = cagLengthP(obj.strokeWidth, svgUnitsPmm, svgUnitsV) / 2
       } else {
-        const v = groupValue('strokeWidth')
+        const v = groupValue(svgGroups, 'strokeWidth')
         if (v !== null) {
           r = cagLengthP(v, svgUnitsPmm, svgUnitsV) / 2
         }
@@ -86,7 +87,7 @@ const shapesMap = function (obj, codify, groupValue, svgUnitsPmm, svgUnitsX, svg
       if ('strokeWidth' in obj) {
         r = cagLengthP(obj.strokeWidth, svgUnitsPmm, svgUnitsV) / 2
       } else {
-        const v = groupValue('strokeWidth')
+        const v = groupValue(svgGroups, 'strokeWidth')
         if (v !== null) {
           r = cagLengthP(v, svgUnitsPmm, svgUnitsV) / 2
         }
@@ -103,14 +104,14 @@ const shapesMap = function (obj, codify, groupValue, svgUnitsPmm, svgUnitsX, svg
       return tmpObj
     },
 
-    path
+    path // paths are a lot more complex, handled seperatly , see below
   }
   return types[obj.type](obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV)
 }
 
 module.exports = shapesMap
 
-function path (obj, groupValue, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV) {
+function path (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups) {
   let pathCag = new CAG()
   let paths = {}
   const on = '' // not sure
@@ -119,7 +120,7 @@ function path (obj, groupValue, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, sv
   if ('strokeWidth' in obj) {
     r = cagLengthP(obj.strokeWidth, svgUnitsPmm, svgUnitsV) / 2
   } else {
-    const v = groupValue('strokeWidth')
+    const v = groupValue(svgGroups, 'strokeWidth')
     if (v !== null) {
       r = cagLengthP(v, svgUnitsPmm, svgUnitsV) / 2
     }
@@ -356,7 +357,7 @@ function path (obj, groupValue, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, sv
       case 'z': // close current line
       case 'Z':
         paths[pathName] = paths[pathName].close().innerToCAG()
-        onCAG = onCAG.union(paths[pathName])
+        pathCag = pathCag.union(paths[pathName])
         cx = sx
         cy = sy // return to the starting point
         pc = true

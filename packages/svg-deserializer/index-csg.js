@@ -458,32 +458,6 @@ let svgUnitsPer = 0
 
 let rootObject = new CAG()
 
-sax.SAXParser.prototype.svgObjects = []    // named objects
-sax.SAXParser.prototype.svgGroups = []    // groups of objects
-sax.SAXParser.prototype.svgInDefs = false // svg DEFS element in process
-sax.SAXParser.prototype.svgUnitsPmm = [1, 1]
-
-const reflect = function (x, y, px, py) {
-  var ox = x - px
-  var oy = y - py
-  if (x === px && y === px) return [x, y]
-  if (x === px) return [x, py + (-oy)]
-  if (y === py) return [px + (-ox), y]
-  return [px + (-ox), py + (-oy)]
-}
-
-// Return the value for the given attribute from the group hiearchy
-const groupValue = function (name) {
-  var i = svgGroups.length
-  while (i > 0) {
-    var g = svgGroups[i - 1]
-    if (name in g) {
-      return g[name]
-    }
-    i--
-  }
-  return null
-}
 const codify = function (group) {
   const level = svgGroups.length
   // add this group to the heiarchy
@@ -496,10 +470,18 @@ const codify = function (group) {
 
   let lnCAG = new CAG()
 
+  const params = {
+    svgUnitsPmm,
+    svgUnitsX,
+    svgUnitsY,
+    svgUnitsV,
+    level,
+    svgGroups
+  }
   // generate code for all objects
   for (i = 0; i < group.objects.length; i++) {
     const obj = group.objects[i]
-    let onCAG = require('./shapesMapCsg')(obj, codify, groupValue, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV)
+    let onCAG = require('./shapesMapCsg')(obj, codify, params)
 
     if ('fill' in obj) {
     // FIXME when CAG supports color
