@@ -50,7 +50,7 @@ const shapesMap = function (obj, codify, params) {
 
     line: (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV) => {
       const x1 = cagLengthX(obj.x1, svgUnitsPmm, svgUnitsX)
-      const y1 = (0 - cagLengthY(obj.y1), svgUnitsPmm, svgUnitsY)
+      const y1 = (0 - cagLengthY(obj.y1, svgUnitsPmm, svgUnitsY))
       const x2 = cagLengthX(obj.x2, svgUnitsPmm, svgUnitsX)
       const y2 = (0 - cagLengthY(obj.y2, svgUnitsPmm, svgUnitsY))
       let r = cssPxUnit // default
@@ -101,7 +101,7 @@ const shapesMap = function (obj, codify, params) {
         if ('x' in p && 'y' in p) {
           var x = cagLengthX(p.x, svgUnitsPmm, svgUnitsX)
           var y = (0 - cagLengthY(p.y, svgUnitsPmm, svgUnitsY))
-          code += indent + '  [' + x + ',' + y + '],\n'
+          tmpCode += indent + '  [' + x + ',' + y + '],\n'
         }
       }
       tmpCode += indent + '],false);\n'
