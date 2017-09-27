@@ -92,7 +92,7 @@ const objectify = function (group) {
   return lnCAG
 }
 
-const codify = function (group, {svgGroups}) {
+const codify = function (group) {
   const level = svgGroups.length
   // add this group to the heiarchy
   svgGroups.push(group)
