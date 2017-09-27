@@ -227,3 +227,34 @@ test('deserialize svg (line) to cag/csg objects', function (t) {
   const observed = deserializer.deserialize(sourceSvg, undefined, {addMetaData: false})
   t.equal(observed.sides.length, 34)
 })
+
+
+test('deserialize svg (path: simple) to cag/csg objects', function (t) {
+  t.plan(1)
+
+  const sourceSvg = `<svg height="210" width="400">
+  <path d="M150 0 L75 200 L225 200 Z" />
+</svg>
+`
+
+  const observed = deserializer.deserialize(sourceSvg, undefined, {addMetaData: false})
+  t.equal(observed.sides.length, 3)
+})
+
+test('deserialize svg (path: with bezier) to cag/csg objects', function (t) {
+  t.plan(1)
+
+  const sourceSvg = `
+  <svg height="210" width="400">
+  <path d="M100,100
+           L150,100
+           a50,25 0 0,0 150,100
+           q50,-50 70,-170
+           Z"
+        style="stroke: #006666; fill: none;"/>
+  </svg>
+`
+
+  const observed = deserializer.deserialize(sourceSvg, undefined, {addMetaData: false})
+  t.equal(observed.sides.length, 16)
+})
