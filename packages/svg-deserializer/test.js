@@ -143,6 +143,63 @@ test('translate svg (line) to jscad', function (t) {
   t.equal(observed, expected)
 })
 
+test('deserialize svg (path: simple) to cag/csg objects', function (t) {
+  t.plan(1)
+
+  const sourceSvg = `<svg height="210" width="400">
+  <path d="M150 0 L75 200 L225 200 Z" />
+</svg>
+`
+
+  const expected = `function main(params) {
+  var cag0 = new CAG();
+  var cag00 = new CAG();
+  var cag001 = new CSG.Path2D([[42.33333,0]],false);
+  cag001 = cag001.appendPoint([21.166665,-56.44443999999999]);
+  cag001 = cag001.appendPoint([63.49999499999999,-56.44443999999999]);
+  cag001 = cag001.close();
+  cag001 = cag001.innerToCAG();
+  cag00 = cag00.union(cag001);
+  cag0 = cag0.union(cag00);
+  return cag0;
+}
+`
+  const observed = deserializer.translate(sourceSvg, undefined, {addMetaData: false})
+  t.equal(observed, expected)
+})
+
+test('deserialize svg (path: with bezier) to cag/csg objects', function (t) {
+  t.plan(1)
+
+  const sourceSvg = `
+  <svg height="210" width="400">
+  <path d="M100,100
+           L150,100
+           a50,25 0 0,0 150,100
+           q50,-50 70,-170
+           Z"
+        style="stroke: #006666; fill: none;"/>
+  </svg>
+`
+  const expected = `function main(params) {
+  var cag0 = new CAG();
+  var cag00 = new CAG();
+  var cag001 = new CSG.Path2D([[28.222219999999997,-28.222219999999997]],false);
+  cag001 = cag001.appendPoint([42.33333,-28.222219999999997]);
+  cag001 = cag001.appendArc([84.66666,-56.44443999999999],{xradius: 14.111109999999998,yradius: -7.055554999999999,xaxisrotation: 0,clockwise: false,large: false});
+  cag001 = cag001.appendBezier([[98.77776999999999,-42.33333],[98.77776999999999,-42.33333],[104.42221399999998,-8.466665999999998]]);
+  cag001 = cag001.close();
+  cag001 = cag001.innerToCAG();
+  cag00 = cag00.union(cag001);
+  cag0 = cag0.union(cag00);
+  return cag0;
+}
+`
+  const observed = deserializer.translate(sourceSvg, undefined, {addMetaData: false})
+  t.equal(observed, expected)
+})
+
+
 
 // deserializer
 
@@ -227,7 +284,6 @@ test('deserialize svg (line) to cag/csg objects', function (t) {
   const observed = deserializer.deserialize(sourceSvg, undefined, {addMetaData: false})
   t.equal(observed.sides.length, 34)
 })
-
 
 test('deserialize svg (path: simple) to cag/csg objects', function (t) {
   t.plan(1)
