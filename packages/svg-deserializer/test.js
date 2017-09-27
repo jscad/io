@@ -42,8 +42,6 @@ test('deserialize svg (polygon) to jscad code', function (t) {
   t.equal(observed, expected)
 })
 
-
-
 test('deserialize svg (rect) to cag/csg objects', function (t) {
   t.plan(1)
 
@@ -82,5 +80,5 @@ test('deserialize svg (polygon) to cag/csg objects', function (t) {
 </svg>`
 
   const observed = deserializer.deserialize(sourceSvg, undefined, {addMetaData: false})
-  t.equal(observed.sides.length, 62)
+  t.equal(observed.sides.length, 6)
 })
