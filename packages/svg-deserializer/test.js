@@ -75,7 +75,19 @@ test('translate svg (polyline) to jscad code', function (t) {
         points="20,100 40,60 70,80 100,20"/>
   </svg>`
 
-  const expected = ''
+  const expected = `function main(params) {
+  var cag0 = new CAG();
+  var cag00 = new CSG.Path2D([
+    [5.644443999999999,-28.222219999999997],
+    [11.288887999999998,-16.933331999999996],
+    [19.755553999999997,-22.577775999999997],
+    [28.222219999999997,-5.644443999999999],
+  ],false);
+  cag00 = cag00.expandToCAG(0.1411111,CSG.defaultResolution2D);
+  cag0 = cag0.union(cag00);
+  return cag0;
+}
+`
   const observed = deserializer.translate(sourceSvg, undefined, {addMetaData: false})
   t.equal(observed, expected)
 })
@@ -107,6 +119,30 @@ test('translate svg (polygon) to jscad code', function (t) {
   const observed = deserializer.translate(sourceSvg, undefined, {addMetaData: false})
   t.equal(observed, expected)
 })
+
+test('translate svg (line) to jscad', function (t) {
+  t.plan(1)
+
+  const sourceSvg = `<svg width="120" height="120" viewBox="0 0 120 120"
+      xmlns="http://www.w3.org/2000/svg">
+
+    <line x1="20" y1="100" x2="100" y2="20"
+        stroke-width="2" stroke="black"/>
+  </svg>
+`
+
+  const expected = `function main(params) {
+  var cag0 = new CAG();
+  var cag00 = new CSG.Path2D([[5.644443999999999,-28.222219999999993],[28.222219999999993,-5.644443999999999]],false);
+  cag00 = cag00.expandToCAG(0.2822221999999999,CSG.defaultResolution2D);
+  cag0 = cag0.union(cag00);
+  return cag0;
+}
+`
+  const observed = deserializer.translate(sourceSvg, undefined, {addMetaData: false})
+  t.equal(observed, expected)
+})
+
 
 // deserializer
 
@@ -176,7 +212,6 @@ test('deserialize svg (polygon) to cag/csg objects', function (t) {
   const observed = deserializer.deserialize(sourceSvg, undefined, {addMetaData: false})
   t.equal(observed.sides.length, 6)
 })
-
 
 test('deserialize svg (line) to cag/csg objects', function (t) {
   t.plan(1)
