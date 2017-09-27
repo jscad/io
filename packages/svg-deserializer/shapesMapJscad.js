@@ -111,15 +111,14 @@ const shapesMap = function (obj, codify, params) {
 
     path
   }
-  return types[obj.type](obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, params)
+  return types[obj.type](obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, params, svgGroups)
 }
 
 module.exports = shapesMap
 
-function path (obj, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, params, svgGroups) {
+function path (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, params, svgGroups) {
+  const {indent, on} = params
   let tmpCode = indent + 'var ' + on + ' = new CAG();\n'
-  let currentPath
-  let paths = {}
 
   let r = cssPxUnit // default
   if ('strokeWidth' in obj) {
@@ -205,7 +204,7 @@ function path (obj, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, par
           var sf = (pts.shift() === '1')
           cx = cx + parseFloat(pts.shift())
           cy = cy + parseFloat(pts.shift())
-          tmpCode += indent + pathName + ' = ' + pathName + '.appendArc([' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + '],{xradius: ' + svg2cagX(rx) + ',yradius: ' + svg2cagY(ry) + ',xaxisrotation: ' + ro + ',clockwise: ' + sf + ',large: ' + lf + '});\n'
+          tmpCode += indent + pathName + ' = ' + pathName + '.appendArc([' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + '],{xradius: ' + svg2cagX(rx, svgUnitsPmm) + ',yradius: ' + svg2cagY(ry, svgUnitsPmm) + ',xaxisrotation: ' + ro + ',clockwise: ' + sf + ',large: ' + lf + '});\n'
         }
         break
       case 'A': // absolute elliptical arc
@@ -217,7 +216,7 @@ function path (obj, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, par
           var sf = (pts.shift() === '1')
           cx = parseFloat(pts.shift())
           cy = parseFloat(pts.shift())
-          tmpCode += indent + pathName + ' = ' + pathName + '.appendArc([' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + '],{xradius: ' + svg2cagX(rx) + ',yradius: ' + svg2cagY(ry) + ',xaxisrotation: ' + ro + ',clockwise: ' + sf + ',large: ' + lf + '});\n'
+          tmpCode += indent + pathName + ' = ' + pathName + '.appendArc([' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + '],{xradius: ' + svg2cagX(rx, svgUnitsPmm) + ',yradius: ' + svg2cagY(ry, svgUnitsPmm) + ',xaxisrotation: ' + ro + ',clockwise: ' + sf + ',large: ' + lf + '});\n'
         }
         break
       case 'c': // relative cubic Bézier
@@ -228,7 +227,7 @@ function path (obj, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, par
           by = cy + parseFloat(pts.shift())
           cx = cx + parseFloat(pts.shift())
           cy = cy + parseFloat(pts.shift())
-          tmpCode += indent + pathName + ' = ' + pathName + '.appendBezier([[' + svg2cagX(x1) + ',' + svg2cagY(y1) + '],[' + svg2cagX(bx) + ',' + svg2cagY(by) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
+          tmpCode += indent + pathName + ' = ' + pathName + '.appendBezier([[' + svg2cagX(x1, svgUnitsPmm) + ',' + svg2cagY(y1, svgUnitsPmm) + '],[' + svg2cagX(bx, svgUnitsPmm) + ',' + svg2cagY(by, svgUnitsPmm) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
           var rf = reflect(bx, by, cx, cy)
           bx = rf[0]
           by = rf[1]
@@ -242,7 +241,7 @@ function path (obj, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, par
           by = parseFloat(pts.shift())
           cx = parseFloat(pts.shift())
           cy = parseFloat(pts.shift())
-          tmpCode += indent + pathName + ' = ' + pathName + '.appendBezier([[' + svg2cagX(x1) + ',' + svg2cagY(y1) + '],[' + svg2cagX(bx) + ',' + svg2cagY(by) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
+          tmpCode += indent + pathName + ' = ' + pathName + '.appendBezier([[' + svg2cagX(x1, svgUnitsPmm) + ',' + svg2cagY(y1, svgUnitsPmm) + '],[' + svg2cagX(bx, svgUnitsPmm) + ',' + svg2cagY(by, svgUnitsPmm) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
           var rf = reflect(bx, by, cx, cy)
           bx = rf[0]
           by = rf[1]
@@ -254,7 +253,7 @@ function path (obj, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, par
           qy = cy + parseFloat(pts.shift())
           cx = cx + parseFloat(pts.shift())
           cy = cy + parseFloat(pts.shift())
-          tmpCode += indent + pathName + ' = ' + pathName + '.appendBezier([[' + svg2cagX(qx) + ',' + svg2cagY(qy) + '],[' + svg2cagX(qx) + ',' + svg2cagY(qy) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
+          tmpCode += indent + pathName + ' = ' + pathName + '.appendBezier([[' + svg2cagX(qx, svgUnitsPmm) + ',' + svg2cagY(qy, svgUnitsPmm) + '],[' + svg2cagX(qx, svgUnitsPmm) + ',' + svg2cagY(qy, svgUnitsPmm) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
           var rf = reflect(qx, qy, cx, cy)
           qx = rf[0]
           qy = rf[1]
@@ -266,7 +265,7 @@ function path (obj, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, par
           qy = parseFloat(pts.shift())
           cx = parseFloat(pts.shift())
           cy = parseFloat(pts.shift())
-          tmpCode += indent + pathName + ' = ' + pathName + '.appendBezier([[' + svg2cagX(qx) + ',' + svg2cagY(qy) + '],[' + svg2cagX(qx) + ',' + svg2cagY(qy) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
+          tmpCode += indent + pathName + ' = ' + pathName + '.appendBezier([[' + svg2cagX(qx, svgUnitsPmm) + ',' + svg2cagY(qy, svgUnitsPmm) + '],[' + svg2cagX(qx, svgUnitsPmm) + ',' + svg2cagY(qy, svgUnitsPmm) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
           var rf = reflect(qx, qy, cx, cy)
           qx = rf[0]
           qy = rf[1]
@@ -276,7 +275,7 @@ function path (obj, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, par
         while (pts.length >= 2) {
           cx = cx + parseFloat(pts.shift())
           cy = cy + parseFloat(pts.shift())
-          tmpCode += indent + pathName + ' = ' + pathName + '.appendBezier([[' + svg2cagX(qx) + ',' + svg2cagY(qy) + '],[' + svg2cagX(qx) + ',' + svg2cagY(qy) + '],[' + cx + ',' + cy + ']]);\n'
+          tmpCode += indent + pathName + ' = ' + pathName + '.appendBezier([[' + svg2cagX(qx, svgUnitsPmm) + ',' + svg2cagY(qy, svgUnitsPmm) + '],[' + svg2cagX(qx, svgUnitsPmm) + ',' + svg2cagY(qy, svgUnitsPmm) + '],[' + cx + ',' + cy + ']]);\n'
           var rf = reflect(qx, qy, cx, cy)
           qx = rf[0]
           qy = rf[1]
@@ -286,7 +285,7 @@ function path (obj, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, par
         while (pts.length >= 2) {
           cx = parseFloat(pts.shift())
           cy = parseFloat(pts.shift())
-          tmpCode += indent + pathName + ' = ' + pathName + '.appendBezier([[' + svg2cagX(qx) + ',' + svg2cagY(qy) + '],[' + svg2cagX(qx) + ',' + svg2cagY(qy) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
+          tmpCode += indent + pathName + ' = ' + pathName + '.appendBezier([[' + svg2cagX(qx, svgUnitsPmm) + ',' + svg2cagY(qy, svgUnitsPmm) + '],[' + svg2cagX(qx, svgUnitsPmm) + ',' + svg2cagY(qy, svgUnitsPmm) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
           var rf = reflect(qx, qy, cx, cy)
           qx = rf[0]
           qy = rf[1]
@@ -300,7 +299,7 @@ function path (obj, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, par
           by = cy + parseFloat(pts.shift())
           cx = cx + parseFloat(pts.shift())
           cy = cy + parseFloat(pts.shift())
-          tmpCode += indent + pathName + ' = ' + pathName + '.appendBezier([[' + svg2cagX(x1) + ',' + svg2cagY(y1) + '],[' + svg2cagX(bx) + ',' + svg2cagY(by) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
+          tmpCode += indent + pathName + ' = ' + pathName + '.appendBezier([[' + svg2cagX(x1, svgUnitsPmm) + ',' + svg2cagY(y1, svgUnitsPmm) + '],[' + svg2cagX(bx, svgUnitsPmm) + ',' + svg2cagY(by, svgUnitsPmm) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
           var rf = reflect(bx, by, cx, cy)
           bx = rf[0]
           by = rf[1]
@@ -314,7 +313,7 @@ function path (obj, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, par
           by = parseFloat(pts.shift())
           cx = parseFloat(pts.shift())
           cy = parseFloat(pts.shift())
-          tmpCode += indent + pathName + ' = ' + pathName + '.appendBezier([[' + svg2cagX(x1) + ',' + svg2cagY(y1) + '],[' + svg2cagX(bx) + ',' + svg2cagY(by) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
+          tmpCode += indent + pathName + ' = ' + pathName + '.appendBezier([[' + svg2cagX(x1, svgUnitsPmm) + ',' + svg2cagY(y1, svgUnitsPmm) + '],[' + svg2cagX(bx, svgUnitsPmm) + ',' + svg2cagY(by, svgUnitsPmm) + '],[' + svg2cagX(cx, svgUnitsPmm) + ',' + svg2cagY(cy, svgUnitsPmm) + ']]);\n'
           var rf = reflect(bx, by, cx, cy)
           bx = rf[0]
           by = rf[1]
