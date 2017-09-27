@@ -33,8 +33,9 @@ const shapesMap = function (obj, codify, params) {
       const x = cagLengthX(obj.x, svgUnitsPmm, svgUnitsX)
       const y = (0 - cagLengthY(obj.y, svgUnitsPmm, svgUnitsY))
       const r = cagLengthP(obj.radius, svgUnitsPmm, svgUnitsV)
+
       if (r > 0) {
-        return CAG.circle({center: [x, y], radius: [r]})
+        return CAG.circle({center: [x, y], radius: r})
       }
     },
 
@@ -50,7 +51,7 @@ const shapesMap = function (obj, codify, params) {
 
     line: (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV) => {
       const x1 = cagLengthX(obj.x1, svgUnitsPmm, svgUnitsX)
-      const y1 = (0 - cagLengthY(obj.y1), svgUnitsPmm, svgUnitsY)
+      const y1 = (0 - cagLengthY(obj.y1, svgUnitsPmm, svgUnitsY))
       const x2 = cagLengthX(obj.x2, svgUnitsPmm, svgUnitsX)
       const y2 = (0 - cagLengthY(obj.y2, svgUnitsPmm, svgUnitsY))
       let r = cssPxUnit // default
