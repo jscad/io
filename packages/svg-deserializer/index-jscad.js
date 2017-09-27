@@ -455,32 +455,6 @@ let svgObj = null  // svg in object form
 let svgUnitsPmm = [1, 1]
 let svgUnitsPer = 0
 
-sax.SAXParser.prototype.svgGroups = []    // groups of objects
-sax.SAXParser.prototype.svgUnitsPmm = [1, 1]
-sax.SAXParser.prototype.svgUnitsPer = 0
-
-const reflect = function (x, y, px, py) {
-  var ox = x - px
-  var oy = y - py
-  if (x === px && y === px) return [x, y]
-  if (x === px) return [x, py + (-oy)]
-  if (y === py) return [px + (-ox), y]
-  return [px + (-ox), py + (-oy)]
-}
-
-// Return the value for the given attribute from the group hiearchy
-const groupValue = function (name) {
-  var i = svgGroups.length
-  while (i > 0) {
-    var g = svgGroups[i - 1]
-    if (name in g) {
-      return g[name]
-    }
-    i--
-  }
-  return null
-}
-
 const codify = function (group) {
   const level = svgGroups.length
   // add this group to the heiarchy
@@ -499,14 +473,28 @@ const codify = function (group) {
   }
   var ln = 'cag' + level
   code += indent + 'var ' + ln + ' = new CAG();\n'
-// generate code for all objects
+
+  // generate code for all objects
   for (i = 0; i < group.objects.length; i++) {
     const obj = group.objects[i]
     const on = ln + i
-    const params = {level, indent, ln, on}
-    let tmpCode = require('./shapesMapJscad')(obj, codify, groupValue, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, params)
+
+    const params = {
+      level,
+      indent,
+      ln,
+      on,
+      svgUnitsPmm,
+      svgUnitsX,
+      svgUnitsY,
+      svgUnitsV,
+      level,
+      svgGroups
+    }
+
+    let tmpCode = require('./shapesMapJscad')(obj, codify, params)
     code += tmpCode
-    
+
     if ('fill' in obj) {
     // FIXME when CAG supports color
     //  code += indent+on+' = '+on+'.setColor(['+obj.fill[0]+','+obj.fill[1]+','+obj.fill[2]+']);\n';

@@ -1,9 +1,8 @@
-const {CSG, CAG} = require('@jscad/csg')
-const {svg2cagX, svg2cagY, cagLengthX, cagLengthY, cagLengthP} = require('./helpers')
+const {svg2cagX, svg2cagY, cagLengthX, cagLengthY, cagLengthP, reflect, groupValue} = require('./helpers')
 const {cssPxUnit} = require('./constants')
 
-const shapesMap = function (obj, codify, groupValue, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, params) {
-  const {level, indent, ln, on} = params
+const shapesMap = function (obj, codify, params) {
+  const {level, indent, on, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups} = params
 
   const types = {
     group: (obj) => {
@@ -58,7 +57,7 @@ const shapesMap = function (obj, codify, groupValue, svgUnitsPmm, svgUnitsX, svg
       if ('strokeWidth' in obj) {
         r = cagLengthP(obj.strokeWidth, svgUnitsPmm, svgUnitsV) / 2
       } else {
-        const v = groupValue('strokeWidth')
+        const v = groupValue(svgGroups, 'strokeWidth')
         if (v !== null) {
           r = cagLengthP(v, svgUnitsPmm, svgUnitsV) / 2
         }
@@ -91,7 +90,7 @@ const shapesMap = function (obj, codify, groupValue, svgUnitsPmm, svgUnitsX, svg
       if ('strokeWidth' in obj) {
         r = cagLengthP(obj.strokeWidth, svgUnitsPmm, svgUnitsV) / 2
       } else {
-        const v = groupValue('strokeWidth')
+        const v = groupValue(svgGroups, 'strokeWidth')
         if (v !== null) {
           r = cagLengthP(v, svgUnitsPmm, svgUnitsV) / 2
         }
@@ -117,7 +116,7 @@ const shapesMap = function (obj, codify, groupValue, svgUnitsPmm, svgUnitsX, svg
 
 module.exports = shapesMap
 
-function path (obj, groupValue, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, params) {
+function path (obj, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, params, svgGroups) {
   let tmpCode = indent + 'var ' + on + ' = new CAG();\n'
   let currentPath
   let paths = {}
@@ -126,7 +125,7 @@ function path (obj, groupValue, cssPxUnit, svgUnitsPmm, svgUnitsX, svgUnitsY, sv
   if ('strokeWidth' in obj) {
     r = cagLengthP(obj.strokeWidth, svgUnitsPmm, svgUnitsV) / 2
   } else {
-    const v = groupValue('strokeWidth')
+    const v = groupValue(svgGroups, 'strokeWidth')
     if (v !== null) {
       r = cagLengthP(v, svgUnitsPmm, svgUnitsV) / 2
     }
