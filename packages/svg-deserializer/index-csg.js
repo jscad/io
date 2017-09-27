@@ -157,14 +157,14 @@ function createSvgParser (src, pxPmm) {
       STYLE: () => undefined, // ignored by design
       undefined: () => console.log('Warning: Unsupported SVG element: ' + node.name)
     }
-
-    let obj = objMap[node.name](node.attributes)
+    let obj = objMap[node.name](node.attributes, {customPxPmm: pxPmm})
 
     // case 'SYMBOL':
     // this is just like an embedded SVG but does NOT render directly, only named
     // this requires another set of control objects
     // only add to named objects for later USE
     //  break;
+    //console.log('node',node)
 
     if (obj !== null) {
       // add to named objects if necessary
@@ -174,6 +174,7 @@ function createSvgParser (src, pxPmm) {
       if (obj.type === 'svg') {
       // initial SVG (group)
         svgGroups.push(obj)
+        //console.log('units', obj.unitsPmm)
         svgUnitsPmm = obj.unitsPmm
         svgUnitsX = obj.viewW
         svgUnitsY = obj.viewH
@@ -245,7 +246,7 @@ function createSvgParser (src, pxPmm) {
 //
 function deserialize (src, filename, options) {
   filename = filename || 'svg'
-  const defaults = {pxPmm: undefined, version: '0.0.0', addMetaData: true}
+  const defaults = {pxPmm: require('./constants').pxPmm, version: '0.0.0', addMetaData: true}
   options = Object.assign({}, defaults, options)
   const {version, pxPmm, addMetaData} = options
 

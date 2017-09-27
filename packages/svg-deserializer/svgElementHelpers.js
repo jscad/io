@@ -90,7 +90,7 @@ const svgTransforms = function (cag, element) {
   }
 }
 
-const svgSvg = function (element) {
+const svgSvg = function (element, {customPxPmm}) {
   // default SVG with no viewport
   var obj = {type: 'svg', x: 0, y: 0, width: '100%', height: '100%', strokeWidth: '1'}
 
@@ -114,12 +114,12 @@ const svgSvg = function (element) {
       obj.viewW = parseFloat(v[3])
       obj.viewH = parseFloat(v[4])
     }
-  // apply the viewbox
+    // apply the viewbox
     if (obj.width.indexOf('%') < 0) {
-    // calculate a scaling from width and viewW
-      var s = css2cag(obj.width, this.pxPmm) // width in millimeters
+      // calculate a scaling from width and viewW
+      var s = css2cag(obj.width, customPxPmm) // width in millimeters
       s = obj.viewW / s
-    // scale the default units
+      // scale the default units
       // obj.unitsPmm[0] = obj.unitsPmm[0] * s;
       obj.unitsPmm[0] = s
     } else {

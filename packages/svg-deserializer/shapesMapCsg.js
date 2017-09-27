@@ -72,8 +72,8 @@ const shapesMap = function (obj, codify, params) {
       for (let j = 0; j < obj.points.length; j++) {
         const p = obj.points[j]
         if ('x' in p && 'y' in p) {
-          var x = cagLengthX(p.x, svgUnitsPmm, svgUnitsX)
-          var y = (0 - cagLengthY(p.y, svgUnitsPmm, svgUnitsY))
+          const x = cagLengthX(p.x, svgUnitsPmm, svgUnitsX)
+          const y = (0 - cagLengthY(p.y, svgUnitsPmm, svgUnitsY))
           points.push([x, y])
         }
       }
