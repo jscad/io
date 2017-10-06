@@ -302,13 +302,11 @@ function deserialize (src, filename, options) {
     source: filename
   }
 
-  let cag
-  if (svgObj !== null) {
-    cag = objectify(svgObj)
-  } else {
-    console.log('Warning: SVG parsing failed')
+  if (!svgObj) {
+    throw new Error('SVG parsing failed, no valid svg data retrieved')
   }
-  return cag
+
+  return objectify(svgObj)
 }
 
 /**
@@ -337,12 +335,14 @@ function translate (src, filename, options) {
   // source: ${filename}
   //
   ` : ''
-  if (svgObj !== null) {
-    const scadCode = codify(svgObj)
-    code += scadCode
-  } else {
-    console.log('Warning: SVG parsing failed')
+
+  if (!svgObj) {
+    throw new Error('SVG parsing failed, no valid svg data retrieved')
   }
+
+  const scadCode = codify(svgObj)
+  code += scadCode
+
   return code
 }
 
