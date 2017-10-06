@@ -4,7 +4,8 @@
 Copyright (c) 2016 Z3 Development https://github.com/z3dev
               2017 Mark 'kaosat-dev' Moissette
 
-Refactor and upgrades sponsored by ***
+* The upgrades (direct CSG output from this deserializer) and refactoring
+have been very kindly sponsored by [Copenhagen Fabrication / Stykka](https://www.stykka.com/)***
 
 All code released under MIT license
 */
