@@ -276,12 +276,17 @@ function createSvgParser (src, pxPmm) {
   return parser
 }
 
-// Parse the given SVG source and return a JSCAD script
-//
-// fn (optional) original filename of SVG source
-// options (optional) anonymous object with:
-// pxPmm: pixels per milimeter for calcuations
-//
+/**
+ * Parse the given SVG source and return a JSCAD script
+ * @param  {string} src svg data as text
+ * @param  {string} filename (optional) original filename of SVG source
+ * @param  {object} options options (optional) anonymous object with:
+ *  pxPmm {number: pixels per milimeter for calcuations
+ *  version: {string} version number to add to the metadata
+ *  addMetadata: {boolean} flag to enable/disable injection of metadata (producer, date, source)
+ *
+ * @return a CAG (2D CSG) object
+ */
 function deserialize (src, filename, options) {
   filename = filename || 'svg'
   const defaults = {pxPmm: require('./constants').pxPmm, version: '0.0.0', addMetaData: true}
@@ -306,13 +311,17 @@ function deserialize (src, filename, options) {
   return cag
 }
 
-//
-// Parse the given SVG source and return a JSCAD script
-//
-// fn (optional) original filename of SVG source
-// options (optional) anonymous object with:
-// pxPmm: pixels per milimeter for calcuations
-//
+/**
+ * Parse the given SVG source and return a JSCAD script
+ * @param  {string} src svg data as text
+ * @param  {string} filename (optional) original filename of SVG source
+ * @param  {object} options options (optional) anonymous object with:
+ *  pxPmm {number: pixels per milimeter for calcuations
+ *  version: {string} version number to add to the metadata
+ *  addMetadata: {boolean} flag to enable/disable injection of metadata (producer, date, source)
+ *    at the start of the file
+ * @return a CAG (2D CSG) object
+ */
 function translate (src, filename, options) {
   filename = filename || 'svg'
   const defaults = {pxPmm: require('./constants').pxPmm, version: '0.0.0', addMetaData: true}
