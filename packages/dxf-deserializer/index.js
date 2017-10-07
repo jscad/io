@@ -215,7 +215,8 @@ function handleEntity(reader,group,value) {
       reader.objstack.push(obj)
       break
     default:
-      var obj = {type: 'unused'}
+    // push on an anonymous object which does not have attributes / values
+      var obj = {}
       reader.objstack.push(obj)
       //console.log('WARNING: Unknown DXF entity: '+value)
       break
@@ -231,30 +232,36 @@ function handleVarible(reader,group,value) {
 function handleInt(reader,group,value) {
   //console.log('int: '+group+','+value)
   var obj = reader.objstack.pop()
-  obj[getTLA(group)] = parseFloat(value)
+  if ('type' in obj) {
+    obj[getTLA(group)] = parseFloat(value)
+  }
   reader.objstack.push(obj)
 }
 
 function handleDouble(reader,group,value) {
   //console.log('double: '+group+','+value)
   var obj = reader.objstack.pop()
-  obj[getTLA(group)] = parseFloat(value)
+  if ('type' in obj) {
+    obj[getTLA(group)] = parseFloat(value)
+  }
   reader.objstack.push(obj)
 }
 
 function handleXcoord(reader,group,value) {
   //console.log('xcoord: '+group+','+value)
   var obj = reader.objstack.pop()
-  if (obj['type'] === 'lwpolyline') {
-  // special handling to build a list of vertices
-    if (obj['pptxs'] === undefined) {
-      obj['pptxs'] = []
-      obj['bulgs'] = []
+  if ('type' in obj) {
+    if (obj['type'] === 'lwpolyline') {
+    // special handling to build a list of vertices
+      if (obj['pptxs'] === undefined) {
+        obj['pptxs'] = []
+        obj['bulgs'] = []
+      }
+      obj['pptxs'].push(parseFloat(value))
+      obj['bulgs'].push(0)
+    } else {
+      obj[getTLA(group)] = parseFloat(value)
     }
-    obj['pptxs'].push(parseFloat(value))
-    obj['bulgs'].push(0)
-  } else {
-    obj[getTLA(group)] = parseFloat(value)
   }
   reader.objstack.push(obj)
 }
@@ -262,14 +269,16 @@ function handleXcoord(reader,group,value) {
 function handleYcoord(reader,group,value) {
   //console.log('ycoord: '+group+','+value)
   var obj = reader.objstack.pop()
-  if (obj['type'] === 'lwpolyline') {
-  // special handling to build a list of vertices
-    if (obj['pptys'] === undefined) {
-      obj['pptys'] = []
+  if ('type' in obj) {
+    if (obj['type'] === 'lwpolyline') {
+    // special handling to build a list of vertices
+      if (obj['pptys'] === undefined) {
+        obj['pptys'] = []
+      }
+      obj['pptys'].push(parseFloat(value))
+    } else {
+      obj[getTLA(group)] = parseFloat(value)
     }
-    obj['pptys'].push(parseFloat(value))
-  } else {
-    obj[getTLA(group)] = parseFloat(value)
   }
   reader.objstack.push(obj)
 }
@@ -277,17 +286,19 @@ function handleYcoord(reader,group,value) {
 function handleBulge(reader,group,value) {
   //console.log('bulg: '+group+','+value)
   var obj = reader.objstack.pop()
-  if (obj['type'] === 'lwpolyline') {
-  // special handling to build a list of vertices
-    let bulgs = obj['bulgs']
-    if (bulgs !== undefined) {
-      let pptxs = obj['pptxs']
-      if (pptxs.length === bulgs.length) {
-        bulgs[bulgs.length-1] = parseFloat(value)
+  if ('type' in obj) {
+    if (obj['type'] === 'lwpolyline') {
+    // special handling to build a list of vertices
+      let bulgs = obj['bulgs']
+      if (bulgs !== undefined) {
+        let pptxs = obj['pptxs']
+        if (pptxs.length === bulgs.length) {
+          bulgs[bulgs.length-1] = parseFloat(value)
+        }
       }
+    } else {
+      obj[getTLA(group)] = parseFloat(value)
     }
-  } else {
-    obj[getTLA(group)] = parseFloat(value)
   }
   reader.objstack.push(obj)
 }
@@ -295,15 +306,19 @@ function handleBulge(reader,group,value) {
 function handleString(reader,group,value) {
   //console.log('string: '+group+','+value)
   var obj = reader.objstack.pop()
-  obj[getTLA(group)] = value
+  if ('type' in obj) {
+    obj[getTLA(group)] = value
+  }
   reader.objstack.push(obj)
 }
 
 function handleName(reader,group,value) {
   //console.log('name: '+group+','+value)
   var obj = reader.objstack.pop()
-  if (obj[getTLA(group)] === undefined) {
-    obj[getTLA(group)] = value
+  if ('type' in obj) {
+    if (obj[getTLA(group)] === undefined) {
+      obj[getTLA(group)] = value
+    }
   }
   reader.objstack.push(obj)
 }
@@ -473,7 +488,7 @@ function instantiatePath2D (obj, layers) {
     });
   } else {
   // FIXME flag this DXF error
-    return
+    return path
   }
 // FIXME add optional to create CAG from the path
   if (isclosed) {
@@ -599,24 +614,29 @@ function getPolyType(obj) {
 function instantiateAsciiDxf (src, options) {
   let reader = createReader(src, options)
 console.log('**************************************************')
-//console.log(JSON.stringify(reader.objstack));
+console.log(JSON.stringify(reader.objstack));
 console.log('**************************************************')
 
   let layers   = []   // list of layers with various information like color
   let current  = null // the object being created
   let polygons = []   // the list of 3D polygons
-  let lines3D  = []   // the list of 3D lines
   let objects  = []   // the list of objects instantiated
   let vectors  = []   // the list of vectors for paths or meshes
 
   var p = null
   for (let obj of reader.objstack) {
+    p = null
+
+    if (! ('type' in obj)) {
+      //console.log('##### skip')
+      continue
+    }
+
     switch (obj.type) {
 //console.log(JSON.stringify(obj));
       case 'layer':
 console.log('##### layer')
         layers.push(obj)
-        p = null
         break
 
     // 3D entities
@@ -630,21 +650,18 @@ console.log('##### 3dface')
       case 'arc':
 console.log('##### arc')
         objects.push( instantiateArc(obj,layers,options.colorindex) )
-        p = null
         break
       case 'circle':
 console.log('##### circle')
         objects.push( instantiateCircle(obj,layers,options.colorindex) )
-        p = null
         break
       case 'ellipse':
 console.log('##### ellipse')
         //objects.push( instantiateCircle(obj,layers,options.colorindex) )
-        p = null
         break
       case 'line':
 console.log('##### line')
-        p = instantiateLine3D(obj)
+        objects.push( instantiateLine3D(obj) )
         break
       case 'polyline':
         if (current === null) {
@@ -670,20 +687,14 @@ console.log('##### instantiateing Path2D of '+current)
       case 'lwpolyline':
 console.log('##### lwpolyline')
         objects.push( instantiatePath2D(obj,layers) )
-        p = null
         break
 
       default:
-        p = null
         break
     }
   // accumlate polygons if necessary
     if (p instanceof CSG.Polygon) {
       polygons.push(p)
-    }
-  // accumlate lines if necessary
-    if (p instanceof CSG.Line3D) {
-      lines3D.push(p)
     }
   // accumlate vectors if necessary
     if (p instanceof CSG.Vector3D) {
@@ -698,14 +709,15 @@ console.log('##### lwpolyline')
     objects.push( CSG.fromPolygons(polygons) )
   }
 // add accumulated objects
-  objects = objects.concat( lines3D )
 
 // debug output
+console.log('**************************************************')
   objects.forEach(
     function(e) {
       console.log(JSON.stringify(e));
     }
   );
+console.log('**************************************************')
   return objects
 }
 
