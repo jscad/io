@@ -287,7 +287,7 @@ function createSvgParser (src, pxPmm) {
  *
  * @return a CAG (2D CSG) object
  */
-function deserialize (src, filename, options) {
+function deserializeToCSG (src, filename, options) {
   filename = filename || 'svg'
   const defaults = {pxPmm: require('./constants').pxPmm, version: '0.0.0', addMetaData: true}
   options = Object.assign({}, defaults, options)
@@ -346,7 +346,12 @@ function translate (src, filename, options) {
   return code
 }
 
-module.exports = {
-  deserialize,
-  translate
+const deserialize = function (src, filename, options) {
+  const defaults = {
+    output: 'jscad'
+  }
+  options = Object.assign({}, defaults, options)
+  return options.output === 'jscad' ? translate(src, filename, options) : deserializeToCSG(src, filename, options)
 }
+
+module.exports = {deserialize}
