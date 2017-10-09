@@ -5,7 +5,7 @@ const { CSG, CAG } = require('@jscad/csg')
 
 import {nearlyEqual} from '../../../test/helpers/nearlyEqual'
 
-const { instantiate, deserialize } = require( '../index' )
+const { deserialize } = require( '../index' )
 
 //
 // Test suite for DXF deserialization (import)
@@ -15,7 +15,7 @@ test('ASCII DXF R13 to Object Conversion', t => {
   t.deepEqual(true, fs.existsSync(dxfPath))
 
   let dxf = fs.readFileSync(dxfPath, 'UTF8')
-  let objs = instantiate(dxf,{})
+  let objs = deserialize(dxf,'aaa',{output: 'csg'})
 
   t.true(Array.isArray(objs))
   t.is(objs.length, 16)
@@ -29,7 +29,7 @@ test('ASCII DXF R14 to Object Conversion', t => {
   t.deepEqual(true, fs.existsSync(dxfPath))
 
   let dxf = fs.readFileSync(dxfPath, 'UTF8')
-  let objs = instantiate(dxf,{})
+  let objs = deserialize(dxf,'aaa',{output: 'csg'})
 
   t.true(Array.isArray(objs))
   t.is(objs.length, 0)
@@ -40,7 +40,7 @@ test('ASCII DXF ANSI to Object Conversion', t => {
   t.deepEqual(true, fs.existsSync(dxfPath))
 
   let dxf = fs.readFileSync(dxfPath, 'UTF8')
-  let objs = instantiate(dxf,{})
+  let objs = deserialize(dxf,'aaa',{output: 'csg'})
 
   t.true(Array.isArray(objs))
   t.is(objs.length, 1)
@@ -53,7 +53,7 @@ test('ASCII DXF ISO to Object Conversion', t => {
   t.deepEqual(true, fs.existsSync(dxfPath))
 
   let dxf = fs.readFileSync(dxfPath, 'UTF8')
-  let objs = instantiate(dxf,{})
+  let objs = deserialize(dxf,'aaa',{output: 'csg'})
 
   t.true(Array.isArray(objs))
   t.is(objs.length, 14)
