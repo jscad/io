@@ -15,7 +15,8 @@ const {CAG} = require('@jscad/csg')
 
 const {cagLengthX, cagLengthY} = require('./helpers')
 const {svgSvg, svgRect, svgCircle, svgGroup, svgLine, svgPath, svgEllipse, svgPolygon, svgPolyline, svgUse} = require('./svgElementHelpers')
-
+const shapesMapCsg = require('./shapesMapCsg')
+const shapesMapJscad = require('./shapesMapJscad')
 // FIXE: should these be kept here ? any risk of side effects ?
 let svgUnitsX
 let svgUnitsY
@@ -50,7 +51,7 @@ const objectify = function (group) {
   // generate code for all objects
   for (i = 0; i < group.objects.length; i++) {
     const obj = group.objects[i]
-    let onCAG = require('./shapesMapCsg')(obj, objectify, params)
+    let onCAG = shapesMapCsg(obj, objectify, params)
 
     if ('fill' in obj) {
     // FIXME when CAG supports color
@@ -129,7 +130,7 @@ const codify = function (group) {
       svgGroups
     }
 
-    let tmpCode = require('./shapesMapJscad')(obj, codify, params)
+    let tmpCode = shapesMapJscad(obj, codify, params)
     code += tmpCode
 
     if ('fill' in obj) {
