@@ -86,8 +86,7 @@ This library is part of the JSCAD Organization, and is maintained by a group of 
 Small Note: If editing this README, please conform to the [standard-readme](https://github.com/RichardLitt/standard-readme) specification.
 
 
-## Publishing
-
+## Publishing
 
 This is for owners/ managers of the repo only, obviously :)
 
