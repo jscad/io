@@ -69,6 +69,7 @@ polyhedron({ points: [
   t.deepEqual(observed, expected)
 })
 
+/*
 test('translate simple binary stl to jscad code', function (t) {
   const inputStlPath = path.resolve(filesPath, 'stl/testcube_10mm.stl')
   const inputStl = fs.readFileSync(inputStlPath)
@@ -132,12 +133,12 @@ polyhedron({ points: [
   const observed = deserializer.deserialize(inputStl, undefined, {output: 'jscad', addMetaData: false})
   t.deepEqual(observed, expected)
 })
+*/
 
-
-/*test('deserialize simple ascii stl to cag/csg objects', function (t) {
+test('deserialize simple ascii stl to cag/csg objects', function (t) {
   const inputStlPath = path.resolve(filesPath, 'stl/testcube_ascii.stl')
   const inputStl = fs.readFileSync(inputStlPath, 'utf8')
 
   const observed = deserializer.deserialize(inputStl, undefined, {output: 'csg', addMetaData: false})
-  t.deepEqual(observed.polygons.length, 42)
-})*/
+  t.deepEqual(observed.polygons.length, 6)
+})
