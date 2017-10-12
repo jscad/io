@@ -12,32 +12,54 @@ const BinaryReader = require('./BinaryReader')
 // 2013/03/18: renamed functions, creating .jscad source direct via polyhedron()
 const echo = console.info
 
-function deserialize (stl, fn, options) {
+function deserialize (stl, filename, options) {
   const defaults = {version: '0.0.0', addMetaData: true, output: 'jscad'}
   options = Object.assign({}, defaults, options)
-  const {version} = options
+  const {version, output, addMetaData} = options
 
-  const isAscii = true
-
-  for (var i = 0; i < stl.length; i++) {
-    if (stl[i].charCodeAt(0) === 0) {
-      isAscii = false
-      break
-    }
-  }
+  const isBinary = isDataBinaryRobust(stl)
 
   if (output === 'jscad') {
-    var src
-    if (!isAscii) {
-      src = deserializeBinarySTL(stl, fn, version)
+    let code = addMetaData ? `//
+    // producer: OpenJSCAD.org Compatibility${version} STL Binary Importer
+    // date: ${new Date()}
+    // source: ${filename}
+    //
+    ` : ''
+
+    if (isBinary) {
+      code = deserializeBinarySTL(stl, filename, version)
     } else {
-      src = deserializeAsciiSTL(stl, fn, version)
+      code = deserializeAsciiSTL(stl, filename, version)
     }
-    return src
+    return code
+  } else if (output === 'csg') {
+
   }
 }
 
-function deserializeBinarySTL (stl, fn, version) {
+function ensureString (buf) {
+  if (typeof buf !== 'string') {
+    let arrayBuffer = new Uint8Array(buf)
+    let str = ''
+    for (var i = 0; i < buf.byteLength; i++) {
+      str += String.fromCharCode(arrayBuffer[i]) // implicitly assumes little-endian
+    }
+    return str
+  } else {
+    return buf
+  }
+}
+
+function isDataBinaryRobust (data) {
+  // console.log('data is binary ?')
+  const patternVertex = /vertex[\s]+([\-+]?[0-9]+\.?[0-9]*([eE][\-+]?[0-9]+)?)+[\s]+([\-+]?[0-9]*\.?[0-9]+([eE][\-+]?[0-9]+)?)+[\s]+([\-+]?[0-9]*\.?[0-9]+([eE][\-+]?[0-9]+)?)+/g
+  const text = ensureString(data)
+  const isBinary = patternVertex.exec(text) === null
+  return isBinary
+}
+
+function deserializeBinarySTL (stl, filename, version) {
     // -- This makes more sense if you read http://en.wikipedia.org/wiki/STL_(file_format)#Binary_STL
   var vertices = []
   var triangles = []
@@ -168,10 +190,7 @@ function deserializeBinarySTL (stl, fn, version) {
     converted++
   }
   var src = ''
-  src += '// producer: OpenJSCAD Compatibility (' + version + ') STL Binary Importer\n'
-  src += '// date: ' + (new Date()) + '\n'
-  src += '// source: ' + fn + '\n'
-  src += '\n'
+
   if (err) src += '// WARNING: import errors: ' + err + ' (some triangles might be misaligned or missing)\n'
   src += '// objects: 1\n// object #1: triangles: ' + totalTriangles + '\n\n'
   src += 'function main() { return '
@@ -180,23 +199,12 @@ function deserializeBinarySTL (stl, fn, version) {
   return src
 }
 
-function deserializeAsciiSTL (stl, fn, version) {
+function deserializeAsciiSTL (stl, filename, version) {
   var src = ''
   var n = 0
   var converted = 0
   var o
 
-  /* let code = addMetaData ? `//
-  // producer: OpenJSCAD.org ${version} SVG Importer
-  // date: ${new Date()}
-  // source: ${filename}
-  //
-  ` : '' */
-
-  src += '// producer: OpenJSCAD Compatibility (' + version + ') STL ASCII Importer\n'
-  src += '// date: ' + (new Date()) + '\n'
-  src += '// source: ' + fn + '\n'
-  src += '\n'
   src += 'function main() { return union(\n'
     // -- Find all models
   var objects = stl.split('endsolid')
