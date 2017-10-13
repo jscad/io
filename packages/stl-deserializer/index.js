@@ -20,27 +20,27 @@ function deserialize (stl, filename, options) {
   const isBinary = isDataBinaryRobust(stl)
 
   if (output === 'jscad') {
-    let code = addMetaData ? `//
-    // producer: OpenJSCAD.org Compatibility${version} STL Binary Importer
-    // date: ${new Date()}
-    // source: ${filename}
-    //
-    ` : ''
-    /* if (err) src += '// WARNING: import errors: ' + err + ' (some triangles might be misaligned or missing)\n'*/
+    /* if (err) src += '// WARNING: import errors: ' + err + ' (some triangles might be misaligned or missing)\n' */
 
+    /*
+    if (err) src += '// WARNING: import errors: ' + err + ' (some triangles might be misaligned or missing)\n'
+    src += '// objects: 1\n// object #1: triangles: ' + totalTriangles + '\n\n'
+    src += 'function main() { return '
+    src += vt2jscad(vertices, triangles, normals, colors)
+    src += '; }' */
+    const elementFormatter = ({vertices, triangles, normals, colors, index}) => `// object #${index}: triangles: ${triangles.length}\n${vt2jscad(vertices, triangles, null)}`
     if (isBinary) {
-      return code + deserializeBinarySTL(stl, filename, version)
+      return formatAsJscad(deserializeBinarySTL(stl, filename, version, elementFormatter), addMetaData, version, filename)
+      // code + deserializeBinarySTL(stl, filename, version)
     } else {
-      const elementFormatter = ({vertices, triangles, index}) => `// object #${index}: triangles: ${triangles.length}\n${vt2jscad(vertices, triangles, null)}`
-      return formatAsJscad(deserializeAsciiSTL(stl, filename, version, elementFormatter))
+      return formatAsJscad(deserializeAsciiSTL(stl, filename, version, elementFormatter), addMetaData, version, filename)
     }
-
     // return isBinary ? code + deserializeBinarySTL(stl, filename, version) : code + deserializeAsciiSTL(stl, filename, version)
   } else if (output === 'csg') {
+    const elementFormatter = ({vertices, triangles, normals, colors}) => polyhedron({ points: vertices, polygons: triangles })
     if (isBinary) {
-
+      return formatAsCsg(deserializeBinarySTL(stl, filename, version, elementFormatter))
     } else {
-      const elementFormatter = ({vertices, triangles}) => polyhedron({ points: vertices, polygons: triangles })
       return formatAsCsg(deserializeAsciiSTL(stl, filename, version, elementFormatter))
     }
     // return isBinary ? deserializeBinarySTL(stl, filename, version) : deserializeAsciiSTLToCSG(stl, filename, version)
@@ -68,8 +68,15 @@ function isDataBinaryRobust (data) {
   return isBinary
 }
 
-function formatAsJscad (data) {
-  return `function main() { return union(
+function formatAsJscad (data, addMetaData, version, filename) {
+  let code = addMetaData ? `//
+  // producer: OpenJSCAD.org Compatibility${version} STL Binary Importer
+  // date: ${new Date()}
+  // source: ${filename}
+  //
+  ` : ''
+
+  return code + `function main() { return union(
 // objects: ${data.length}
 ${data.join('\n')}); }
 `
@@ -209,14 +216,8 @@ function deserializeBinarySTL (stl, filename, version) {
     normals.push(no)
     converted++
   }
-  let src = ''
 
-  if (err) src += '// WARNING: import errors: ' + err + ' (some triangles might be misaligned or missing)\n'
-  src += '// objects: 1\n// object #1: triangles: ' + totalTriangles + '\n\n'
-  src += 'function main() { return '
-  src += vt2jscad(vertices, triangles, normals, colors)
-  src += '; }'
-  return src
+  return [{vertices, triangles, normals, colors}]
 }
 
 function deserializeAsciiSTL (stl, filename, version, elementFormatter) {
