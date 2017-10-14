@@ -1,5 +1,3 @@
-// import { CSG } from '@jscad/csg'
-// import { vt2jscad } from './vt2jscad'
 const { CSG } = require('@jscad/csg')
 const { vt2jscad } = require('./vt2jscad')
 const BinaryReader = require('./BinaryReader')
@@ -7,7 +5,8 @@ const BinaryReader = require('./BinaryReader')
 // STL function from http://jsfiddle.net/Riham/yzvGD/35/
 // CC BY-SA by Riham
 // changes by Rene K. Mueller <spiritdude@gmail.com>
-//
+// changes by Mark 'kaosat-dev' Moissette
+// 2017/10/14: refactoring, added support for CSG output etc
 // 2013/03/28: lot of rework and debugging included, and error handling
 // 2013/03/18: renamed functions, creating .jscad source direct via polyhedron()
 const echo = console.info
@@ -19,34 +18,41 @@ function deserialize (stl, filename, options) {
 
   const isBinary = isDataBinaryRobust(stl)
 
-  if (output === 'jscad') {
-    /* if (err) src += '// WARNING: import errors: ' + err + ' (some triangles might be misaligned or missing)\n' */
-
-    /*
-    if (err) src += '// WARNING: import errors: ' + err + ' (some triangles might be misaligned or missing)\n'
-    src += '// objects: 1\n// object #1: triangles: ' + totalTriangles + '\n\n'
-    src += 'function main() { return '
-    src += vt2jscad(vertices, triangles, normals, colors)
-    src += '; }' */
-    const elementFormatter = ({vertices, triangles, normals, colors, index}) => `// object #${index}: triangles: ${triangles.length}\n${vt2jscad(vertices, triangles, null)}`
-    if (isBinary) {
-      return formatAsJscad(deserializeBinarySTL(stl, filename, version, elementFormatter), addMetaData, version, filename)
-      // code + deserializeBinarySTL(stl, filename, version)
-    } else {
-      return formatAsJscad(deserializeAsciiSTL(stl, filename, version, elementFormatter), addMetaData, version, filename)
+  function convert (buffer) {
+    let binary = ''
+    const bytes = new Uint8Array(buffer)
+    let length = bytes.byteLength
+    for (let i = 0; i < length; i++) {
+      binary += String.fromCharCode(bytes[i])
     }
-    // return isBinary ? code + deserializeBinarySTL(stl, filename, version) : code + deserializeAsciiSTL(stl, filename, version)
-  } else if (output === 'csg') {
-    const elementFormatter = ({vertices, triangles, normals, colors}) => polyhedron({ points: vertices, polygons: triangles })
-    if (isBinary) {
-      return formatAsCsg(deserializeBinarySTL(stl, filename, version, elementFormatter))
-    } else {
-      return formatAsCsg(deserializeAsciiSTL(stl, filename, version, elementFormatter))
-    }
-    // return isBinary ? deserializeBinarySTL(stl, filename, version) : deserializeAsciiSTLToCSG(stl, filename, version)
+    return binary
   }
+
+  stl = isBinary && isBuffer(stl) ? convert(stl) : stl
+
+  const elementFormatterJscad = ({vertices, triangles, normals, colors, index}) => `// object #${index}: triangles: ${triangles.length}\n${vt2jscad(vertices, triangles, null)}`
+  const elementFormatterCSG = ({vertices, triangles, normals, colors}) => polyhedron({ points: vertices, polygons: triangles })
+
+  const deserializer = isBinary ? deserializeBinarySTL : deserializeAsciiSTL
+  const elementFormatter = output === 'jscad' ? elementFormatterJscad : elementFormatterCSG
+  const outputFormatter = output === 'jscad' ? formatAsJscad : formatAsCsg
+
+  return outputFormatter(deserializer(stl, filename, version, elementFormatter), addMetaData, version, filename)
+
+  /*
+  if (err) src += '// WARNING: import errors: ' + err + ' (some triangles might be misaligned or missing)\n'
+  src += '// objects: 1\n// object #1: triangles: ' + totalTriangles + '\n\n'
+  src += 'function main() { return '
+  src += vt2jscad(vertices, triangles, normals, colors)
+  src += '; }' */
 }
 
+// taken from https://github.com/feross/is-buffer if we need it more than once, add as dep
+function isBuffer (obj) {
+  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
+}
+
+// transforms input to string if it was not already the case
 function ensureString (buf) {
   if (typeof buf !== 'string') {
     let arrayBuffer = new Uint8Array(buf)
@@ -60,6 +66,7 @@ function ensureString (buf) {
   }
 }
 
+// reliable binary detection
 function isDataBinaryRobust (data) {
   // console.log('data is binary ?')
   const patternVertex = /vertex[\s]+([\-+]?[0-9]+\.?[0-9]*([eE][\-+]?[0-9]+)?)+[\s]+([\-+]?[0-9]*\.?[0-9]+([eE][\-+]?[0-9]+)?)+[\s]+([\-+]?[0-9]*\.?[0-9]+([eE][\-+]?[0-9]+)?)+/g
@@ -86,7 +93,7 @@ function formatAsCsg (data) {
   return new CSG().union(data)
 }
 
-function deserializeBinarySTL (stl, filename, version) {
+function deserializeBinarySTL (stl, filename, version, elementFormatter) {
     // -- This makes more sense if you read http://en.wikipedia.org/wiki/STL_(file_format)#Binary_STL
   let vertices = []
   let triangles = []
@@ -217,7 +224,7 @@ function deserializeBinarySTL (stl, filename, version) {
     converted++
   }
 
-  return [{vertices, triangles, normals, colors}]
+  return [elementFormatter({vertices, triangles, normals, colors})]
 }
 
 function deserializeAsciiSTL (stl, filename, version, elementFormatter) {
@@ -324,8 +331,6 @@ function deserializeAsciiSTL (stl, filename, version, elementFormatter) {
   }
 
   return elements
-  // src += '); }\n'
-  // return new CSG().union(elements)
 }
 
 // FIXME : just a stand in for now from scad-api, not sure if we should rely on scad-api from here ?
@@ -341,7 +346,7 @@ function polyhedron (p) {
     }
 
     let v = []
-    for (j = ref[i].length - 1; j >= 0; j--) { // --- we reverse order for examples of OpenSCAD work
+    for (let j = ref[i].length - 1; j >= 0; j--) { // --- we reverse order for examples of OpenSCAD work
       v.push(new CSG.Vertex(new CSG.Vector3D(pp[j][0], pp[j][1], pp[j][2])))
     }
     let s = CSG.Polygon.defaultShared

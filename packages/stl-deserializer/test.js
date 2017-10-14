@@ -69,51 +69,50 @@ polyhedron({ points: [
   t.deepEqual(observed, expected)
 })
 
-/*
 test('translate simple binary stl to jscad code', function (t) {
   const inputStlPath = path.resolve(filesPath, 'stl/testcube_10mm.stl')
   const inputStl = fs.readFileSync(inputStlPath)
 
   const expected = `function main() { return union(
 // objects: 1
-// object #1: triangles: 12
+// object #undefined: triangles: 12
 polyhedron({ points: [
-	[1,0,0],
-	[1,1,0],
-	[0,0,0],
-	[1,1,0],
-	[0,1,0],
-	[0,0,0],
-	[0,1,0],
-	[0,1,1],
-	[0,0,0],
-	[0,1,1],
-	[0,0,1],
-	[0,0,0],
-	[1,1,0],
-	[1,1,1],
-	[0,1,0],
-	[1,1,1],
-	[0,1,1],
-	[0,1,0],
-	[1,1,1],
-	[1,1,0],
-	[1,0,0],
-	[1,0,1],
-	[1,1,1],
-	[1,0,0],
-	[1,0,1],
-	[1,0,0],
-	[0,0,0],
-	[0,0,1],
-	[1,0,1],
-	[0,0,0],
-	[1,1,1],
-	[1,0,1],
-	[0,0,1],
-	[0,1,1],
-	[1,1,1],
-	[0,0,1]],
+	[5,-5,5],
+	[5,-5,-5],
+	[-5,-5,-5],
+	[-5,-5,5],
+	[5,-5,5],
+	[-5,-5,-5],
+	[5,-5,-5],
+	[5,5,-5],
+	[-5,5,-5],
+	[-5,-5,-5],
+	[5,-5,-5],
+	[-5,5,-5],
+	[5,-5,5],
+	[5,5,5],
+	[5,5,-5],
+	[5,-5,-5],
+	[5,-5,5],
+	[5,5,-5],
+	[-5,-5,5],
+	[-5,5,5],
+	[5,5,5],
+	[5,-5,5],
+	[-5,-5,5],
+	[5,5,5],
+	[-5,-5,-5],
+	[-5,5,-5],
+	[-5,5,5],
+	[-5,-5,5],
+	[-5,-5,-5],
+	[-5,5,5],
+	[5,5,5],
+	[-5,5,5],
+	[-5,5,-5],
+	[5,5,-5],
+	[5,5,5],
+	[-5,5,-5]],
 	polygons: [
 	[0,1,2],
 	[3,4,5],
@@ -133,7 +132,6 @@ polyhedron({ points: [
   const observed = deserializer.deserialize(inputStl, undefined, {output: 'jscad', addMetaData: false})
   t.deepEqual(observed, expected)
 })
-*/
 
 test('deserialize simple ascii stl to cag/csg objects', function (t) {
   const inputStlPath = path.resolve(filesPath, 'stl/testcube_ascii.stl')
@@ -141,4 +139,20 @@ test('deserialize simple ascii stl to cag/csg objects', function (t) {
 
   const observed = deserializer.deserialize(inputStl, undefined, {output: 'csg', addMetaData: false})
   t.deepEqual(observed.polygons.length, 6)
+})
+
+test('deserialize simple binary stl to cag/csg objects', function (t) {
+  const inputStlPath = path.resolve(filesPath, 'stl/testcube_10mm.stl')
+  const inputStl = fs.readFileSync(inputStlPath)
+
+  const observed = deserializer.deserialize(inputStl, undefined, {output: 'csg', addMetaData: false})
+  t.deepEqual(observed.polygons.length, 6)
+})
+
+test('deserialize more complex binary stl to cag/csg objects', function (t) {
+  const inputStlPath = path.resolve(filesPath, 'stl/herringbone-gear-large.stl')
+  const inputStl = fs.readFileSync(inputStlPath, 'utf8')
+
+  const observed = deserializer.deserialize(inputStl, undefined, {output: 'csg', addMetaData: false})
+  t.deepEqual(observed.polygons.length, 14611)
 })
