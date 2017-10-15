@@ -14,6 +14,28 @@ const objDeSerializer = require('@jscad/obj-deserializer')
 const stlDeSerializer = require('@jscad/stl-deserializer')
 const svgDeSerializer = require('@jscad/svg-deserializer')
 
+// api function that wraps all deserializers , to be used as part of jscad itself
+// TODO: should this return a csg by default ? (YES)
+// TODO: should this also handle file path resolution & reading : NO because it conflates issues, YES because of convenience, for browser UI only)
+function deserialize (input, filename, options) {
+  options = Object.assign({}, options, {output: 'CSG'})
+  const {format} = options
+  if (!format) {
+    throw new Error('no input format specified, cannot load data')
+  }
+  const deserializers = {
+    amf: amfDeSerializer,
+    gcode: gcodeDeSerializer,
+    json: jsonDeSerializer,
+    obj: objDeSerializer,
+    stl: stlDeSerializer,
+    svg: svgSerializer
+  }
+  const deserializer = deserializers[format]
+  const output = deserializer.deserialize(input, filename, options)
+  return output
+}
+
 module.exports = {
   makeBlob,
   amfSerializer,
@@ -28,9 +50,11 @@ module.exports = {
   jsonDeSerializer,
   objDeSerializer,
   stlDeSerializer,
-  svgDeSerializer
+  svgDeSerializer,
+
+  deserialize
 }
-/*export {makeBlob} from './utils/Blob'
+/* export {makeBlob} from './utils/Blob'
 
 import * as CAGToDxf from './serializers/CAGToDxf'
 import * as CAGToJson from './serializers/CAGToJson'
@@ -48,4 +72,4 @@ export {parseGCode} from './deserializers/parseGCode'
 export {parseJSON} from './deserializers/parseJSON'
 export {parseOBJ} from './deserializers/parseOBJ'
 export {parseSTL} from './deserializers/parseSTL'
-export {parseSVG} from './deserializers/parseSVG'*/
+export {parseSVG} from './deserializers/parseSVG' */
