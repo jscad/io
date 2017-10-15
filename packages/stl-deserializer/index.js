@@ -18,17 +18,7 @@ function deserialize (stl, filename, options) {
 
   const isBinary = isDataBinaryRobust(stl)
 
-  function convert (buffer) {
-    let binary = ''
-    const bytes = new Uint8Array(buffer)
-    let length = bytes.byteLength
-    for (let i = 0; i < length; i++) {
-      binary += String.fromCharCode(bytes[i])
-    }
-    return binary
-  }
-
-  stl = isBinary && isBuffer(stl) ? convert(stl) : stl
+  stl = isBinary && isBuffer(stl) ? bufferToBinaryString(stl) : stl
 
   const elementFormatterJscad = ({vertices, triangles, normals, colors, index}) => `// object #${index}: triangles: ${triangles.length}\n${vt2jscad(vertices, triangles, null)}`
   const elementFormatterCSG = ({vertices, triangles, normals, colors}) => polyhedron({ points: vertices, polygons: triangles })
@@ -45,6 +35,16 @@ function deserialize (stl, filename, options) {
   src += 'function main() { return '
   src += vt2jscad(vertices, triangles, normals, colors)
   src += '; }' */
+}
+
+function bufferToBinaryString (buffer) {
+  let binary = ''
+  const bytes = new Uint8Array(buffer)
+  let length = bytes.byteLength
+  for (let i = 0; i < length; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  return binary
 }
 
 // taken from https://github.com/feross/is-buffer if we need it more than once, add as dep
