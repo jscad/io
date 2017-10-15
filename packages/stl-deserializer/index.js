@@ -1,6 +1,6 @@
 const { CSG } = require('@jscad/csg')
 const { vt2jscad } = require('./vt2jscad')
-const BinaryReader = require('./BinaryReader')
+const { BinaryReader } = require('@jscad/io-utils')
 
 // STL function from http://jsfiddle.net/Riham/yzvGD/35/
 // CC BY-SA by Riham
