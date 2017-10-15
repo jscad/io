@@ -1,10 +1,12 @@
 const fs = require('fs')
 const path = require('path')
 const test = require('ava')
-const deserializer = require('./index.js')
+const deserializer = require('../index.js')
 
 const filesPath = path.resolve('../../node_modules/@jscad/sample-files') // require.resolve('@jscad/sample-files')
 
+const polygonsFromCsg = csg => csg.polygons.map(x => x.vertices.map(vert => ([vert.pos.x, vert.pos.y, vert.pos.z])))
+// x=>console.log(
 test('translate simple ascii stl to jscad code', function (t) {
   const inputStlPath = path.resolve(filesPath, 'stl/testcube_ascii.stl')
   const inputStl = fs.readFileSync(inputStlPath, 'utf8')
@@ -139,6 +141,15 @@ test('deserialize simple ascii stl to cag/csg objects', function (t) {
 
   const observed = deserializer.deserialize(inputStl, undefined, {output: 'csg', addMetaData: false})
   t.deepEqual(observed.polygons.length, 6)
+
+  const observedVertices = polygonsFromCsg(observed)
+  const expectedVertices = [ [ [ 1, 1, 0 ], [ 1, 0, 0 ], [ 0, 0, 0 ], [ 0, 1, 0 ] ],
+  [ [ 0, 1, 1 ], [ 0, 1, 0 ], [ 0, 0, 0 ], [ 0, 0, 1 ] ],
+  [ [ 1, 1, 1 ], [ 1, 1, 0 ], [ 0, 1, 0 ], [ 0, 1, 1 ] ],
+  [ [ 1, 1, 0 ], [ 1, 1, 1 ], [ 1, 0, 1 ], [ 1, 0, 0 ] ],
+  [ [ 1, 0, 0 ], [ 1, 0, 1 ], [ 0, 0, 1 ], [ 0, 0, 0 ] ],
+  [ [ 1, 0, 1 ], [ 1, 1, 1 ], [ 0, 1, 1 ], [ 0, 0, 1 ] ] ]
+  t.deepEqual(observedVertices, expectedVertices)
 })
 
 test('deserialize simple binary stl to cag/csg objects', function (t) {
@@ -147,12 +158,49 @@ test('deserialize simple binary stl to cag/csg objects', function (t) {
 
   const observed = deserializer.deserialize(inputStl, undefined, {output: 'csg', addMetaData: false})
   t.deepEqual(observed.polygons.length, 6)
+  const observedVertices = polygonsFromCsg(observed)
+  const expectedVertices = [ [ [ 5, -5, -5 ], [ 5, -5, 5 ], [ -5, -5, 5 ], [ -5, -5, -5 ] ],
+  [ [ 5, 5, -5 ], [ 5, -5, -5 ], [ -5, -5, -5 ], [ -5, 5, -5 ] ],
+  [ [ 5, 5, -5 ], [ 5, 5, 5 ], [ 5, -5, 5 ], [ 5, -5, -5 ] ],
+  [ [ 5, -5, 5 ], [ 5, 5, 5 ], [ -5, 5, 5 ], [ -5, -5, 5 ] ],
+  [ [ -5, 5, 5 ], [ -5, 5, -5 ], [ -5, -5, -5 ], [ -5, -5, 5 ] ],
+  [ [ 5, 5, 5 ], [ 5, 5, -5 ], [ -5, 5, -5 ], [ -5, 5, 5 ] ] ]
+  t.deepEqual(observedVertices, expectedVertices)
 })
 
-test('deserialize more complex binary stl to cag/csg objects', function (t) {
+test('deserialize medium complexity binary stl to cag/csg objects', function (t) {
+  const inputStlPath = path.resolve(filesPath, 'stl/pr2_head_tilt.stl')
+  const inputStl = fs.readFileSync(inputStlPath, 'utf8')
+
+  const observed = deserializer.deserialize(inputStl, undefined, {output: 'csg', addMetaData: false})
+  t.deepEqual(observed.polygons.length, 1074)
+  const observedVertices = polygonsFromCsg(observed)
+  const expectedVertices = JSON.parse(fs.readFileSync(path.join(__dirname, 'pr2_head_tilt_vertices.json'), 'utf8'))
+  t.deepEqual(observedVertices, expectedVertices)
+})
+
+test('deserialize complex ascii stl to cag/csg objects', function (t) {
   const inputStlPath = path.resolve(filesPath, 'stl/herringbone-gear-large.stl')
   const inputStl = fs.readFileSync(inputStlPath, 'utf8')
 
   const observed = deserializer.deserialize(inputStl, undefined, {output: 'csg', addMetaData: false})
   t.deepEqual(observed.polygons.length, 14611)
+  // too many vertices for a reasonable in detail test : even a generated JSON from just the CSG vertices is almost 2 MB !
+
+  // const observedVertices = polygonsFromCsg(observed)
+  // const expectedVertices = JSON.parse(fs.readFileSync('./testExpecteds/herringbone-gear-large.json', 'utf8'))
+  // t.deepEqual(observedVertices, expectedVertices)
+  // fs.writeFileSync('herringbone-gear-large.json', JSON.stringify(observedVertices))
+})
+
+test('deserialize complex binary stl to cag/csg objects (2)', function (t) {
+  const inputStlPath = path.resolve(filesPath, 'stl/UM2CableChain_BedEnd.stl')
+  const inputStl = fs.readFileSync(inputStlPath)
+
+  const observed = deserializer.deserialize(inputStl, undefined, {output: 'csg', addMetaData: false})
+  t.deepEqual(observed.polygons.length, 10241)
+  // too many vertices for a reasonable in detail test : even a generated JSON from just the CSG vertices is almost 2 MB !
+
+  // const observedVertices = polygonsFromCsg(observed)
+  // const expectedVertices = JSON.parse(fs.readFileSync('./testExpecteds/herringbone-gear-large.json', 'utf8'))
 })
