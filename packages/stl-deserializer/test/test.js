@@ -194,7 +194,7 @@ test('deserialize complex ascii stl to cag/csg objects', function (t) {
 })
 
 test('deserialize complex binary stl to cag/csg objects (2)', function (t) {
-  const inputStlPath = path.resolve(filesPath, 'stl/UM2CableChain_BedEnd.stl')
+  const inputStlPath = path.resolve(filesPath, 'stl/UM2CableChain_BedEnd.STL')
   const inputStl = fs.readFileSync(inputStlPath)
 
   const observed = deserializer.deserialize(inputStl, undefined, {output: 'csg', addMetaData: false})
