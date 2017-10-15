@@ -170,10 +170,10 @@ test('deserialize simple binary stl to cag/csg objects', function (t) {
 
 test('deserialize medium complexity binary stl to cag/csg objects', function (t) {
   const inputStlPath = path.resolve(filesPath, 'stl/pr2_head_tilt.stl')
-  const inputStl = fs.readFileSync(inputStlPath, 'utf8')
+  const inputStl = fs.readFileSync(inputStlPath)
 
   const observed = deserializer.deserialize(inputStl, undefined, {output: 'csg', addMetaData: false})
-  t.deepEqual(observed.polygons.length, 1074)
+  t.deepEqual(observed.polygons.length, 849)
   const observedVertices = polygonsFromCsg(observed)
   const expectedVertices = JSON.parse(fs.readFileSync(path.join(__dirname, 'pr2_head_tilt_vertices.json'), 'utf8'))
   t.deepEqual(observedVertices, expectedVertices)
