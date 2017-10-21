@@ -1,3 +1,4 @@
+const path = require('path')
 const {makeBlob} = require('@jscad/io-utils')
 
 const amfSerializer = require('@jscad/amf-serializer')
@@ -17,12 +18,16 @@ const svgDeSerializer = require('@jscad/svg-deserializer')
 // api function that wraps all deserializers , to be used as part of jscad itself
 // TODO: should this return a csg by default ? (YES)
 // TODO: should this also handle file path resolution & reading : NO because it conflates issues, YES because of convenience, for browser UI only)
-function deserialize (input, filename, options) {
+// TODO: how to handle both Node.js and browser envs
+function deserialize (input, options) {
   options = Object.assign({}, options, {output: 'CSG'})
-  const {format} = options
+  const filename = path.basename()
+  const format = path.extname(input) || options.format
+
   if (!format) {
-    throw new Error('no input format specified, cannot load data')
+    throw new Error('no input format specified, and none present in the input path, cannot load data')
   }
+
   const deserializers = {
     amf: amfDeSerializer,
     gcode: gcodeDeSerializer,
