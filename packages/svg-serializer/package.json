@@ -33,6 +33,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@jscad/csg": "latest"
+    "@jscad/csg": "latest",
+    "onml": "^0.4.1"
   }
 }
