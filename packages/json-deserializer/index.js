@@ -87,9 +87,9 @@ function deserialize (src, fn, options) {
   options = Object.assign({}, defaults, options)
   const {version} = options
 
-// convert the JSON into an anonymous object
+  // convert the JSON into an anonymous object
   var obj = JSON.parse(src)
-// convert the internal objects to JSCAD code
+  // convert the internal objects to JSCAD code
   var code = ''
   code += '//\n'
   code += '// producer: OpenJSCAD.org ' + version + ' JSON Importer\n'

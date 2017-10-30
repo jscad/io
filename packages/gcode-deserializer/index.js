@@ -1,10 +1,11 @@
 
-function deserialize (gcode, fn, options) {   // http://reprap.org/wiki/G-code
+function deserialize (gcode, fn, options) {
+  // http://reprap.org/wiki/G-code
   const defaults = {version: '0.0.0'}
   options = Object.assign({}, defaults, options)
   const {version} = options
-                                  // just as experiment ...
-  var l = gcode.split(/[\n]/)   // for now just GCODE ASCII
+  // just as experiment ...
+  var l = gcode.split(/[\n]/) // for now just GCODE ASCII
   var srci = ''
   var d = 0
   var pos = []
@@ -45,12 +46,12 @@ function deserialize (gcode, fn, options) {   // http://reprap.org/wiki/G-code
         } else {
           if (d) pos[a] += v
         }
-            // console.log(d,a,pos.E,lpos.E);
+        // console.log(d,a,pos.E,lpos.E);
         if (d && a === 'E' && lpos.E === undefined) {
           lpos.E = pos.E
         }
         if (d && a === 'E' && (pos.E - lpos.E) > 0) {
-               // console.log(pos.E,lpos.E);
+          // console.log(pos.E,lpos.E);
           e++
         }
       }
@@ -58,7 +59,7 @@ function deserialize (gcode, fn, options) {   // http://reprap.org/wiki/G-code
     if (d && pos.X && pos.Y) {
       if (e) {
         if (!le && lpos.X && lpos.Y) {
-               // console.log(lpos.X,lpos.Y);
+          // console.log(lpos.X,lpos.Y);
           p.push('[' + (lpos.X + origin[0]) + ',' + (lpos.Y + origin[1]) + ']')
         }
         p.push('[' + (pos.X + origin[0]) + ',' + (pos.Y + origin[1]) + ']')
@@ -72,8 +73,8 @@ function deserialize (gcode, fn, options) {   // http://reprap.org/wiki/G-code
         srci += 'EX([' + p.join(', ') + '],{w: ' + lh * 1.1 + ', h:' + lh * 1.02 + ', fn:1, closed: false}).translate([0,0,' + pos['Z'] + '])'
         p = []
         lz = pos.Z
-            // if(layers>2)
-            //   break;
+        // if(layers>2)
+        //   break;
       }
       le = e
       lpos.X = pos.X
@@ -89,7 +90,7 @@ function deserialize (gcode, fn, options) {   // http://reprap.org/wiki/G-code
   src += '// date: ' + (new Date()) + '\n'
   src += '// source: ' + fn + '\n'
   src += '\n'
-   // if(err) src += "// WARNING: import errors: "+err+" (some triangles might be misaligned or missing)\n";
+  // if(err) src += "// WARNING: import errors: "+err+" (some triangles might be misaligned or missing)\n";
   src += '// layers: ' + layers + '\n'
   src += 'function main() {\n\tvar EX = function(p,opt) { return rectangular_extrude(p,opt); }\n\treturn ['
   src += srci
