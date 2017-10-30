@@ -6,9 +6,13 @@
  * @return {csg}
  */
 function ensureManifoldness (input) {
-  input = 'reTesselated' in input ? input.reTesselated() : input
-  input = 'fixTJunctions' in input ? input.fixTJunctions() : input // fixTJunctions also calls this.canonicalized() so no need to do it twice
-  return input
+  const transform = input => {
+    input = 'reTesselated' in input ? input.reTesselated() : input
+    input = 'fixTJunctions' in input ? input.fixTJunctions() : input // fixTJunctions also calls this.canonicalized() so no need to do it twice
+    return input
+  }
+
+  return input.constructor !== Array ? transform(input) : input.map(transform)
 }
 
 module.exports = ensureManifoldness
