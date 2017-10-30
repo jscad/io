@@ -34,10 +34,5 @@
     "serializer",
     "deserializer"
   ],
-  "license": "MIT",
-  "dependencies": {
-  },
-  "devDependencies": {
-    "@jscad/csg": "^0.3.1"
-  }
+  "license": "MIT"
 }

@@ -31,11 +31,5 @@
     "serializer",
     "stl"
   ],
-  "license": "MIT",
-  "devDependencies": {
-    "@jscad/csg": "^0.3.1"
-  },
-  "dependencies": {
-    "@jscad/io-utils": "^0.1.0"
-  }
+  "license": "MIT"
 }
