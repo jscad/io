@@ -73,13 +73,14 @@ BinaryReader.prototype = {
 
     this._pos += size
 
-    return exponent == (bias << 1) + 1 ? significand ? NaN : signal ? -Infinity : +Infinity
+    return exponent === (bias << 1) + 1 ? significand ? NaN : signal ? -Infinity : +Infinity
          : (1 + signal * -2) * (exponent || significand ? !exponent ? Math.pow(2, -bias + 1) * significand
          : Math.pow(2, exponent - bias) * (1 + significand) : 0)
   },
 
   _decodeInt: function (bits, signed) {
-    var x = this._readBits(0, bits, bits / 8), max = Math.pow(2, bits)
+    var x = this._readBits(0, bits, bits / 8)
+    var max = Math.pow(2, bits)
     var result = signed && x >= max / 2 ? x - max : x
 
     this._pos += bits / 8
@@ -88,7 +89,7 @@ BinaryReader.prototype = {
 
    // shl fix: Henri Torgemane ~1996 (compressed by Jonas Raoni)
   _shl: function (a, b) {
-    for (++b; --b; a = ((a %= 0x7fffffff + 1) & 0x40000000) == 0x40000000 ? a * 2 : (a - 0x40000000) * 2 + 0x7fffffff + 1);
+    for (++b; --b; a = ((a %= 0x7fffffff + 1) & 0x40000000) === 0x40000000 ? a * 2 : (a - 0x40000000) * 2 + 0x7fffffff + 1);
     return a
   },
 

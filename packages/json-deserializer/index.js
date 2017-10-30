@@ -13,7 +13,7 @@ Notes:
 */
 
 // import { CSG } from '@jscad/csg'
-const {CSG} = require('@jscad/csg')
+const {CSG, CAG} = require('@jscad/csg')
 
 // //////////////////////////////////////////
 //

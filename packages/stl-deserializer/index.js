@@ -109,7 +109,12 @@ function deserializeBinarySTL (stl, filename, version, elementFormatter) {
   let bmask = parseInt('00111110000000000', 2)
   let br = new BinaryReader(stl)
 
-  let m = 0, c = 0, r = 0, g = 0, b = 0, a = 0
+  let m = 0
+  let c = 0
+  let r = 0
+  let g = 0
+  let b = 0
+  let a = 0
   for (let i = 0; i < 80; i++) {
     switch (m) {
       case 6:
@@ -137,6 +142,7 @@ function deserializeBinarySTL (stl, filename, version, elementFormatter) {
           case 'R':
           case '=':
             m += 1
+            break
           default:
             break
         }

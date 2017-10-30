@@ -6,41 +6,50 @@ function deserialize (gcode, fn, options) {   // http://reprap.org/wiki/G-code
                                   // just as experiment ...
   var l = gcode.split(/[\n]/)   // for now just GCODE ASCII
   var srci = ''
-  var d = 0, pos = [], lpos = [], le = 0, ld = 0, p = []
+  var d = 0
+  var pos = []
+  var lpos = []
+  var le = 0
+  var p = []
   var origin = [-100, -100]
   var layers = 0
-  var lh = 0.35, lz = 0
+  var lh = 0.35
+  var lz = 0
+  var ld = 0
 
   for (var i = 0; i < l.length; i++) {
-    var val = '', k, e = 0
+    var val = ''
+    var k
+    var e = 0
     if (l[i].match(/^\s*;/)) { continue }
     var c = l[i].split(/\s+/)
     for (var j = 0; j < c.length; j++) {
       if (c[j].match(/G(\d+)/)) {
         var n = parseInt(RegExp.$1)
-        if (n == 1) d++
-        if (n == 90) pos.type = 'abs'
-        if (n == 91) pos.type = 'rel'
+        if (n === 1) d++
+        if (n === 90) pos.type = 'abs'
+        if (n === 91) pos.type = 'rel'
       } else if (c[j].match(/M(\d+)/)) {
-        var n = parseInt(RegExp.$1)
-        if (n == 104 || n == 109) { k = 'temp' }
+        let n = parseInt(RegExp.$1)
+        if (n === 104 || n === 109) { k = 'temp' }
       } else if (c[j].match(/S([\d\.]+)/)) {
         var v = parseInt(RegExp.$1)
         if (k !== undefined) {
           val[k] = v
         }
       } else if (c[j].match(/([XYZE])([\-\d\.]+)/)) {
-        var a = RegExp.$1, v = parseFloat(RegExp.$2)
-        if (pos.type == 'abs') {
+        var a = RegExp.$1
+        let v = parseFloat(RegExp.$2)
+        if (pos.type === 'abs') {
           if (d) pos[a] = v
         } else {
           if (d) pos[a] += v
         }
             // console.log(d,a,pos.E,lpos.E);
-        if (d && a == 'E' && lpos.E === undefined) {
+        if (d && a === 'E' && lpos.E === undefined) {
           lpos.E = pos.E
         }
-        if (d && a == 'E' && (pos.E - lpos.E) > 0) {
+        if (d && a === 'E' && (pos.E - lpos.E) > 0) {
                // console.log(pos.E,lpos.E);
           e++
         }
@@ -56,7 +65,7 @@ function deserialize (gcode, fn, options) {   // http://reprap.org/wiki/G-code
       }
       if (!e && le && p.length > 1) {
         if (srci.length) srci += ',\n\t\t'
-        if (pos.Z != lz) {
+        if (pos.Z !== lz) {
           lh = pos.Z - lz
           layers++
         }
