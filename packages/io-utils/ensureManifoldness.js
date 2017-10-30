@@ -5,10 +5,10 @@
  * @param {string} title - The title of the book.
  * @return {csg}
  */
-function ensureManifoldness (csg) {
-  csg = csg.reTesselated ? csg.reTesselated() : csg
-  csg = csg.canonicalized ? csg.canonicalized() : csg
-  return csg
+function ensureManifoldness (input) {
+  input = 'reTesselated' in input ? input.reTesselated() : input
+  input = 'fixTJunctions' in input ? input.fixTJunctions() : input // fixTJunctions also calls this.canonicalized() so no need to do it twice
+  return input
 }
 
 module.exports = ensureManifoldness
