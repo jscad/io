@@ -674,6 +674,196 @@ function instantiateCircle (obj, layers, colorindex) {
   return new CAG.cylinder({start: [pptx,ppty,pptz],end: [x,y,z],radius: swid,resolution: CSG.defaultResolution3D})
 }
 
+function createEdges(vlen, faces) {
+  let edges = []
+  while (vlen > 0) {
+    edges.push([])
+    vlen--
+  }
+  let mod3 = Math.floor(faces.length / 3) * 3
+  if (mod3 === faces.length) {
+    let fi = 0
+    while (fi < faces.length) {
+      let v1 = faces[fi++]
+      let v2 = faces[fi++]
+      let v3 = faces[fi++]
+      if (v1 === v2 || v1 === v3 || v2 === v3) continue
+
+      let edge = edges[v1]
+      if (edge.indexOf(v2) < 0) { edge.push(v2) }
+      if (edge.indexOf(v3) < 0) { edge.push(v3) }
+
+      edge = edges[v2]
+      if (edge.indexOf(v3) < 0) { edge.push(v3) }
+      if (edge.indexOf(v1) < 0) { edge.push(v1) }
+
+      edge = edges[v3]
+      if (edge.indexOf(v1) < 0) { edge.push(v1) }
+      if (edge.indexOf(v2) < 0) { edge.push(v2) }
+    }
+  }
+  return edges
+}
+function createFaces(edgesByVertex) {
+  let v1 = edgesByVertex.length
+  let faces = []
+  while (v1 > 0) {
+    v1--
+    let v1edges = edgesByVertex[v1]
+    let e1i = v1edges.length
+    while (e1i > 0) {
+      e1i--
+      let v2 = v1edges[e1i]
+      let v2edges = edgesByVertex[v2]
+    // search for common vertexes
+      let e2i = v2edges.length
+      while (e2i > 0) {
+        e2i--
+        let v3 = v2edges[e2i]
+        if (v1edges.indexOf(v3) < 0) continue
+      // save this face
+        faces.push([v1,v2,v3])
+      }
+    }
+  }
+  return faces
+}
+
+function instantiateFaces(fvals) {
+  let faces = []
+  let vi = 0
+  while (vi < fvals.length) {
+    let fi = fvals[vi++]
+    let face = []
+    while (fi > 0) {
+      face.push(fvals[vi++])
+      fi--
+    }
+    faces.push(face)
+  }
+  return faces
+}
+function instantiatePoints(pptxs,pptys,pptzs) {
+  let points = []
+  let vi = 0
+  while (vi < pptxs.length) {
+    let x = pptxs[vi]
+    let y = pptys[vi]
+    let z = pptzs[vi]
+    points.push([x,y,z])
+    vi++
+  }
+  return points
+}
+
+//
+// instantiate the MESH as an CSG object, consisting of the polygons given
+//
+// Note: See Face-Vertex meshes on Wikipedia
+//
+function instantiateMesh (obj, layers, colorindex) {
+// expected values
+  let vlen = obj['vlen']
+  let pptxs = obj['pptxs'] // vertices
+  let pptys = obj['pptys']
+  let pptzs = obj['pptzs']
+
+  let flen = obj['flen']
+  let fvals = obj['fvals'] // faces
+
+// conversion
+  let cn = getColorNumber(obj,layers)
+  let shared = getColor(cn,colorindex)
+
+  CSG._CSGDEBUG = false
+
+  let polygons = []
+  if (vlen === pptxs.length && vlen === pptys.length && vlen === pptzs.length) {
+    if (flen === fvals.length) {
+      let faces  = instantiateFaces(fvals)
+//console.log(faces)
+      let points = instantiatePoints(pptxs,pptys,pptzs)
+//console.log(points)
+
+      let fi = 0
+      while (fi < faces.length) {
+        let face = faces[fi]
+        let vectors  = []
+        let vertices = [] // did i hear someone say REDUNDANCY
+        let vi = 0
+        while (vi < face.length) {
+          let pi = face[vi]
+          let vector = new CSG.Vector3D(points[pi])
+          vectors.push(vector)
+          let vertex = new CSG.Vertex(vector)
+          vertices.push(vertex)
+          vi++
+        }
+        let plane = CSG.Plane.fromVector3Ds(vectors[0],vectors[1],vectors[2])
+//console.log("plane: "+plane.toString())
+     // polygons need to be CCW rotation about the normal
+
+        let normal = plane.normal
+        let w1 = vectors[0]
+        let w2 = vectors[1]
+        let w3 = vectors[2]
+        let e1 = w2.minus(w1)
+        let e2 = w3.minus(w1)
+        let t = new CSG.Vector3D(normal).dot(e1.cross(e2))
+        if (t > 0) {    // 1,2,3 -> 3,2,1
+//console.log('reverse')
+          //vertices.reverse()
+        }
+
+        //let poly = CSG.Polygon.createFromPoints([p1,p2,p3],shared)
+        let poly = new CSG.Polygon(vertices,shared)
+        polygons.push( poly )
+
+        fi++
+      }
+/*
+        let v1 = fvals[fi++]
+        let v2 = fvals[fi++]
+        let v3 = fvals[fi++]
+//console.log('Vs: '+v1+','+v2+','+v3)
+        if (v1 === v2 || v1 === v3 || v2 === v3) continue
+        let p1 = new CSG.Vector3D([pptxs[v1],pptys[v1],pptzs[v1]])
+        let p2 = new CSG.Vector3D([pptxs[v2],pptys[v2],pptzs[v2]])
+        let p3 = new CSG.Vector3D([pptxs[v3],pptys[v3],pptzs[v3]])
+    // check for CW vs CCW polygons
+        let plane = CSG.Plane.fromVector3Ds(p1,p2,p3)
+//console.log("plane: "+plane.toString())
+        let normal = plane.normal
+        if (isNaN(normal.x)) continue
+//console.log("normal: "+normal.toString())
+
+      let w1 = new CSG.Vector3D(p1)
+      let w2 = new CSG.Vector3D(p2)
+      let w3 = new CSG.Vector3D(p3)
+      let e1 = w2.minus(w1)
+      let e2 = w3.minus(w1)
+      let t = new CSG.Vector3D(normal).dot(e1.cross(e2))
+      if (t > 0) {    // 1,2,3 -> 3,2,1
+//console.log('reverse')
+        let tmp = p1
+        p1 = p3
+        p3 = tmp
+      }
+      let poly = CSG.Polygon.createFromPoints([p1,p2,p3],shared,plane)
+      }
+        let poly = CSG.Polygon.createFromPoints([p1,p2,p3],shared)
+//console.log("polygon: "+poly.toString())
+        //let c = poly.checkIfConvex()
+//console.log("poly convex: "+c)
+*/
+    } else {
+    }
+  } else {
+  // invalid vlen
+  }
+  return CSG.fromPolygons(polygons)
+}
+
 function findLayer(obj, layers) {
   let lname = obj['lnam'] || '0'
   for (let layer of layers) {
@@ -703,7 +893,7 @@ function getColorNumber(obj,layers) {
 }
 
 function mod(num, mod) {
-  var remain = num % mod;
+  let remain = num % mod;
   return Math.floor(remain >= 0 ? remain : remain + mod);
 }
 
@@ -736,11 +926,23 @@ function getPolyType(obj) {
   return ptype
 }
 
+function completeCurrent(objects,baseobj,polygons,vectors) {
+  if (baseobj instanceof CSG.Path2D) {
+console.log('##### completing Path2D')
+    objects.push( new CSG.Path2D(vectors, baseobj.closed) )
+  }
+  if (baseobj instanceof CSG) {
+console.log('##### completing CSG')
+    objects.push( CSG.fromPolygons(polygons) )
+  }
+  return null
+}
+
 function instantiateAsciiDxf (src, options) {
   let reader = createReader(src, options)
 console.log('**************************************************')
-console.log(JSON.stringify(reader.objstack));
-console.log('**************************************************')
+//console.log(JSON.stringify(reader.objstack));
+//console.log('**************************************************')
 
   let layers   = []   // list of layers with various information like color
   let current  = null // the object being created
@@ -748,7 +950,7 @@ console.log('**************************************************')
   let objects  = []   // the list of objects instantiated
   let vectors  = []   // the list of vectors for paths or meshes
 
-  var p = null
+  let p = null
   for (let obj of reader.objstack) {
     p = null
 
@@ -759,36 +961,51 @@ console.log('**************************************************')
 
     switch (obj.type) {
 //console.log(JSON.stringify(obj));
+      case 'dxf':
+        break
       case 'layer':
 console.log('##### layer')
+        current = completeCurrent(objects,current,polygons,vectors)
         layers.push(obj)
+        break
+      case 'variable':
+        current = completeCurrent(objects,current,polygons,vectors)
         break
 
     // 3D entities
       case '3dface':
 console.log('##### 3dface')
         p = instantiatePolygon(obj,layers,options.colorindex)
-        if (current === null) { current = new CSG() }
+        if (current === null) {
+console.log('##### start of 3dfaces CSG')
+          current = new CSG()
+        }
         break
       case 'mesh':
 console.log('##### mesh')
+        current = completeCurrent(objects,current,polygons,vectors)
+        objects.push( instantiateMesh(obj,layers,options.colorindex) )
         break
 
     // 2D or 3D entities
       case 'arc':
 console.log('##### arc')
+        current = completeCurrent(objects,current,polygons,vectors)
         objects.push( instantiateArc(obj,layers,options.colorindex) )
         break
       case 'circle':
 console.log('##### circle')
+        current = completeCurrent(objects,current,polygons,vectors)
         objects.push( instantiateCircle(obj,layers,options.colorindex) )
         break
       case 'ellipse':
 console.log('##### ellipse')
+        current = completeCurrent(objects,current,polygons,vectors)
         //objects.push( instantiateCircle(obj,layers,options.colorindex) )
         break
       case 'line':
 console.log('##### line')
+        current = completeCurrent(objects,current,polygons,vectors)
         objects.push( instantiateLine3D(obj) )
         break
       case 'polyline':
@@ -802,22 +1019,19 @@ console.log('##### vertex')
         p = instantiateVertex(obj)
         break
       case 'seqend':
-        if (current !== null) {
-          if (current instanceof CSG.Path2D) {
-console.log('##### instantiateing Path2D of '+current)
-            objects.push( new CSG.Path2D( vectors, current.closed ) )
-          }
-          current = null
-        }
+        current = completeCurrent(objects,current,polygons,vectors)
         break
 
     // 2D entities
       case 'lwpolyline':
 console.log('##### lwpolyline')
+        current = completeCurrent(objects,current,polygons,vectors)
         objects.push( instantiatePath2D(obj,layers) )
         break
 
       default:
+console.log('##### ERROR')
+console.log(obj.type)
         break
     }
   // accumlate polygons if necessary
@@ -833,19 +1047,17 @@ console.log('##### lwpolyline')
     }
   }
 // instantiate the last object if necessary
-  if (current instanceof CSG) {
-    objects.push( CSG.fromPolygons(polygons) )
-  }
+  current = completeCurrent(objects,current,polygons,vectors)
 // add accumulated objects
 
 // debug output
-console.log('**************************************************')
-  objects.forEach(
-    function(e) {
-      console.log(JSON.stringify(e));
-    }
-  );
-console.log('**************************************************')
+//console.log('**************************************************')
+//  objects.forEach(
+//    function(e) {
+//      console.log(JSON.stringify(e));
+//    }
+//  );
+//console.log('**************************************************')
   return objects
 }
 
@@ -858,17 +1070,17 @@ function instantiate (src, fn, options) {
   options.colorindex = options.colorindex || colorIndex
 
   // FIXME handle both ASCII and BINARY
-  var objs = instantiateAsciiDxf(src, options)
+  let objs = instantiateAsciiDxf(src, options)
   return objs
 }
 
 // Options:
 //
 function translate (src, filename, options) {
-  var code = ''
-  var n = 0
-  var converted = 0
-  var o
+  let code = ''
+  let n = 0
+  let converted = 0
+  let o
 
   code += '// producer: OpenJSCAD Compatibility (' + options.version + ') DXF ASCII Importer\n'
   code += '// date: ' + (new Date()) + '\n'
