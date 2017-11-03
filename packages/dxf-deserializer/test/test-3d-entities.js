@@ -20,8 +20,8 @@ test('ASCII DXF from Bourke 3D Entities to Object Conversion', t => {
 // expect one layer, containing 2 objects (CSG, and Line3D)
   t.true(Array.isArray(objs))
   t.is(objs.length,2)
-  t.true(objs[0] instanceof CSG.Line3D)
-  t.true(objs[1] instanceof CSG)
+  t.true(objs[0] instanceof CSG)
+  t.true(objs[1] instanceof CSG.Line3D)
 })
 
 test('ASCII DXF from JSCAD 3D Shapes to Object Conversion',  t => {
@@ -111,7 +111,7 @@ test('ASCII DXF from Autocad2017 3D Lines to Object Conversion',  t => {
 })
 
 
-test.skip('ASCII DXF from Autocad2017 3D Boxes to Object Conversion',  t => {
+test('ASCII DXF from Autocad2017 3D Boxes to Object Conversion',  t => {
   let dxfPath = path.resolve(__dirname, '../../../../sample-files/dxf/autocad2017/3Dboxes.dxf')
   t.deepEqual(true, fs.existsSync(dxfPath))
 
@@ -124,7 +124,7 @@ test.skip('ASCII DXF from Autocad2017 3D Boxes to Object Conversion',  t => {
 })
 
 
-test.skip('ASCII DXF from Autocad2017 3D Drawing Shapes to Object Conversion',  t => {
+test('ASCII DXF from Autocad2017 3D Drawing Shapes to Object Conversion',  t => {
   let dxfPath = path.resolve(__dirname, '../../../../sample-files/dxf/autocad2017/3Ddraw.dxf')
   t.deepEqual(true, fs.existsSync(dxfPath))
 
@@ -137,15 +137,38 @@ test.skip('ASCII DXF from Autocad2017 3D Drawing Shapes to Object Conversion',  
 })
 
 
-test.skip('ASCII DXF from Autocad2017 3D Mesh to Object Conversion',  t => {
-  let dxfPath = path.resolve(__dirname, '../../../../sample-files/dxf/autocad2017/3Dmesh01.dxf')
+test('ASCII DXF from exdxf 3D Mesh to Object Conversion',  t => {
+  let dxfPath = path.resolve(__dirname, '../../../../sample-files/dxf/ezdxf/AC1027_mesh.dxf')
   t.deepEqual(true, fs.existsSync(dxfPath))
 
   let dxf  = fs.readFileSync(dxfPath, 'UTF8')
   let objs = deserialize(dxf,'3Dmesh01',{output: 'csg'})
 
-// expect nothing as 3DSOLID entities cannot be converted
+// expect 2D and 3D objects
   t.true(Array.isArray(objs))
-  t.is(objs.length,0)
+  t.is(objs.length,5)
+
+  let obj4 = objs[4]
+  t.is(obj4.toPolygons().length,6)
+})
+
+
+test('ASCII DXF from Autocad2017 3D Mesh to Object Conversion',  t => {
+  let dxfPath = path.resolve(__dirname, '../../../../sample-files/dxf/autocad2017/3Dmesh01.dxf')
+  //let dxfPath = path.resolve(__dirname, '../../../../sample-files/dxf/ezdxf/AC1027_mesh.dxf')
+  t.deepEqual(true, fs.existsSync(dxfPath))
+
+  let dxf  = fs.readFileSync(dxfPath, 'UTF8')
+  let objs = deserialize(dxf,'3Dmesh01',{output: 'csg'})
+
+// expect 3D objects
+  t.true(Array.isArray(objs))
+  t.is(objs.length,2)
+
+  let obj0 = objs[0]
+  t.is(obj0.toPolygons().length,54)
+
+  let obj1 = objs[1]
+  t.is(obj1.toPolygons().length,54)
 })
 
