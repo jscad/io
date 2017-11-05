@@ -8,9 +8,30 @@ const polygonsFromCsg = csg => csg.polygons.map(x => x.vertices.map(vert => ([ve
 
 test('translate simple amf file to jscad code', function (t) {
   const inputPath = path.resolve(filesPath, 'obj/cube.obj')
-  const inputFile = fs.readFileSync(inputPath)
+  const inputFile = fs.readFileSync(inputPath, 'utf8')
 
-  const expected = ``
+  const expected = `// objects: 1
+// object #1: polygons: 6
+function main() { return
+polyhedron({ points: [
+  [-0.5,-0.5,0.5],
+  [-0.5,-0.5,-0.5],
+  [-0.5,0.5,-0.5],
+  [-0.5,0.5,0.5],
+  [0.5,-0.5,0.5],
+  [0.5,-0.5,-0.5],
+  [0.5,0.5,-0.5],
+  [0.5,0.5,0.5]],
+  polygons: [
+  [3,2,1,0],
+  [1,5,4,0],
+  [2,6,5,1],
+  [7,6,2,3],
+  [4,7,3,0],
+  [5,6,7,4]] })
+
+}
+  `
 
   const observed = deserializer.deserialize(inputFile, undefined, {output: 'jscad', addMetaData: false})
   t.deepEqual(observed, expected)
