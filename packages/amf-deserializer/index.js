@@ -707,7 +707,7 @@ function deserialize (src, filename, options) {
   const parser = createAmfParser(src)
   // convert the internal objects to JSCAD code
   let code = addMetaData ? `//
-  // producer: OpenJSCAD.org Compatibility${version} AMF Importer
+  // producer: OpenJSCAD.org Compatibility${version} AMF deserializer
   // date: ${new Date()}
   // source: ${filename}
   //
