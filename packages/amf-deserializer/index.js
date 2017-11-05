@@ -698,21 +698,21 @@ function codify (amf, data) {
 // options (optional) anonymous object with:
 // pxPmm: pixels per milimeter for calcuations
 // FIXME: add openjscad version in a cleaner manner ?
-function deserialize (src, fn, options) {
-  fn = fn || 'amf'
-  const defaults = {version: '0.0.0'}
+function deserialize (src, filename, options) {
+  const defaults = {version: '0.0.0', addMetaData: true, output: 'jscad'}
   options = Object.assign({}, defaults, options)
-  const {version} = options
+  const {version, output, addMetaData} = options
 
   // parse the AMF source
   const parser = createAmfParser(src)
   // convert the internal objects to JSCAD code
-  var code = ''
-  code += '//\n'
-  code += '// producer: OpenJSCAD.org ' + version + ' AMF Importer\n'
-  code += '// date: ' + (new Date()) + '\n'
-  code += '// source: ' + fn + '\n'
-  code += '//\n'
+  let code = addMetaData ? `//
+  // producer: OpenJSCAD.org Compatibility${version} AMF Importer
+  // date: ${new Date()}
+  // source: ${filename}
+  //
+  ` : ''
+
   if (parser.amfObj !== null) {
     // console.log(JSON.stringify(parser.amfObj))
     // console.log(JSON.stringify(parser.amfMaterials))
