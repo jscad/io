@@ -1,26 +1,26 @@
 const { vt2jscad } = require('./vt2jscad')
 
-function deserialize (obj, fn, options) { // http://en.wikipedia.org/wiki/Wavefront_.obj_file
-  const defaults = {version: '0.0.0'}
+function deserialize (obj, filename, options) { // http://en.wikipedia.org/wiki/Wavefront_.obj_file
+  const defaults = {version: '0.0.0', addMetaData: true, output: 'jscad'}
   options = Object.assign({}, defaults, options)
-  const {version} = options
+  const {version, output, addMetaData} = options
 
-  var l = obj.split(/\n/)
-  var v = []
-  var f = []
+  let l = obj.split(/\n/)
+  let v = []
+  let f = []
 
-  for (var i = 0; i < l.length; i++) {
-    var s = l[i]
-    var a = s.split(/\s+/)
+  for (let i = 0; i < l.length; i++) {
+    let s = l[i]
+    let a = s.split(/\s+/)
 
     if (a[0] === 'v') {
       v.push([a[1], a[2], a[3]])
     } else if (a[0] === 'f') {
-      var fc = []
-      var skip = 0
+      let fc = []
+      let skip = 0
 
-      for (var j = 1; j < a.length; j++) {
-        var c = a[j]
+      for (let j = 1; j < a.length; j++) {
+        let c = a[j]
         c = c.replace(/\/.*$/, '') // -- if coord# is '840/840' -> 840
         c-- // -- starts with 1, but we start with 0
         if (c >= v.length) {
@@ -38,17 +38,20 @@ function deserialize (obj, fn, options) { // http://en.wikipedia.org/wiki/Wavefr
       // vn vt and all others disregarded
     }
   }
-  var src = ''
-  src += '// producer: OpenJSCAD Compatibility (' + version + ') Wavefront OBJ Importer\n'
-  src += '// date: ' + (new Date()) + '\n'
-  src += '// source: ' + fn + '\n'
-  src += '\n'
+  let code = addMetaData ? `//
+  // producer: OpenJSCAD.org Compatibility${version} OBJ deserializer
+  // date: ${new Date()}
+  // source: ${filename}
+  //
+  ` : ''
   // if(err) src += "// WARNING: import errors: "+err+" (some triangles might be misaligned or missing)\n";
-  src += '// objects: 1\n// object #1: polygons: ' + f.length + '\n\n'
-  src += 'function main() { return '
-  src += vt2jscad(v, f)
-  src += '; }'
-  return src
+  code += `// objects: 1
+// object #1: polygons: ${f.length}
+function main() { return
+${vt2jscad(v, f)}
+}
+  `
+  return code
 }
 
 module.exports = {
