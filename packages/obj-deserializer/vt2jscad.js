@@ -1,21 +1,21 @@
-// vertices, triangles, normals and colors
-function vt2jscad (v, t, n, c) {
+// positions, triangles, normals and colors
+function vt2jscad (positions, triangles, normals, colors) {
   let src = ''
   src += 'polyhedron({ points: [\n  '
-  for (let i = 0, j = 0; i < v.length; i++) {
+  for (let i = 0, j = 0; i < positions.length; i++) {
     if (j++) src += ',\n  '
-    src += '[' + v[i] + ']' // .join(", ");
+    src += '[' + positions[i] + ']' // .join(", ");
   }
   src += '],\n  polygons: [\n  '
-  for (let i = 0, j = 0; i < t.length; i++) {
+  for (let i = 0, j = 0; i < triangles.length; i++) {
     if (j++) src += ',\n  '
-    src += '[' + t[i] + ']' // .join(', ');
+    src += '[' + triangles[i] + ']' // .join(', ');
   }
-  if (c && t.length === c.length) {
+  if (colors && triangles.length === colors.length) {
     src += '],\n\tcolors: [\n  '
-    for (let i = 0, j = 0; i < c.length; i++) {
+    for (let i = 0, j = 0; i < colors.length; i++) {
       if (j++) src += ',\n  '
-      src += '[' + c[i] + ']' // .join(', ');
+      src += '[' + colors[i] + ']' // .join(', ');
     }
   }
   src += '] })\n'
