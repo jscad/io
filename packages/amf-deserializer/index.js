@@ -456,11 +456,12 @@ function codify (amf, data) {
       let fcount = faces.length
       let vcount = vertices.length
 
-      code += '// Object ' + obj.id + '\n'
-      code += '//  faces   : ' + fcount + '\n'
-      code += '//  vertices: ' + vcount + '\n'
-      code += 'function createObject' + obj.id + '() {\n'
-      code += '  let polys = [];\n'
+      code += `// Object ${obj.id}
+//  faces   : ${fcount}
+//  vertices: ${vcount}
+function createObject${obj.id}() {
+  let polys = [];
+`
 
       // convert the results into function calls
       for (let i = 0; i < fcount; i++) {
@@ -487,32 +488,40 @@ function codify (amf, data) {
   }
 
   // start everthing
-  code = '// Objects  : ' + objects.length + '\n'
-  code += '// Materials: ' + materials.length + '\n'
-  code += '\n'
-  code += '// helper functions\n'
+  code = `// Objects  : ${objects.length}
+// Materials: ${materials.length}
+
+// helper functions
+`
+
   if (amf.scale !== 1.0) {
     code += 'let SCALE = ' + amf.scale + '; // scaling units (' + amf.unit + ')\n'
     code += 'let VV = function(x,y,z) { return new CSG.Vertex(new CSG.Vector3D(x*SCALE,y*SCALE,z*SCALE)); };\n'
   } else {
     code += 'let VV = function(x,y,z) { return new CSG.Vertex(new CSG.Vector3D(x,y,z)); };\n'
   }
-  code += 'let PP = function(a) { return new CSG.Polygon(a); };\n'
-  code += '\n'
-  code += 'function main() {\n'
-  code += '  let csgs = [];\n'
+  code += `let PP = function(a) { return new CSG.Polygon(a); };
+
+function main() {
+  let csgs = [];
+`
   for (let i = 0; i < objects.length; i++) {
     let obj = objects[i]
     if (obj.type === 'object') {
       code += '  csgs.push(createObject' + obj.id + '());\n'
     }
   }
-  code += '  return union(csgs);\n'
-  code += '}\n'
-  code += '\n'
+  code += `  return union(csgs);
+}
+
+`
 
   objects.map(createDefinition, data)
   return code
+}
+
+const objectify = (amf, data) => {
+
 }
 
 const translate = function (src, filename, options) {
