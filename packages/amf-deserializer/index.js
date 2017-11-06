@@ -21,8 +21,44 @@ History:
 //
 // //////////////////////////////////////////
 const sax = require('sax')
+const {amfMesh,
+amfVertices,
+amfCoordinates,
+amfX,
+amfY,
+amfZ,
+amfNormal,
+amfVolume,
+amfTriangle,
+amfV1,
+amfV2,
+amfV3,
+amfVertex,
+amfEdge,
+amfMetadata,
+amfMaterial,
+amfColor,
+amfR,
+amfG,
+amfB,
+amfA,
+amfMap,
+amfU1,
+amfU2,
+amfU3} = require('./helpers')
 
 const inchMM = (1 / 0.039370) // used for scaling AMF (inch) to CAG coordinates(MM)
+
+let amfLast = null // last object found
+let amfDefinition = 0 // definitions beinging created
+// 0-AMF,1-object,2-material,3-texture,4-constellation,5-metadata
+// high level elements / definitions
+let amfObjects = [] // list of objects
+let amfMaterials = [] // list of materials
+let amfTextures = [] // list of textures
+let amfConstels = [] // list of constellations
+// let amfMetadata = [] // list of metadata
+let amfObj = null // amf in object form
 
 // processing controls
 sax.SAXParser.prototype.amfLast = null // last object found
@@ -34,8 +70,6 @@ sax.SAXParser.prototype.amfMaterials = [] // list of materials
 sax.SAXParser.prototype.amfTextures = [] // list of textures
 sax.SAXParser.prototype.amfConstels = [] // list of constellations
 sax.SAXParser.prototype.amfMetadata = [] // list of metadata
-
-sax.SAXParser.prototype.amfObj = null // amf in object form
 
 function amfAmf (element) {
   // default SVG with no viewport
@@ -65,279 +99,87 @@ function amfAmf (element) {
   return obj
 }
 
-sax.SAXParser.prototype.amfObject = function (element) {
-  var obj = {type: 'object', id: 'JSCAD' + (this.amfObjects.length)} // default ID
+const amfObject = function (element) {
+  var obj = {type: 'object', id: 'JSCAD' + (amfObjects.length)} // default ID
 
   if ('ID' in element) { obj.id = element.ID }
 
   obj.objects = []
   return obj
-}
-
-function amfMesh (element) {
-  var obj = {type: 'mesh'}
-
-  obj.objects = []
-  return obj
-}
-
-// Note: TBD Vertices can have a color, which is used to interpolate a face color (from the 3 vertices)
-function amfVertices (element) {
-  var obj = {type: 'vertices'}
-  obj.objects = []
-  return obj
-}
-
-function amfCoordinates (element) {
-  var obj = {type: 'coordinates'}
-
-  obj.objects = []
-  return obj
-}
-function amfNormal (element) {
-  var obj = {type: 'normal'}
-
-  obj.objects = []
-  return obj
-}
-function amfX (element) {
-  return {type: 'x', value: '0'}
-}
-function amfY (element) {
-  return {type: 'y', value: '0'}
-}
-function amfZ (element) {
-  return {type: 'z', value: '0'}
-}
-
-function amfVolume (element) {
-  var obj = {type: 'volume'}
-
-  if ('MATERIALID' in element) { obj.materialid = element.MATERIALID }
-
-  obj.objects = []
-  return obj
-}
-
-function amfTriangle (element) {
-  var obj = {type: 'triangle'}
-
-  obj.objects = []
-  return obj
-}
-function amfV1 (element) {
-  return {type: 'v1', value: '0'}
-}
-function amfV2 (element) {
-  return {type: 'v2', value: '0'}
-}
-function amfV3 (element) {
-  return {type: 'v3', value: '0'}
-}
-
-function amfVertex (element) {
-  var obj = {type: 'vertex'}
-  obj.objects = []
-  return obj
-}
-
-function amfEdge (element) {
-  var obj = {type: 'edge'}
-
-  obj.objects = []
-  return obj
-}
-
-function amfMetadata (element) {
-  var obj = {type: 'metadata'}
-
-  if ('TYPE' in element) { obj.mtype = element.TYPE }
-  if ('ID' in element) { obj.id = element.ID }
-
-  return obj
-}
-
-function amfMaterial (element) {
-  var obj = {type: 'material'}
-
-  if ('ID' in element) { obj.id = element.ID }
-
-  obj.objects = []
-  return obj
-}
-
-function amfColor (element) {
-  var obj = {type: 'color'}
-
-  obj.objects = []
-  return obj
-}
-function amfR (element) {
-  return {type: 'r', value: '1'}
-}
-function amfG (element) {
-  return {type: 'g', value: '1'}
-}
-function amfB (element) {
-  return {type: 'b', value: '1'}
-}
-function amfA (element) {
-  return {type: 'a', value: '1'}
-}
-
-function amfMap (element) {
-  var obj = {type: 'map'}
-
-  if ('GTEXID' in element) { obj.gtexid = element.GTEXID }
-  if ('BTEXID' in element) { obj.btexid = element.BTEXID }
-  if ('RTEXID' in element) { obj.rtexid = element.RTEXID }
-
-  obj.objects = []
-  return obj
-}
-
-function amfU1 (element) {
-  return {type: 'u1', value: '0'}
-}
-function amfU2 (element) {
-  return {type: 'u2', value: '0'}
-}
-function amfU3 (element) {
-  return {type: 'u3', value: '0'}
 }
 
 function createAmfParser (src, pxPmm) {
   // create a parser for the XML
-  var parser = sax.parser(false, {trim: true, lowercase: false, position: true})
+  const parser = sax.parser(false, {trim: true, lowercase: false, position: true})
 
   parser.onerror = function (e) {
     console.log('error: line ' + e.line + ', column ' + e.column + ', bad character [' + e.c + ']')
   }
   parser.onopentag = function (node) {
-    // console.log('opentag: '+node.name+' at line '+this.line+' position '+this.column);
-    // for (x in node.attributes) {
-    //  console.log('    '+x+'='+node.attributes[x]);
-    // }
-    // case 'VTEX1':
-    // case 'VTEX2':
-    // case 'VTEX3':
-
-    var obj = null
-    switch (node.name) {
-      // top level elements
-      case 'AMF':
-        obj = amfAmf(node.attributes)
-        break
-      case 'OBJECT':
-        obj = this.amfObject(node.attributes)
-        if (this.amfDefinition === 0) this.amfDefinition = 1 // OBJECT processing
-        break
-      case 'MESH':
-        obj = amfMesh(node.attributes)
-        break
-      case 'VERTICES':
-        obj = amfVertices(node.attributes)
-        break
-      case 'VERTEX':
-        obj = amfVertex(node.attributes)
-        break
-      case 'EDGE':
-        obj = amfEdge(node.attributes)
-        break
-      case 'VOLUME':
-        obj = amfVolume(node.attributes)
-        break
-      case 'MATERIAL':
-        obj = amfMaterial(node.attributes)
-        if (this.amfDefinition === 0) this.amfDefinition = 2 // MATERIAL processing
-        break
-      case 'COMPOSITE':
-        break
-      case 'TEXTURE':
-        if (this.amfDefinition === 0) this.amfDefinition = 3 // TEXTURE processing
-        break
-      case 'CONSTELLATION':
-        if (this.amfDefinition === 0) this.amfDefinition = 4 // CONSTELLATION processing
-        break
-      case 'METADATA':
-        obj = amfMetadata(node.attributes)
-        if (this.amfDefinition === 0) this.amfDefinition = 5 // METADATA processing
-        break
-      // coordinate elements
-      case 'COORDINATES':
-        obj = amfCoordinates(node.attributes)
-        break
-      case 'NORMAL':
-        obj = amfNormal(node.attributes)
-        break
-      case 'X':
-      case 'NX':
-        obj = amfX(node.attributes)
-        break
-      case 'Y':
-      case 'NY':
-        obj = amfY(node.attributes)
-        break
-      case 'Z':
-      case 'NZ':
-        obj = amfZ(node.attributes)
-        break
-      // triangle elements
-      case 'TRIANGLE':
-        obj = amfTriangle(node.attributes)
-        break
-      case 'V1':
-      case 'VTEX1':
-        obj = amfV1(node.attributes)
-        break
-      case 'V2':
-      case 'VTEX2':
-        obj = amfV2(node.attributes)
-        break
-      case 'V3':
-      case 'VTEX3':
-        obj = amfV3(node.attributes)
-        break
-      // color elements
-      case 'COLOR':
-        obj = amfColor(node.attributes)
-        break
-      case 'R':
-        obj = amfR(node.attributes)
-        break
-      case 'G':
-        obj = amfG(node.attributes)
-        break
-      case 'B':
-        obj = amfB(node.attributes)
-        break
-      case 'A':
-        obj = amfA(node.attributes)
-        break
-      // map elements
-      case 'MAP':
-      case 'TEXMAP':
-        obj = amfMap(node.attributes)
-        break
-      case 'U1':
-      case 'UTEX1':
-      case 'WTEX1':
-        obj = amfU1(node.attributes)
-        break
-      case 'U2':
-      case 'UTEX2':
-      case 'WTEX2':
-        obj = amfU2(node.attributes)
-        break
-      case 'U3':
-      case 'UTEX3':
-      case 'WTEX3':
-        obj = amfU3(node.attributes)
-        break
-      default:
-        // console.log('opentag: '+node.name+' at line '+this.line+' position '+this.column);
-        break
+    const objMap = {
+      AMF: amfAmf, // obj = amfAmf(node.attributes)
+      OBJECT: (node) => {
+        const tmp = amfObject(node.attributes)
+        if (amfDefinition === 0) amfDefinition = 1 // OBJECT processing
+        return tmp
+      }, //
+      MESH: amfMesh,
+      VERTICES: amfVertices,
+      VERTEX: amfVertex,
+      EDGE: amfEdge,
+      VOLUME: amfVolume,
+      MATERIAL: node => {
+        const tmp = amfMaterial(node.attributes)
+        if (amfDefinition === 0) amfDefinition = 2 // MATERIAL processing
+        return tmp
+      },
+      TEXTURE: node => {
+        if (amfDefinition === 0) amfDefinition = 3 // TEXTURE processing
+      },
+      CONSTELLATION: node => {
+        if (amfDefinition === 0) amfDefinition = 4 // CONSTELLATION processing
+      },
+      METADATA: node => {
+        const tmp = amfMetadata(node.attributes)
+        if (amfDefinition === 0) amfDefinition = 5 // METADATA processing
+        return tmp
+      },
+      COORDINATES: amfCoordinates,
+      NORMAL: amfNormal,
+      NX: amfX,
+      X: amfX, // FIXME OR undefined ???
+      NY: amfY,
+      Y: amfY,
+      NZ: amfZ,
+      Z: amfZ,
+      TRIANGLE: amfTriangle,
+      V1: amfV1,
+      VTEX1: amfV1,
+      V2: amfV2,
+      VTEX2: amfV2,
+      V3: amfV3,
+      VTEX3: amfV3,
+      COLOR: amfColor,
+      R: amfR,
+      G: amfG,
+      B: amfB,
+      A: amfA,
+      MAP: amfMap,
+      TEXMAP: amfMap,
+      U1: amfU1,
+      UTEX1: amfU1,
+      WTEX1: amfU1,
+      U2: amfU2,
+      UTEX2: amfU2,
+      WTEX2: amfU2,
+      U3: amfU3,
+      UTEX3: amfU3,
+      WTEX3: amfU3,
+      COMPOSITE: () => undefined, // ignored by design
+      undefined: () => console.log('Warning: Unsupported AMF element: ' + node.name)
     }
+
+    let obj = objMap[node.name] ? objMap[node.name](node.attributes, {amfObjects}) : null
 
     if (obj !== null) {
       // console.log('definitinon '+this.amfDefinition);
@@ -484,13 +326,11 @@ function createAmfParser (src, pxPmm) {
   }
 
   parser.onend = function () {
-    // console.log('AMF parsing completed');
+    // console.log('AMF parsing completed')
   }
 
   // start the parser
   parser.write(src).close()
-
-  return parser
 }
 
 //
@@ -691,36 +531,52 @@ function codify (amf, data) {
   return code
 }
 
-//
-// deserialize the given AMF source and return a JSCAD script
-//
-// fn (optional) original filename of AMF source
-// options (optional) anonymous object with:
-// pxPmm: pixels per milimeter for calcuations
-// FIXME: add openjscad version in a cleaner manner ?
-function deserialize (src, filename, options) {
-  const defaults = {version: '0.0.0', addMetaData: true, output: 'jscad'}
+const translate = function (src, filename, options) {
+  filename = filename || 'amf'
+  const defaults = {pxPmm: require('./constants').pxPmm, version: '0.0.0', addMetaData: true}
   options = Object.assign({}, defaults, options)
-  const {version, output, addMetaData} = options
+  const {version, pxPmm, addMetaData} = options
 
-  // parse the AMF source
-  const parser = createAmfParser(src)
+  // parse the SVG source
+  createAmfParser(src, pxPmm)
   // convert the internal objects to JSCAD code
   let code = addMetaData ? `//
-  // producer: OpenJSCAD.org Compatibility${version} AMF deserializer
+  // producer: OpenJSCAD.org ${version} AMF deserializer
   // date: ${new Date()}
   // source: ${filename}
   //
   ` : ''
 
-  if (parser.amfObj !== null) {
-    // console.log(JSON.stringify(parser.amfObj))
-    // console.log(JSON.stringify(parser.amfMaterials))
-    code += codify(parser.amfObj, parser)
-  } else {
-    console.log('Warning: AMF parsing failed')
+  if (!amfObj) {
+    throw new Error('SVG parsing failed, no valid svg data retrieved')
   }
+
+  const scadCode = codify(amfObj)
+  code += scadCode
   return code
+}
+
+const deserializeToCSG = function (src, filename, options) {
+  filename = filename || 'amf'
+  const defaults = {pxPmm: require('./constants').pxPmm, version: '0.0.0', addMetaData: true}
+  options = Object.assign({}, defaults, options)
+  const {pxPmm} = options
+
+  // parse the AMF data
+  createAmfParser(src, pxPmm)
+  if (!amfObj) {
+    throw new Error('AMF parsing failed, no valid amf data retrieved')
+  }
+
+  return objectify(svgObj)
+}
+
+const deserialize = function (src, filename, options) {
+  const defaults = {
+    output: 'jscad'
+  }
+  options = Object.assign({}, defaults, options)
+  return options.output === 'jscad' ? translate(src, filename, options) : deserializeToCSG(src, filename, options)
 }
 
 module.exports = {
