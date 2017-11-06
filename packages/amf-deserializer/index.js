@@ -46,8 +46,7 @@ amfMap,
 amfU1,
 amfU2,
 amfU3} = require('./helpers')
-
-const inchMM = (1 / 0.039370) // used for scaling AMF (inch) to CAG coordinates(MM)
+const {inchMM} = require('./constants')
 
 let amfLast = null // last object found
 let amfDefinition = 0 // definitions beinging created
@@ -60,20 +59,9 @@ let amfConstels = [] // list of constellations
 // let amfMetadata = [] // list of metadata
 let amfObj = null // amf in object form
 
-// processing controls
-sax.SAXParser.prototype.amfLast = null // last object found
-sax.SAXParser.prototype.amfDefinition = 0 // definitions beinging created
-// 0-AMF,1-object,2-material,3-texture,4-constellation,5-metadata
-// high level elements / definitions
-sax.SAXParser.prototype.amfObjects = [] // list of objects
-sax.SAXParser.prototype.amfMaterials = [] // list of materials
-sax.SAXParser.prototype.amfTextures = [] // list of textures
-sax.SAXParser.prototype.amfConstels = [] // list of constellations
-sax.SAXParser.prototype.amfMetadata = [] // list of metadata
-
 function amfAmf (element) {
   // default SVG with no viewport
-  var obj = {type: 'amf', unit: 'mm', scale: 1.0}
+  let obj = {type: 'amf', unit: 'mm', scale: 1.0}
 
   if ('UNIT' in element) { obj.unit = element.UNIT.toLowerCase() }
   // set scaling
@@ -100,7 +88,7 @@ function amfAmf (element) {
 }
 
 const amfObject = function (element) {
-  var obj = {type: 'object', id: 'JSCAD' + (amfObjects.length)} // default ID
+  let obj = {type: 'object', id: 'JSCAD' + (amfObjects.length)} // default ID
 
   if ('ID' in element) { obj.id = element.ID }
 
@@ -118,8 +106,8 @@ function createAmfParser (src, pxPmm) {
   parser.onopentag = function (node) {
     const objMap = {
       AMF: amfAmf, // obj = amfAmf(node.attributes)
-      OBJECT: (node) => {
-        const tmp = amfObject(node.attributes)
+      OBJECT: (attributes) => {
+        const tmp = amfObject(attributes)
         if (amfDefinition === 0) amfDefinition = 1 // OBJECT processing
         return tmp
       }, //
@@ -128,8 +116,8 @@ function createAmfParser (src, pxPmm) {
       VERTEX: amfVertex,
       EDGE: amfEdge,
       VOLUME: amfVolume,
-      MATERIAL: node => {
-        const tmp = amfMaterial(node.attributes)
+      MATERIAL: attributes => {
+        const tmp = amfMaterial(attributes)
         if (amfDefinition === 0) amfDefinition = 2 // MATERIAL processing
         return tmp
       },
@@ -139,8 +127,8 @@ function createAmfParser (src, pxPmm) {
       CONSTELLATION: node => {
         if (amfDefinition === 0) amfDefinition = 4 // CONSTELLATION processing
       },
-      METADATA: node => {
-        const tmp = amfMetadata(node.attributes)
+      METADATA: attributes => {
+        const tmp = amfMetadata(attributes)
         if (amfDefinition === 0) amfDefinition = 5 // METADATA processing
         return tmp
       },
@@ -182,49 +170,48 @@ function createAmfParser (src, pxPmm) {
     let obj = objMap[node.name] ? objMap[node.name](node.attributes, {amfObjects}) : null
 
     if (obj !== null) {
-      // console.log('definitinon '+this.amfDefinition);
-      switch (this.amfDefinition) {
+      switch (amfDefinition) {
         case 0: // definition of AMF
           if ('objects' in obj) {
             // console.log('push object ['+obj.type+']');
-            this.amfObjects.push(obj)
+            amfObjects.push(obj)
           }
           break
         case 1: // definition of OBJECT
-          if (this.amfObjects.length > 0) {
-            var group = this.amfObjects.pop()
+          if (amfObjects.length > 0) {
+            let group = amfObjects.pop()
             // add the object to the active group if necessary
             if ('objects' in group) {
               // console.log('object '+group.type+' adding ['+obj.type+']');
               // console.log(JSON.stringify(obj));
               group.objects.push(obj)
             }
-            this.amfObjects.push(group)
+            amfObjects.push(group)
             // and push this object as a group object if necessary
             if ('objects' in obj) {
               // console.log('object group ['+obj.type+']');
-              this.amfObjects.push(obj)
+              amfObjects.push(obj)
             }
           }
           break
         case 2: // definition of MATERIAL
           if (obj.type === 'material') {
             // console.log('push material ['+obj.type+']');
-            this.amfMaterials.push(obj)
+            amfMaterials.push(obj)
           } else {
-            if (this.amfMaterials.length > 0) {
-              let group = this.amfMaterials.pop()
+            if (amfMaterials.length > 0) {
+              let group = amfMaterials.pop()
               // add the object to the active group if necessary
               if ('objects' in group) {
                 // console.log('material '+group.type+' adding ['+obj.type+']');
                 // console.log(JSON.stringify(obj));
                 group.objects.push(obj)
               }
-              this.amfMaterials.push(group)
+              amfMaterials.push(group)
               // and push this object as a group object if necessary
               if ('objects' in obj) {
                 // console.log('push material ['+obj.type+']');
-                this.amfMaterials.push(obj)
+                amfMaterials.push(obj)
               }
             }
           }
@@ -239,12 +226,11 @@ function createAmfParser (src, pxPmm) {
           console.log('ERROR: invalid AMF definition')
           break
       }
-      this.amfLast = obj // retain this object in order to add values
+      amfLast = obj // retain this object in order to add values
     }
   }
 
   parser.onclosetag = function (node) {
-    // console.log('onclosetag: '+this.amfDefinition);
     switch (node) {
       // list those which have objects
       case 'AMF':
@@ -263,53 +249,53 @@ function createAmfParser (src, pxPmm) {
       case 'TEXMAP':
         break
       case 'TEXTURE':
-        if (this.amfDefinition === 3) { this.amfDefinition = 0 } // resume processing
+        if (amfDefinition === 3) { amfDefinition = 0 } // resume processing
         return
       case 'CONSTELLATION':
-        if (this.amfDefinition === 4) { this.amfDefinition = 0 } // resume processing
+        if (amfDefinition === 4) { amfDefinition = 0 } // resume processing
         return
       case 'METADATA':
-        if (this.amfDefinition === 5) { this.amfDefinition = 0 } // resume processing
+        if (amfDefinition === 5) { amfDefinition = 0 } // resume processing
         return
       default:
         // console.log('closetag: '+node);
         return
     }
 
-    var obj = null
-    switch (this.amfDefinition) {
+    let obj = null
+    switch (amfDefinition) {
       case 0: // definition of AMF
       case 1: // definition of OBJECT
-        if (this.amfObjects.length > 0) {
-          obj = this.amfObjects.pop()
+        if (amfObjects.length > 0) {
+          obj = amfObjects.pop()
           // console.log('pop object ['+obj.type+']');
           if (obj.type === 'object') {
-            this.amfDefinition = 0 // AMF processing
+            amfDefinition = 0 // AMF processing
           }
         }
         // check for completeness
-        if (this.amfObjects.length === 0) {
-          this.amfObj = obj
+        if (amfObjects.length === 0) {
+          amfObj = obj
         }
         break
       case 2: // definition of MATERIAL
-        if (this.amfMaterials.length > 0) {
-          obj = this.amfMaterials.pop()
+        if (amfMaterials.length > 0) {
+          obj = amfMaterials.pop()
           // console.log('pop material ['+obj.type+']');
           if (obj.type === 'material') {
-            this.amfMaterials.push(obj) // keep a list of materials
-            this.amfDefinition = 0 // AMF processing
+            amfMaterials.push(obj) // keep a list of materials
+            amfDefinition = 0 // AMF processing
           }
         }
         break
       case 3: // definition of TEXTURE
-        this.amfDefinition = 0 // AMF processing
+        amfDefinition = 0 // AMF processing
         break
       case 4: // definition of CONSTELLATION
-        this.amfDefinition = 0 // AMF processing
+        amfDefinition = 0 // AMF processing
         break
       case 5: // definition of METADATA
-        this.amfDefinition = 0 // AMF processing
+        amfDefinition = 0 // AMF processing
         break
       default:
         break
@@ -318,9 +304,8 @@ function createAmfParser (src, pxPmm) {
 
   parser.ontext = function (value) {
     if (value !== null) {
-      if (this.amfLast && this.amfDefinition !== 0) {
-        this.amfLast.value = value
-        // console.log(JSON.stringify(this.amfLast));
+      if (amfLast && amfDefinition !== 0) {
+        amfLast.value = value
       }
     }
   }
@@ -338,13 +323,12 @@ function createAmfParser (src, pxPmm) {
 //
 function codify (amf, data) {
   if (amf.type !== 'amf' || (!amf.objects)) throw new Error('AMF malformed')
-
   let code = ''
 
   // hack due to lack of this in array map()
-  var objects = amf.objects
-  var materials = data.amfMaterials
-  var lastmaterial = null
+  let objects = amf.objects
+  let materials = data.amfMaterials
+  let lastmaterial = null
   function findMaterial (id) {
     if (lastmaterial && lastmaterial.id === id) return lastmaterial
     for (let i = 0; i < materials.length; i++) {
@@ -363,12 +347,12 @@ function codify (amf, data) {
   }
   function getColor (objects) {
     for (let i = 0; i < objects.length; i++) {
-      var obj = objects[i]
+      let obj = objects[i]
       if (obj.type === 'color') {
-        var r = parseFloat(getValue(obj.objects, 'r'))
-        var g = parseFloat(getValue(obj.objects, 'g'))
-        var b = parseFloat(getValue(obj.objects, 'b'))
-        var a = parseFloat(getValue(obj.objects, 'a'))
+        let r = parseFloat(getValue(obj.objects, 'r'))
+        let g = parseFloat(getValue(obj.objects, 'g'))
+        let b = parseFloat(getValue(obj.objects, 'b'))
+        let a = parseFloat(getValue(obj.objects, 'a'))
         if (Number.isNaN(r)) r = 1.0 // AMF default color
         if (Number.isNaN(g)) g = 1.0
         if (Number.isNaN(b)) b = 1.0
@@ -379,7 +363,7 @@ function codify (amf, data) {
     return null
   }
   function findColorByMaterial (id) {
-    var m = findMaterial(id)
+    let m = findMaterial(id)
     if (m) {
       return getColor(m.objects)
     }
@@ -404,15 +388,15 @@ function codify (amf, data) {
   }
   // convert all objects to CSG based code
   function createObject (obj, oidx) {
-    var vertices = [] // [x,y,z]
-    var faces = [] // [v1,v2,v3]
-    var colors = [] // [r,g,b,a]
+    let vertices = [] // [x,y,z]
+    let faces = [] // [v1,v2,v3]
+    let colors = [] // [r,g,b,a]
 
     function addCoord (coord, cidx) {
       if (coord.type === 'coordinates') {
-        var x = parseFloat(getValue(coord.objects, 'x'))
-        var y = parseFloat(getValue(coord.objects, 'y'))
-        var z = parseFloat(getValue(coord.objects, 'z'))
+        let x = parseFloat(getValue(coord.objects, 'x'))
+        let y = parseFloat(getValue(coord.objects, 'y'))
+        let z = parseFloat(getValue(coord.objects, 'z'))
         // console.log('['+x+','+y+','+z+']');
         vertices.push([x, y, z])
       }
@@ -427,12 +411,12 @@ function codify (amf, data) {
     }
     function addTriangle (tri, tidx) {
       if (tri.type === 'triangle') {
-        var v1 = parseInt(getValue(tri.objects, 'v1'))
-        var v2 = parseInt(getValue(tri.objects, 'v2'))
-        var v3 = parseInt(getValue(tri.objects, 'v3'))
+        let v1 = parseInt(getValue(tri.objects, 'v1'))
+        let v2 = parseInt(getValue(tri.objects, 'v2'))
+        let v3 = parseInt(getValue(tri.objects, 'v3'))
         // console.log('['+v1+','+v2+','+v3+']');
         faces.push([v1, v2, v3]) // HINT: reverse order for polyhedron()
-        var c = getColor(tri.objects)
+        let c = getColor(tri.objects)
         if (c) {
           colors.push(c)
         } else {
@@ -440,7 +424,7 @@ function codify (amf, data) {
         }
       }
     }
-    var tricolor = null // for found colors
+    let tricolor = null // for found colors
     function addPart (part, pidx) {
       // console.log(part.type);
       switch (part.type) {
@@ -469,20 +453,20 @@ function codify (amf, data) {
     if (obj.objects.length > 0) {
       obj.objects.map(addMesh, data)
 
-      var fcount = faces.length
-      var vcount = vertices.length
+      let fcount = faces.length
+      let vcount = vertices.length
 
       code += '// Object ' + obj.id + '\n'
       code += '//  faces   : ' + fcount + '\n'
       code += '//  vertices: ' + vcount + '\n'
       code += 'function createObject' + obj.id + '() {\n'
-      code += '  var polys = [];\n'
+      code += '  let polys = [];\n'
 
       // convert the results into function calls
-      for (var i = 0; i < fcount; i++) {
+      for (let i = 0; i < fcount; i++) {
         code += '  polys.push(\n'
         code += '    PP([\n'
-        for (var j = 0; j < faces[i].length; j++) {
+        for (let j = 0; j < faces[i].length; j++) {
           if (faces[i][j] < 0 || faces[i][j] >= vcount) {
             // if (err.length === '') err += 'bad index for vertice (out of range)'
             continue
@@ -492,7 +476,7 @@ function codify (amf, data) {
         }
         code += '])'
         if (colors[i]) {
-          var c = colors[i]
+          let c = colors[i]
           code += '.setColor([' + c[0] + ',' + c[1] + ',' + c[2] + ',' + c[3] + '])'
         }
         code += ');\n'
@@ -508,17 +492,17 @@ function codify (amf, data) {
   code += '\n'
   code += '// helper functions\n'
   if (amf.scale !== 1.0) {
-    code += 'var SCALE = ' + amf.scale + '; // scaling units (' + amf.unit + ')\n'
-    code += 'var VV = function(x,y,z) { return new CSG.Vertex(new CSG.Vector3D(x*SCALE,y*SCALE,z*SCALE)); };\n'
+    code += 'let SCALE = ' + amf.scale + '; // scaling units (' + amf.unit + ')\n'
+    code += 'let VV = function(x,y,z) { return new CSG.Vertex(new CSG.Vector3D(x*SCALE,y*SCALE,z*SCALE)); };\n'
   } else {
-    code += 'var VV = function(x,y,z) { return new CSG.Vertex(new CSG.Vector3D(x,y,z)); };\n'
+    code += 'let VV = function(x,y,z) { return new CSG.Vertex(new CSG.Vector3D(x,y,z)); };\n'
   }
-  code += 'var PP = function(a) { return new CSG.Polygon(a); };\n'
+  code += 'let PP = function(a) { return new CSG.Polygon(a); };\n'
   code += '\n'
   code += 'function main() {\n'
-  code += '  var csgs = [];\n'
+  code += '  let csgs = [];\n'
   for (let i = 0; i < objects.length; i++) {
-    var obj = objects[i]
+    let obj = objects[i]
     if (obj.type === 'object') {
       code += '  csgs.push(createObject' + obj.id + '());\n'
     }
@@ -537,7 +521,7 @@ const translate = function (src, filename, options) {
   options = Object.assign({}, defaults, options)
   const {version, pxPmm, addMetaData} = options
 
-  // parse the SVG source
+  // parse the AMF source
   createAmfParser(src, pxPmm)
   // convert the internal objects to JSCAD code
   let code = addMetaData ? `//
@@ -548,10 +532,9 @@ const translate = function (src, filename, options) {
   ` : ''
 
   if (!amfObj) {
-    throw new Error('SVG parsing failed, no valid svg data retrieved')
+    throw new Error('AMF parsing failed, no valid AMF data retrieved')
   }
-
-  const scadCode = codify(amfObj)
+  const scadCode = codify(amfObj, {amfMaterials, amfTextures, amfConstels})
   code += scadCode
   return code
 }
@@ -568,7 +551,7 @@ const deserializeToCSG = function (src, filename, options) {
     throw new Error('AMF parsing failed, no valid amf data retrieved')
   }
 
-  return objectify(svgObj)
+  return objectify(amfObj, {amfMaterials, amfTextures, amfConstels})
 }
 
 const deserialize = function (src, filename, options) {

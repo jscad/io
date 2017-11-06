@@ -1,26 +1,23 @@
 function amfMesh (element) {
-  var obj = {type: 'mesh'}
-
+  let obj = {type: 'mesh'}
   obj.objects = []
   return obj
 }
 
 // Note: TBD Vertices can have a color, which is used to interpolate a face color (from the 3 vertices)
 function amfVertices (element) {
-  var obj = {type: 'vertices'}
+  let obj = {type: 'vertices'}
   obj.objects = []
   return obj
 }
 
 function amfCoordinates (element) {
-  var obj = {type: 'coordinates'}
-
+  let obj = {type: 'coordinates'}
   obj.objects = []
   return obj
 }
 function amfNormal (element) {
-  var obj = {type: 'normal'}
-
+  let obj = {type: 'normal'}
   obj.objects = []
   return obj
 }
@@ -35,7 +32,7 @@ function amfZ (element) {
 }
 
 function amfVolume (element) {
-  var obj = {type: 'volume'}
+  let obj = {type: 'volume'}
 
   if ('MATERIALID' in element) { obj.materialid = element.MATERIALID }
 
@@ -44,8 +41,7 @@ function amfVolume (element) {
 }
 
 function amfTriangle (element) {
-  var obj = {type: 'triangle'}
-
+  let obj = {type: 'triangle'}
   obj.objects = []
   return obj
 }
@@ -73,7 +69,7 @@ function amfEdge (element) {
 }
 
 function amfMetadata (element) {
-  var obj = {type: 'metadata'}
+  let obj = {type: 'metadata'}
 
   if ('TYPE' in element) { obj.mtype = element.TYPE }
   if ('ID' in element) { obj.id = element.ID }
@@ -82,7 +78,7 @@ function amfMetadata (element) {
 }
 
 function amfMaterial (element) {
-  var obj = {type: 'material'}
+  let obj = {type: 'material'}
 
   if ('ID' in element) { obj.id = element.ID }
 
@@ -91,7 +87,7 @@ function amfMaterial (element) {
 }
 
 function amfColor (element) {
-  var obj = {type: 'color'}
+  let obj = {type: 'color'}
 
   obj.objects = []
   return obj
@@ -110,7 +106,7 @@ function amfA (element) {
 }
 
 function amfMap (element) {
-  var obj = {type: 'map'}
+  let obj = {type: 'map'}
 
   if ('GTEXID' in element) { obj.gtexid = element.GTEXID }
   if ('BTEXID' in element) { obj.btexid = element.BTEXID }
