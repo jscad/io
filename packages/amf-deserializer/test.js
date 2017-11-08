@@ -96,7 +96,6 @@ function createObject1() {
   t.deepEqual(observed, expected)
 })
 
-/*
 test('deserialize simple amf to cag/csg objects', function (t) {
   const inputPath = path.resolve(filesPath, 'amf/Amf_cube.amf')
   const inputFile = fs.readFileSync(inputPath, 'utf8')
@@ -105,11 +104,28 @@ test('deserialize simple amf to cag/csg objects', function (t) {
   t.deepEqual(observed.polygons.length, 6)
 
   const observedVertices = polygonsFromCsg(observed)
-  const expectedVertices = [ [ [ 1, 1, 0 ], [ 1, 0, 0 ], [ 0, 0, 0 ], [ 0, 1, 0 ] ],
-  [ [ 0, 1, 1 ], [ 0, 1, 0 ], [ 0, 0, 0 ], [ 0, 0, 1 ] ],
-  [ [ 1, 1, 1 ], [ 1, 1, 0 ], [ 0, 1, 0 ], [ 0, 1, 1 ] ],
-  [ [ 1, 1, 0 ], [ 1, 1, 1 ], [ 1, 0, 1 ], [ 1, 0, 0 ] ],
-  [ [ 1, 0, 0 ], [ 1, 0, 1 ], [ 0, 0, 1 ], [ 0, 0, 0 ] ],
-  [ [ 1, 0, 1 ], [ 1, 1, 1 ], [ 0, 1, 1 ], [ 0, 0, 1 ] ] ]
+  // NOTE: 0.99999 instead of 1 ... hurray for sax / js precision
+  const expectedVertices = [ [ [ 1, 1, -1 ], [ 1, -1, -1 ], [ -1, -1, -1 ], [ -1, 1, -1 ] ],
+    [ [ 0.999999, -1, 1 ],
+    [ 1, 0.999999, 1 ],
+    [ -1, 0.999999, 1 ],
+    [ -1, -1, 1 ] ],
+    [ [ 1, 0.999999, 1 ],
+    [ 0.999999, -1, 1 ],
+    [ 1, -1, -1 ],
+    [ 1, 1, -1 ] ],
+    [ [ 1, -1, -1 ],
+    [ 0.999999, -1, 1 ],
+    [ -1, -1, 1 ],
+    [ -1, -1, -1 ] ],
+    [ [ -1, 0.999999, 1 ],
+    [ -1, 1, -1 ],
+    [ -1, -1, -1 ],
+    [ -1, -1, 1 ] ],
+    [ [ 1, 0.999999, 1 ],
+    [ 1, 1, -1 ],
+    [ -1, 1, -1 ],
+    [ -1, 0.999999, 1 ] ] ]
+
   t.deepEqual(observedVertices, expectedVertices)
-})*/
+})

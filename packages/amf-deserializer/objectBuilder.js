@@ -44,23 +44,23 @@ function findColorByMaterial (materials, id) {
 }
 
 // convert all objects to CSG based code
-function createObject (obj, index, data) {
+function createObject (obj, index, data, options) {
   let vertices = [] // [x,y,z]
   let faces = [] // [v1,v2,v3]
   let colors = [] // [r,g,b,a]
 
   function addCoord (coord, cidx) {
     if (coord.type === 'coordinates') {
+      // console.log('coords', coord.objects)
       let x = parseFloat(getValue(coord.objects, 'x'))
       let y = parseFloat(getValue(coord.objects, 'y'))
       let z = parseFloat(getValue(coord.objects, 'z'))
-      // console.log('['+x+','+y+','+z+']');
+      // console.log('[' + x + ',' + y + ',' + z + ']')
       vertices.push([x, y, z])
     }
     // normal is possible
   }
   function addVertex (vertex, vidx) {
-    // console.log(vertex.type);
     if (vertex.type === 'vertex') {
       vertex.objects.map(addCoord)
     }
@@ -108,14 +108,20 @@ function createObject (obj, index, data) {
   }
 
   // const output =
-  if (false) {
+  if (options.csg === true) {
+    const {CSG} = require('@jscad/csg')
+    const scale = options.amf.scale
+    const vertex = scale !== 1.0 ? ([x, y, z]) => new CSG.Vertex(new CSG.Vector3D(x * scale, y * scale, z * scale))
+      : ([x, y, z]) => new CSG.Vertex(new CSG.Vector3D(x, y, z))
     const polygon = a => new CSG.Polygon(a)
-    let polys = []
 
     obj.objects.map(addMesh, data)
+    let polys = []
 
     let fcount = faces.length
     let vcount = vertices.length
+    // console.log('here', fcount, vcount)
+
     for (let i = 0; i < fcount; i++) {
       let subData = []
       for (let j = 0; j < faces[i].length; j++) {
@@ -123,9 +129,10 @@ function createObject (obj, index, data) {
           // if (err.length === '') err += 'bad index for vertice (out of range)'
           continue
         }
-        subData.push(VV(vertices[faces[i][j]]))
-      }
+        // console.log('bla', vertices[faces[i][j]])
 
+        subData.push(vertex(vertices[faces[i][j]]))
+      }
       const color = colors[i] ? colors[i] : undefined
       const polygonData = color ? polygon(subData).setColor([color[0], color[1], color[2], color[3]]) : polygon(subData)
       polys.push(polygonData)

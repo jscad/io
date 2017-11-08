@@ -137,7 +137,7 @@ function createAmfParser (src, pxPmm) {
       COORDINATES: amfCoordinates,
       NORMAL: amfNormal,
       NX: amfX,
-      X: amfX, // FIXME OR undefined ???
+      X: amfX,
       NY: amfY,
       Y: amfY,
       NZ: amfZ,
@@ -336,7 +336,7 @@ function codify (amf, data) {
     // console.log(materials.length);
     switch (obj.type) {
       case 'object':
-        code += createObject(obj, didx, data)
+        code += createObject(obj, didx, data, {csg: false})
         break
       case 'metadata':
         break
@@ -383,13 +383,8 @@ function main() {
 
 const objectify = (amf, data) => {
   let objects = amf.objects
-  let SCALE = amf.scale
-  let VV = amf.scale !== 1.0 ? (x, y, z) => new CSG.Vertex(new CSG.Vector3D(x * SCALE, y * SCALE, z * SCALE)) :
-    (x, y, z) => new CSG.Vertex(new CSG.Vector3D(x, y, z))
-  let PP =  a => new CSG.Polygon(a)
-
-  const csgs = objects.map((object, index) => object.type === 'object' ? createObject(object, index, data) : undefined)
-  return CSG.union(csgs)
+  const csgs = objects.map((object, index) => object.type === 'object' ? createObject(object, index, data, {amf, csg: true}) : undefined)
+  return new CSG().union(csgs)
 }
 
 const translate = function (src, filename, options) {
