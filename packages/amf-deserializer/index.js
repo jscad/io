@@ -21,6 +21,7 @@ History:
 //
 // //////////////////////////////////////////
 const sax = require('sax')
+const {CSG} = require('@jscad/csg')
 const {amfMesh,
 amfVertices,
 amfCoordinates,
@@ -381,7 +382,14 @@ function main() {
 }
 
 const objectify = (amf, data) => {
+  let objects = amf.objects
+  let SCALE = amf.scale
+  let VV = amf.scale !== 1.0 ? (x, y, z) => new CSG.Vertex(new CSG.Vector3D(x * SCALE, y * SCALE, z * SCALE)) :
+    (x, y, z) => new CSG.Vertex(new CSG.Vector3D(x, y, z))
+  let PP =  a => new CSG.Polygon(a)
 
+  const csgs = objects.map((object, index) => object.type === 'object' ? createObject(object, index, data) : undefined)
+  return CSG.union(csgs)
 }
 
 const translate = function (src, filename, options) {

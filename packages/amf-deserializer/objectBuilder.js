@@ -44,7 +44,7 @@ function findColorByMaterial (materials, id) {
 }
 
 // convert all objects to CSG based code
-function createObject (obj, oidx, data) {
+function createObject (obj, index, data) {
   let vertices = [] // [x,y,z]
   let faces = [] // [v1,v2,v3]
   let colors = [] // [r,g,b,a]
@@ -105,6 +105,32 @@ function createObject (obj, oidx, data) {
     if (mesh.type === 'mesh') {
       mesh.objects.map(addPart, data)
     }
+  }
+
+  // const output =
+  if (false) {
+    const polygon = a => new CSG.Polygon(a)
+    let polys = []
+
+    obj.objects.map(addMesh, data)
+
+    let fcount = faces.length
+    let vcount = vertices.length
+    for (let i = 0; i < fcount; i++) {
+      let subData = []
+      for (let j = 0; j < faces[i].length; j++) {
+        if (faces[i][j] < 0 || faces[i][j] >= vcount) {
+          // if (err.length === '') err += 'bad index for vertice (out of range)'
+          continue
+        }
+        subData.push(VV(vertices[faces[i][j]]))
+      }
+
+      const color = colors[i] ? colors[i] : undefined
+      const polygonData = color ? polygon(subData).setColor([color[0], color[1], color[2], color[3]]) : polygon(subData)
+      polys.push(polygonData)
+    }
+    return CSG.fromPolygons(polys)
   }
 
   let code = ''
