@@ -1,12 +1,22 @@
 const { vt2jscad } = require('./vt2jscad')
 const {CSG} = require('@jscad/csg')
 
-function deserialize (obj, filename, options) { // http://en.wikipedia.org/wiki/Wavefront_.obj_file
+/**
+ * Parse the given obj data and return either a JSCAD script or a CSG/CAG object
+ * @param  {string} input obj data
+ * @param {string} filename (optional) original filename of AMF source
+ * @param {object} options options (optional) anonymous object with:
+ * @param {string} [options.version='0.0.0'] version number to add to the metadata
+ * @param {boolean} [options.addMetadata=true] toggle injection of metadata (producer, date, source) at the start of the file
+ * @param {string} [options.output='jscad'] {String} either jscad or csg to set desired output
+ * @return {CSG/string} either a CAG/CSG object or a string (jscad script)
+ */
+function deserialize (input, filename, options) { // http://en.wikipedia.org/wiki/Wavefront_.obj_file
   const defaults = {version: '0.0.0', addMetaData: true, output: 'jscad'}
   options = Object.assign({}, defaults, options)
   const {output} = options
 
-  const {positions, faces} = getPositionsAndFaces(obj)
+  const {positions, faces} = getPositionsAndFaces(input)
   return output === 'jscad' ? stringify({positions, faces, options}) : objectify({positions, faces, options})
 }
 
