@@ -7,7 +7,7 @@ const filesPath = path.resolve('../../node_modules/@jscad/sample-files') // requ
 const polygonsFromCsg = csg => csg.polygons.map(x => x.vertices.map(vert => ([vert.pos.x, vert.pos.y, vert.pos.z])))
 
 test('translate simple amf file to jscad code', function (t) {
-  const inputPath = path.resolve(filesPath, 'amf/Amf_cube.amf')
+  const inputPath = path.resolve(filesPath, 'amf/Amf_Cube.amf')
   const inputFile = fs.readFileSync(inputPath)
 
   const expected = `// Objects  : 1
@@ -97,7 +97,7 @@ function createObject1() {
 })
 
 test('deserialize simple amf to cag/csg objects', function (t) {
-  const inputPath = path.resolve(filesPath, 'amf/Amf_cube.amf')
+  const inputPath = path.resolve(filesPath, 'amf/Amf_Cube.amf')
   const inputFile = fs.readFileSync(inputPath, 'utf8')
 
   const observed = deserializer.deserialize(inputFile, undefined, {output: 'csg', addMetaData: false})
