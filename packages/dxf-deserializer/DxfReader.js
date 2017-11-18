@@ -1,31 +1,37 @@
+// DXF reader to emit groups of interest to handlers
+// By Z3 Dev 'z3dev' 2017
+// Released under MIT license for JSCAD organization
+
 ;(function (dxf) { // wrapper for non-node envs
   dxf.reader = function (options) { return new DxfReader(options) }
 
-
-  // list of states from processing
-  // these can be received by calling on(state) below
   dxf.STATES = [
       'start',
       'end',
       'error',
     ]
-  // list of events while reading
-  dxf.EVENTS = [
-      'ongroup',
-      'onsection',
-      'onheader',
-      'onclasses',
-      'ontables',
-      'onblocks',
-      'onentities',
-      'onobjects',
-    ]
 
-  //
-  // Options:
-  // - track  : track postion for error reporting
-  // - strict : obey strict DXF specifications
-  //   - 256 character limit on lines
+  /**
+   * Class DxfReader
+   * A class to hold state while reading DXF formatted data.
+   * @param {Object} [options] - options for parsing
+   * @param {Boolean} [options.track=true] - track position for error reporting
+   * @param {Boolean} [options.strict=false] - obey strict DXF specifications
+   * @constructor
+   *
+   * @example
+   * const dxfPath = path.resolve(__dirname, 'circle10.dxf')
+   * let src = fs.readFileSync(dxfPath, 'UTF8')
+   * let reader = dxf.reader({track: true})
+   * // setup state handling
+   * reader.on('error',handleError)
+   * reader.on('start',handleStart)
+   * reader.on('end'  ,handleEnd)
+   * // setup handling for groups of interest, skip the rest
+   * reader.absorb(0,handleEntity)
+   * // start the reader
+   * reader.write(src).close()
+   */
   function DxfReader (options) {
     var reader = this
     reader.options = options || {}
@@ -38,6 +44,7 @@
 
   DxfReader.prototype = {
   // set a handler for the given state
+  // see dxf.STATES above
     on: function (state, callback) {
     // verify the state
     // set the callback
@@ -46,23 +53,23 @@
     },
 
   // set a handler for the given group and value
-    absorb: function (group,callback) {
+    absorb: function (group, callback) {
       if (this.absorbers === undefined) {
         this.absorbers = new Map()
       }
       this.absorbers.set(group,callback)
     },
 
-  // read the given data
+  // write the given data into the reader, initiating parsing
     write: function (data) {
       var reader = this
       parse(reader,data)
       return reader
     },
 
+  // close and clear all state
     close: function () {
       var reader = this
-      var data = null
       reader.isclosed = true
       return reader;
     },
@@ -110,7 +117,7 @@
   function emitend (reader) {
     return emitstate(reader,'onend',reader.data)
   }
-  
+
   function emitstate (reader,state,data) {
     var onhandler = state.toString()
     reader[onhandler] && reader[onhandler](reader,data)
@@ -118,7 +125,7 @@
   }
 
   //
-  // parse the given data in the context of the give reader
+  // parse the given data in the context of the given reader
   //
   function parse (reader, data) {
   // check reader state
@@ -145,7 +152,6 @@
     reader.column = 0
 
   // use or convert the data to String
-
     var i = 0
     var c = ''
     var l = ''
@@ -176,6 +182,10 @@
     return reader
   }
 
+  /** Parse the given line in the context of the given reader, emitting group value pairs
+   * @param reader {DxfReader} - context DxfReader to use
+   * @param line {String} - line to parse
+   */
   function parseLine (reader, line) {
     line = line.trim()
     if (reader.group === null) {
@@ -194,6 +204,10 @@
     }
   }
 
+  /** Parse the given line in the context of the given reader, and update the group
+   * @param reader {DxfReader} - context DxfReader to use
+   * @param line {String} - line to parse
+   */
   function setDxfGroup (reader, line) {
   // groups are numeric
     var code = parseInt(line)
@@ -205,6 +219,10 @@
     }
   }
 
+  /** Parse the given line in the context of the given reader, and update the (group) value
+   * @param reader {DxfReader} - context DxfReader to use
+   * @param line {String} - line to parse
+   */
   function setDxfValue (reader, line) {
     var g = reader.group // alias
     if (reader.options.strict) {
