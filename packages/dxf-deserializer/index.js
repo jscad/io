@@ -12,6 +12,7 @@ const { CSG, CAG } = require('@jscad/csg')
 const {colorIndex, BYLAYER} = require('./autocad')
 const dxf = require('./DxfReader')
 const instantiateAsciiDxf = require('./instantiate')
+const translateAsciiDxf = require('./translate')
 
 // //////////////////////////////////////////
 //
@@ -522,7 +523,6 @@ function instantiate (src, filename, options) {
   options = options || {}
   options.colorindex = options.colorindex || colorIndex
 
-  // FIXME handle both ASCII and BINARY
   let reader = createReader(src, options)
   let objs = instantiateAsciiDxf(reader, options)
   return objs
@@ -531,20 +531,22 @@ function instantiate (src, filename, options) {
 // Options:
 //
 function translate (src, filename, options) {
-  let code = ''
-  let n = 0
-  let converted = 0
-  let o
+  options = options || {}
+  options.colorindex = options.colorindex || colorIndex
 
-  code += '// producer: OpenJSCAD Compatibility (' + options.version + ') DXF ASCII Importer\n'
-  code += '// date: ' + (new Date()) + '\n'
-  code += '// source: ' + filename + '\n'
+  let reader = createReader(src, options)
+
+  let code = ''
+  code += '// Produced by JSCAD IO Library : DXF Deserialization (' + options.version + ')\n'
+  //code += '// date: ' + (new Date()) + '\n'
+  //code += '// source: ' + filename + '\n'
   code += '\n'
+  code += translateAsciiDxf(reader, options)
 // create a table of colors if necessary
 // create a function for each layer that returns a list of objects (entities)
-  code += 'function main() { return union(\n'
+  //code += 'function main() { return union(\n'
 // return a list of layers
-  code += '); }\n'
+  //code += '); }\n'
   return code
 }
 
