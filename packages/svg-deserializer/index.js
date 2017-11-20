@@ -17,15 +17,98 @@ const {cagLengthX, cagLengthY} = require('./helpers')
 const {svgSvg, svgRect, svgCircle, svgGroup, svgLine, svgPath, svgEllipse, svgPolygon, svgPolyline, svgUse} = require('./svgElementHelpers')
 const shapesMapCsg = require('./shapesMapCsg')
 const shapesMapJscad = require('./shapesMapJscad')
+
+/**
+* Parse the given svg data and return either a JSCAD script or a CSG/CAG object
+* @param {string} input svg data
+* @param {string} filename (optional) original filename of AMF source
+* @param {object} options options (optional) anonymous object with:
+* @param {string} [options.version='0.0.0'] version number to add to the metadata
+* @param {boolean} [options.addMetadata=true] toggle injection of metadata (producer, date, source) at the start of the file
+* @param {string} [options.output='jscad'] {String} either jscad or csg to set desired output
+* @param {float} [options.pxPmm] custom pixels per mm unit
+* @return {CSG/string} either a CAG/CSG object or a string (jscad script)
+*/
+const deserialize = function (input, filename, options) {
+  const defaults = {
+    output: 'jscad'
+  }
+  options = Object.assign({}, defaults, options)
+  return options.output === 'jscad' ? translate(input, filename, options) : deserializeToCSG(input, filename, options)
+}
+
+/**
+ * Parse the given SVG source and return a JSCAD script
+ * @param  {string} src svg data as text
+ * @param  {string} filename (optional) original filename of SVG source
+ * @param  {object} options options (optional) anonymous object with:
+ *  pxPmm {number: pixels per milimeter for calcuations
+ *  version: {string} version number to add to the metadata
+ *  addMetadata: {boolean} flag to enable/disable injection of metadata (producer, date, source)
+ *
+ * @return a CAG (2D CSG) object
+ */
+function deserializeToCSG (src, filename, options) {
+  filename = filename || 'svg'
+  const defaults = {pxPmm: require('./constants').pxPmm, version: '0.0.0', addMetaData: true}
+  options = Object.assign({}, defaults, options)
+  const {pxPmm} = options
+
+  // parse the SVG source
+  createSvgParser(src, pxPmm)
+  if (!svgObj) {
+    throw new Error('SVG parsing failed, no valid svg data retrieved')
+  }
+
+  return objectify(svgObj)
+}
+
+/**
+ * Parse the given SVG source and return a JSCAD script
+ * @param  {string} src svg data as text
+ * @param  {string} filename (optional) original filename of SVG source
+ * @param  {object} options options (optional) anonymous object with:
+ *  pxPmm {number: pixels per milimeter for calcuations
+ *  version: {string} version number to add to the metadata
+ *  addMetadata: {boolean} flag to enable/disable injection of metadata (producer, date, source)
+ *    at the start of the file
+ * @return a CAG (2D CSG) object
+ */
+function translate (src, filename, options) {
+  filename = filename || 'svg'
+  const defaults = {pxPmm: require('./constants').pxPmm, version: '0.0.0', addMetaData: true}
+  options = Object.assign({}, defaults, options)
+  const {version, pxPmm, addMetaData} = options
+
+  // parse the SVG source
+  createSvgParser(src, pxPmm)
+  // convert the internal objects to JSCAD code
+  let code = addMetaData ? `//
+  // producer: OpenJSCAD.org ${version} SVG Importer
+  // date: ${new Date()}
+  // source: ${filename}
+  //
+  ` : ''
+
+  if (!svgObj) {
+    throw new Error('SVG parsing failed, no valid svg data retrieved')
+  }
+
+  const scadCode = codify(svgObj)
+  code += scadCode
+
+  return code
+}
+
 // FIXE: should these be kept here ? any risk of side effects ?
 let svgUnitsX
 let svgUnitsY
 let svgUnitsV
 // processing controls
-let svgObjects = []    // named objects
-let svgGroups = []    // groups of objects
+let svgObjects = [] // named objects
+let svgGroups = [] // groups of objects
 let svgInDefs = false // svg DEFS element in process
-let svgObj = null  // svg in object form
+let svgObj = null // svg in object form
 let svgUnitsPmm = [1, 1]
 
 const objectify = function (group) {
@@ -105,7 +188,7 @@ const codify = function (group) {
     indent += '  '
     i--
   }
-// pre-code
+  // pre-code
   var code = ''
   if (level === 0) {
     code += 'function main(params) {\n'
@@ -150,16 +233,17 @@ const codify = function (group) {
         if ('scale' in t) { ts = t }
         if ('translate' in t) { tt = t }
       }
-      if (ts !== null) {
+      if (ts !== null && ts !== undefined) {
         const x = ts.scale[0]
         const y = ts.scale[1]
         code += indent + on + ' = ' + on + '.scale([' + x + ',' + y + ']);\n'
       }
-      if (tr !== null) {
+      if (tr !== null && tr !== undefined) {
+        console.log('tr', tr)
         const z = 0 - tr.rotate
         code += indent + on + ' = ' + on + '.rotateZ(' + z + ');\n'
       }
-      if (tt !== null) {
+      if (tt !== null && tt !== undefined) {
         const x = cagLengthX(tt.translate[0], svgUnitsPmm, svgUnitsX)
         const y = (0 - cagLengthY(tt.translate[1], svgUnitsPmm, svgUnitsY))
         code += indent + on + ' = ' + on + '.translate([' + x + ',' + y + ']);\n'
@@ -275,84 +359,6 @@ function createSvgParser (src, pxPmm) {
   // start the parser
   parser.write(src).close()
   return parser
-}
-
-/**
- * Parse the given SVG source and return a JSCAD script
- * @param  {string} src svg data as text
- * @param  {string} filename (optional) original filename of SVG source
- * @param  {object} options options (optional) anonymous object with:
- *  pxPmm {number: pixels per milimeter for calcuations
- *  version: {string} version number to add to the metadata
- *  addMetadata: {boolean} flag to enable/disable injection of metadata (producer, date, source)
- *
- * @return a CAG (2D CSG) object
- */
-function deserializeToCSG (src, filename, options) {
-  filename = filename || 'svg'
-  const defaults = {pxPmm: require('./constants').pxPmm, version: '0.0.0', addMetaData: true}
-  options = Object.assign({}, defaults, options)
-  const {version, pxPmm, addMetaData} = options
-
-  // parse the SVG source
-  const parser = createSvgParser(src, pxPmm)
-  // convert the internal objects to JSCAD code
-  const metadata = {
-    producer: `OpenJSCAD.org ${version} SVG Importer`,
-    date: new Date(),
-    source: filename
-  }
-
-  if (!svgObj) {
-    throw new Error('SVG parsing failed, no valid svg data retrieved')
-  }
-
-  return objectify(svgObj)
-}
-
-/**
- * Parse the given SVG source and return a JSCAD script
- * @param  {string} src svg data as text
- * @param  {string} filename (optional) original filename of SVG source
- * @param  {object} options options (optional) anonymous object with:
- *  pxPmm {number: pixels per milimeter for calcuations
- *  version: {string} version number to add to the metadata
- *  addMetadata: {boolean} flag to enable/disable injection of metadata (producer, date, source)
- *    at the start of the file
- * @return a CAG (2D CSG) object
- */
-function translate (src, filename, options) {
-  filename = filename || 'svg'
-  const defaults = {pxPmm: require('./constants').pxPmm, version: '0.0.0', addMetaData: true}
-  options = Object.assign({}, defaults, options)
-  const {version, pxPmm, addMetaData} = options
-
-  // parse the SVG source
-  const parser = createSvgParser(src, pxPmm)
-  // convert the internal objects to JSCAD code
-  let code = addMetaData ? `//
-  // producer: OpenJSCAD.org ${version} SVG Importer
-  // date: ${new Date()}
-  // source: ${filename}
-  //
-  ` : ''
-
-  if (!svgObj) {
-    throw new Error('SVG parsing failed, no valid svg data retrieved')
-  }
-
-  const scadCode = codify(svgObj)
-  code += scadCode
-
-  return code
-}
-
-const deserialize = function (src, filename, options) {
-  const defaults = {
-    output: 'jscad'
-  }
-  options = Object.assign({}, defaults, options)
-  return options.output === 'jscad' ? translate(src, filename, options) : deserializeToCSG(src, filename, options)
 }
 
 module.exports = {deserialize}

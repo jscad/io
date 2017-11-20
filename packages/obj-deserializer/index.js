@@ -1,54 +1,81 @@
-// import { vt2jscad } from './vt2jscad'
 const { vt2jscad } = require('./vt2jscad')
+const {CSG} = require('@jscad/csg')
 
-function deserialize (obj, fn, options) {   // http://en.wikipedia.org/wiki/Wavefront_.obj_file
-  const defaults = {version: '0.0.0'}
+/**
+ * Parse the given obj data and return either a JSCAD script or a CSG/CAG object
+ * @param  {string} input obj data
+ * @param {string} filename (optional) original filename of AMF source
+ * @param {object} options options (optional) anonymous object with:
+ * @param {string} [options.version='0.0.0'] version number to add to the metadata
+ * @param {boolean} [options.addMetadata=true] toggle injection of metadata (producer, date, source) at the start of the file
+ * @param {string} [options.output='jscad'] {String} either jscad or csg to set desired output
+ * @return {CSG/string} either a CAG/CSG object or a string (jscad script)
+ */
+function deserialize (input, filename, options) { // http://en.wikipedia.org/wiki/Wavefront_.obj_file
+  const defaults = {version: '0.0.0', addMetaData: true, output: 'jscad'}
   options = Object.assign({}, defaults, options)
-  const {version} = options
+  const {output} = options
 
-  var l = obj.split(/\n/)
-  var v = [], f = []
+  const {positions, faces} = getPositionsAndFaces(input)
+  return output === 'jscad' ? stringify({positions, faces, options}) : objectify({positions, faces, options})
+}
 
-  for (var i = 0; i < l.length; i++) {
-    var s = l[i]
-    var a = s.split(/\s+/)
+const getPositionsAndFaces = data => {
+  let lines = data.split(/\n/)
+  let positions = []
+  let faces = []
 
-    if (a[0] == 'v') {
-      v.push([a[1], a[2], a[3]])
-    } else if (a[0] == 'f') {
-      var fc = []
-      var skip = 0
+  for (let i = 0; i < lines.length; i++) {
+    let s = lines[i]
+    let a = s.split(/\s+/)
 
-      for (var j = 1; j < a.length; j++) {
-        var c = a[j]
-        c = c.replace(/\/.*$/, '')     // -- if coord# is '840/840' -> 840
-        c--                       // -- starts with 1, but we start with 0
-        if (c >= v.length) {
+    if (a[0] === 'v') {
+      positions.push([a[1], a[2], a[3]])
+    } else if (a[0] === 'f') {
+      let fc = []
+      let skip = 0
+
+      for (let j = 1; j < a.length; j++) {
+        let c = a[j]
+        c = c.replace(/\/.*$/, '') // -- if coord# is '840/840' -> 840
+        c-- // -- starts with 1, but we start with 0
+        if (c >= positions.length) {
           skip++
         }
-        if (skip == 0) {
+        if (skip === 0) {
           fc.push(c)
         }
       }
          // fc.reverse();
-      if (skip == 0) {
-        f.push(fc)
+      if (skip === 0) {
+        faces.push(fc)
       }
     } else {
-      ;     // vn vt and all others disregarded
+      // vn vt and all others disregarded
     }
   }
-  var src = ''
-  src += '// producer: OpenJSCAD Compatibility (' + version + ') Wavefront OBJ Importer\n'
-  src += '// date: ' + (new Date()) + '\n'
-  src += '// source: ' + fn + '\n'
-  src += '\n'
-   // if(err) src += "// WARNING: import errors: "+err+" (some triangles might be misaligned or missing)\n";
-  src += '// objects: 1\n// object #1: polygons: ' + f.length + '\n\n'
-  src += 'function main() { return '
-  src += vt2jscad(v, f)
-  src += '; }'
-  return src
+  return {positions, faces}
+}
+
+const objectify = ({positions, faces}) => {
+  return CSG.polyhedron({points: positions, faces})
+}
+
+const stringify = ({positions, faces, addMetaData, filename, version}) => {
+  let code = addMetaData ? `//
+  // producer: OpenJSCAD.org Compatibility${version} OBJ deserializer
+  // date: ${new Date()}
+  // source: ${filename}
+  //
+  ` : ''
+  // if(err) src += "// WARNING: import errors: "+err+" (some triangles might be misaligned or missing)\n";
+  code += `// objects: 1
+// object #1: polygons: ${faces.length}
+function main() { return
+${vt2jscad(positions, faces)}
+}
+  `
+  return code
 }
 
 module.exports = {

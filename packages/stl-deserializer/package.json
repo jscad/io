@@ -1,6 +1,6 @@
 {
   "name": "@jscad/stl-deserializer",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Stl deserializer for jscad project",
   "repository": "https://github.com/jscad/io",
   "main": "index.js",
@@ -33,7 +33,10 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@jscad/csg": "0.3.1",
-    "@jscad/io-utils": "^0.1.0"
+    "@jscad/csg": "0.3.6",
+    "@jscad/io-utils": "^0.1.2"
+  },
+  "devDependencies": {
+    "ava": "^0.23.0"
   }
 }

@@ -1,5 +1,6 @@
 // import xmldom from 'xmldom'
 const xmldom = require('xmldom')
+const { ensureManifoldness } = require('@jscad/io-utils')
 
 const mimeType = 'model/x3d+xml'
 
@@ -7,30 +8,31 @@ const XMLSerializer = xmldom.XMLSerializer
 // NOTE: might be useful :https://github.com/jindw/xmldom/pull/152/commits/be5176ece6fa1591daef96a5f361aaacaa445175
 
 function serialize (CSG) {
+  CSG = ensureManifoldness(CSG)
   const DOMImplementation = typeof document !== 'undefined' ? document.implementation : new xmldom.DOMImplementation()
   // materialPolygonLists
   // key: a color string (e.g. "0 1 1" for yellow)
   // value: an array of strings specifying polygons of this color
   //        (as space-separated indices into vertexCoords)
-  var materialPolygonLists = {},
-    // list of coordinates (as "x y z" strings)
-    vertexCoords = [],
-    // map to look up the index in vertexCoords of a given vertex
-    vertexTagToCoordIndexMap = {}
+  var materialPolygonLists = {}
+  // list of coordinates (as "x y z" strings)
+  var vertexCoords = []
+  // map to look up the index in vertexCoords of a given vertex
+  var vertexTagToCoordIndexMap = {}
 
   CSG.polygons.map(function (p) {
-    var red = 0,
-      green = 0,
-      blue = 1 // default color is blue
+    var red = 0
+    var green = 0
+    var blue = 1 // default color is blue
     if (p.shared && p.shared.color) {
       red = p.shared.color[0]
       green = p.shared.color[1]
       blue = p.shared.color[2]
     }
 
-    var polygonVertexIndices = [],
-      numvertices = p.vertices.length,
-      vertex
+    var polygonVertexIndices = []
+    var numvertices = p.vertices.length
+    var vertex
     for (var i = 0; i < numvertices; i++) {
       vertex = p.vertices[i]
       if (!(vertex.getTag() in vertexTagToCoordIndexMap)) {

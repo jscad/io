@@ -1,6 +1,6 @@
 {
   "name": "@jscad/json-serializer",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "description": "json serializer for jscad project",
   "repository": "https://github.com/jscad/io",
   "main": "index.js",
@@ -33,6 +33,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@jscad/csg": "latest"
+    "@jscad/csg": "0.3.6",
+    "@jscad/io-utils": "^0.1.2"
   }
 }
