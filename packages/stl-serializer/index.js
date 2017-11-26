@@ -6,7 +6,8 @@ const mimeType = 'application/sla'
 
 function serialize (data, options) {
   const defaults = {
-    binary: true
+    binary: true,
+    statusCallback: function (statusObject) { }
   }
   options = Object.assign({}, defaults, options)
 
