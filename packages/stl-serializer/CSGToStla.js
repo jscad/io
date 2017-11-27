@@ -1,13 +1,13 @@
 
 function serialize (CSG, options) {
-  options.statusCallback && options.statusCallback({progress: 0})
+  options && options.statusCallback && options.statusCallback({progress: 0})
   var result = 'solid csg.js\n'
   CSG.polygons.map(function (p, i) {
     result += CSGPolygontoStlString(p)
-    options.statusCallback && options.statusCallback({progress: 100 * i / CSG.polygons.length})
+    options && options.statusCallback && options.statusCallback({progress: 100 * i / CSG.polygons.length})
   })
   result += 'endsolid csg.js\n'
-  options.statusCallback && options.statusCallback({progress: 100})
+  options && options.statusCallback && options.statusCallback({progress: 100})
   return [result]
 }
 
