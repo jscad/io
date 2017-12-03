@@ -9,7 +9,7 @@ All code released under MIT license
 
 const { CSG, CAG } = require('@jscad/csg')
 
-const {colorIndex, BYLAYER} = require('./autocad')
+const {colorIndex, BYLAYER, getTLA} = require('./autocad')
 const dxf = require('./DxfReader')
 const instantiateAsciiDxf = require('./instantiate')
 const translateAsciiDxf = require('./translate')
@@ -20,38 +20,6 @@ const translateAsciiDxf = require('./translate')
 // See http://www.autodesk.com/techpubs/autocad/dxf/
 //
 // //////////////////////////////////////////
-
-//
-// translate group codes to names for internal use
-//
-let dxfTLA = [
-    [0  ,'etyp'], [1 ,'text'], [2 ,'name'], [3 ,'nam1'],
-    [5  ,'hdle'], [6 ,'ltyp'], [7 ,'lsty'], [8 ,'lnam'], [9 ,'vari'],
-    [10 ,'pptx'], [11,'sptx'], [12,'tptx'], [13,'fptx'],
-    [20 ,'ppty'], [21,'spty'], [22,'tpty'], [23,'fpty'],
-    [30 ,'pptz'], [31,'sptz'], [32,'tptz'], [33,'fptz'],
-    [38, 'elev'], [39 ,'lthk'],
-    [40 ,'swid'], [41,'ewid'], [42,'bulg'], [43,'cwid'],
-    [48 ,'lscl'],
-    [50 ,'ang0'], [51,'ang1'],
-    [60 ,'visb'], [62,'cnmb'],
-    [67 ,'spac'],
-    [70 ,'lflg'], [71,'fvia'], [72,'fvib'], [73,'fvic'], [74,'fvid'],
-    [75 ,'cflg'],
-    [90 ,'vlen'], [91,'slen'], [92,'plen'], [93,'flen'], [94,'elen'],
-    [95 ,'clen'],
-    [100,'sbnm'],
-    [210,'etrx'],
-    [220,'etry'],
-    [230,'etrz'],
-  ];
-
-let dxfMap = new Map(dxfTLA)
-
-function getTLA (group) {
-  return dxfMap.get(group)
-}
-
 
 function handleError(e) {
   console.log('error: line ' + e.line + ', column ' + e.column + ', bad character [' + e.c + ']')
