@@ -32,12 +32,21 @@ function instantiatePolygon (obj,layers,colorindex) {
   return new CSG.Polygon(vertices,shared)
 }
 
-// return Line3D
 //
-function instantiateLine3D (obj) {
-  let p1 = new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] )
-  let p2 = new CSG.Vector3D( [obj['sptx'],obj['spty'],obj['sptz']] )
-  return CSG.Line3D.fromPoints(p1, p2)
+// instantiate the given DXF as 2D or 3D line
+//
+function instantiateLine (obj, layers, colorindex) {
+  let csg = null
+  if (obj['pptz'] === obj['sptz'] & obj['pptz'] === 0) {
+    let p1 = new CSG.Vector2D( [obj['pptx'],obj['ppty']] )
+    let p2 = new CSG.Vector2D( [obj['sptx'],obj['spty']] )
+    csg = CSG.Line2D.fromPoints(p1, p2)
+  } else {
+    let p1 = new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] )
+    let p2 = new CSG.Vector3D( [obj['sptx'],obj['spty'],obj['sptz']] )
+    csg = CSG.Line3D.fromPoints(p1, p2)
+  }
+  return csg;
 }
 
 function instantiateVertex (obj) {
@@ -460,6 +469,7 @@ console.log('**************************************************')
 
     switch (obj.type) {
 //console.log(JSON.stringify(obj));
+    // control objects
       case 'dxf':
         break
       case 'layer':
@@ -505,7 +515,7 @@ console.log('##### ellipse')
       case 'line':
 console.log('##### line')
         current = completeCurrent(objects,current,polygons,vectors)
-        objects.push( instantiateLine3D(obj) )
+        objects.push( instantiateLine(obj,layers,options.colorindex) )
         break
       case 'polyline':
         if (current === null) {
