@@ -98,7 +98,7 @@ function addSection(path,x1,y1,bulg) {
 //
 // convert the given obj (lwpolyline) into a path
 //
-function instantiatePath2D (obj, layers) {
+function instantiatePath2D (obj, layers, options) {
   const closed = parseInt('00000000000000001', 2)
 
 //console.log(JSON.stringify(obj));
@@ -535,7 +535,7 @@ console.log('##### vertex')
       case 'lwpolyline':
 console.log('##### lwpolyline')
         current = completeCurrent(objects,current,polygons,vectors)
-        objects.push( instantiatePath2D(obj,layers) )
+        objects.push( instantiatePath2D(obj,layers,options) )
         break
 
       default:
