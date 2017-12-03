@@ -8,11 +8,22 @@ All code released under MIT license
 */
 const { CSG, CAG } = require('@jscad/csg')
 
-const {BYBLOCK, BYLAYER} = require('./autocad')
+const {BYBLOCK, BYLAYER, getTLA} = require('./autocad')
 
-// return Polygon
+function translateVector2D(vector) {
+  let script = 'new CSG.Vector2D(' + vector.x + ',' + vector.y + ')'
+  return script
+}
+
+function translateVector3D(vector) {
+  let script = 'new CSG.Vector3D(' + vector.x + ',' + vector.y + ',' + vector.z + ')'
+  return script
+}
+
 //
-function instantiatePolygon (obj,layers,colorindex) {
+// translate the give object (3Dface) into CSG.Polygon
+//
+function translatePolygon (obj,layers,colorindex) {
   let vertices = []
 // FIXME: should check global variable to instantiate in the proper orientation
   vertices.push( new CSG.Vertex(new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] ) ) )
@@ -29,15 +40,33 @@ function instantiatePolygon (obj,layers,colorindex) {
   }
   let cn = getColorNumber(obj,layers)
   let shared = getColor(cn,colorindex)
-  return new CSG.Polygon(vertices,shared)
+  const polygon = new CSG.Polygon(vertices,shared)
+
+  let script = 'new CSG.Polygon('
+  for (let vertex of polygon.vertices) {
+    script += translateVertex(vertex) + ','
+  }
+  script += translateShared(polygon.shared) + ','
+  script += translatePlane(polygon.plane) + ')'
+  return script
 }
 
-// return Line3D
 //
-function instantiateLine3D (obj) {
-  let p1 = new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] )
-  let p2 = new CSG.Vector3D( [obj['sptx'],obj['spty'],obj['sptz']] )
-  return CSG.Line3D.fromPoints(p1, p2)
+// translate the given DXF object (line) into 2D or 3D line
+//
+function translateLine (obj, layers, colorindex) {
+  let script = '  let ' + obj['name'] + ' = '
+  if (obj['pptz'] === obj['sptz'] & obj['pptz'] === 0) {
+    let p1 = new CSG.Vector2D( [obj['pptx'],obj['ppty']] )
+    let p2 = new CSG.Vector2D( [obj['sptx'],obj['spty']] )
+    script += 'CSG.Line2D.fromPoints(' + translateVector2D(p1) + ',' + translateVector2D(p2) + ')\n'
+  } else {
+    let p1 = new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] )
+    let p2 = new CSG.Vector3D( [obj['sptx'],obj['spty'],obj['sptz']] )
+    script += 'CSG.Line3D.fromPoints(' + translateVector3D(p1) + ',' + translateVector3D(p2) + ')\n'
+  }
+  obj['script'] = script
+  addToLayer(obj,layers)
 }
 
 function instantiateVertex (obj) {
@@ -62,12 +91,12 @@ function instantiateVertex (obj) {
 }
 
 //
-// append a section to the given path
+// append a section to the given script
 //
-function addSection(path,x1,y1,bulg) {
+function addSection(script,x1,y1,bulg) {
   if (bulg === 0) {
   // add straight line to the end of the path
-    path = path.appendPoint( [x1, y1] )
+    script += '.appendPoint( [' + x1 + ',' + y1 + '] )'
   } else {
   // add arc to the end of the path
     let prev   = path.points[path.points.length-1]
@@ -81,18 +110,16 @@ function addSection(path,x1,y1,bulg) {
     let large     = false // FIXME how to determine?
     let d = Math.atan(bulg) / (Math.PI/180) * 4
 //console.log("u: "+u+", r: "+r+", cw: "+clockwise+", d: "+d)
-    path = path.appendArc([x1,y1],{radius: r,xaxisrotation: d,clockwise: clockwise,large: large});
+    script += '.appendArc([' + x1 + ',' + y1 + '],{radius: ' + r + ',xaxisrotation: ' + d + ',clockwise: ' + clockwise + ',large: ' + large + '})'
   }
-  return path
+  return script
 }
 
 //
 // convert the given obj (lwpolyline) into a path
 //
-function instantiatePath2D (obj, layers) {
+function translatePath2D (obj, layers, options) {
   const closed = parseInt('00000000000000001', 2)
-
-//console.log(JSON.stringify(obj));
 
 // expected values
   let vlen  = obj['vlen']
@@ -100,35 +127,39 @@ function instantiatePath2D (obj, layers) {
   let pptys = obj['pptys']
   let bulgs = obj['bulgs']
   let flags = obj['lflg']
-// conversion
-  let path = new CSG.Path2D()
+  let name  = obj['name']
+// translation
+  let script = '  let ' + name + ' = new CSG.Path2D()\n'
   let isclosed = ((flags & closed) === 1)
   if (vlen === pptxs.length && vlen === pptys.length && vlen === bulgs.length) {
+    script += '  ' + name + ' = ' + name
     pptxs.forEach(function(item, index, array) {
       let bulg = 0
       if (index > 0) {
         bulg = bulgs[index-1] // apply the previous bulg
       }
-      path = addSection(path, pptxs[index], pptys[index], bulg)
-    });
+      script = addSection(script, pptxs[index], pptys[index], bulg)
+    })
+    script += '\n'
   } else {
   // FIXME flag this DXF error
-    return path
+    return
   }
 // FIXME add optional to create CAG from the path
   if (isclosed) {
   // apply the last section between last and first points
-    path = addSection(path, pptxs[0], pptys[0], bulgs[bulgs.length-1])
-    path = path.close()
-    return CAG.fromPoints(path.points)
+    //path = addSection(path, pptxs[0], pptys[0], bulgs[bulgs.length-1])
+    script += '  ' + name + ' = ' + name + '.close()\n'
+    script += '  ' + name + ' = CAG.fromPoints(' + name + '.points)\n'
   }
-  return path
+  obj['script'] = script
+  addToLayer( obj,layers )
 }
 
 //
 // convert the given obj (arc) into CAG or CSG
 //
-function instantiateArc (obj, layers, colorindex) {
+function translateArc (obj, layers, colorindex) {
 // expected values
   let lthk = obj['lthk']
   let pptx = obj['pptx']
@@ -137,14 +168,18 @@ function instantiateArc (obj, layers, colorindex) {
   let swid = obj['swid']
   let ang0 = obj['ang0'] // start angle
   let ang1 = obj['ang1'] // end angle
+  let name = obj['name']
 // conversion
   if (lthk === 0.0) {
   // convert to 2D object
   // FIXME need to determine resolution from object/layer/variables
-    return CSG.Path2D.arc({center: [pptx,ppty],radius: swid,startangle: ang0,endangle: ang1, resolution: CSG.defaultResolution2D})
+    let script = '  let ' + name + ' = CSG.Path2D.arc({center: [' + pptx + ',' + ppty + '],radius: ' + swid + ',startangle: ' + ang0 + ',endangle: ' + ang1 + ', resolution: CSG.defaultResolution2D})\n'
+    obj['script'] = script
+    addToLayer( obj,layers )
+    return
   }
   // FIXME how to represent 3D arc?
-  return CSG.Path2D.arc({center: [pptx,ppty],radius: swid,startangle: ang0,endangle: ang1, resolution: CSG.defaultResolution2D})
+  //return CSG.Path2D.arc({center: [pptx,ppty],radius: swid,startangle: ang0,endangle: ang1, resolution: CSG.defaultResolution2D})
 }
 
 //
@@ -157,15 +192,18 @@ function translateCircle (obj, layers, colorindex) {
   let ppty = obj['ppty']
   let pptz = obj['pptz']
   let swid = obj['swid']
+  let name = obj['name']
 // conversion
-  let cn = getColorNumber(obj,layers)
-  let shared = getColor(cn,colorindex)
+  // FIXME add color when supported
+  //let cn = getColorNumber(obj,layers)
+  //let shared = getColor(cn,colorindex)
   if (lthk === 0.0) {
   // convert to 2D object
   // FIXME need to determine resolution from object/layer/variables
-  // FIXME add color when supported
-    let script = 'let cag1 = CAG.circle({center: [' + pptx + ',' + ppty + '],radius: ' + swid + ',resolution: CSG.defaultResolution2D})\n'
-    return script
+    let script = '  let ' + name + ' = CAG.circle({center: [' + pptx + ',' + ppty + '],radius: ' + swid + ',resolution: CSG.defaultResolution2D})\n'
+    obj['script'] = script
+    addToLayer( obj,layers )
+    return
   }
   // convert to 3D object
   // FIXME need to determine resolution from object/layer/variables
@@ -173,7 +211,7 @@ function translateCircle (obj, layers, colorindex) {
   let x = pptx
   let y = ppty
   let z = pptz + swid
-  return CAG.cylinder({start: [pptx,ppty,pptz],end: [x,y,z],radius: swid,resolution: CSG.defaultResolution3D})
+  //return CAG.cylinder({start: [pptx,ppty,pptz],end: [x,y,z],radius: swid,resolution: CSG.defaultResolution3D})
 }
 
 function createEdges(vlen, faces) {
@@ -333,12 +371,42 @@ function instantiateMesh (obj, layers, colorindex) {
 
 function findLayer(obj, layers) {
   let lname = obj['lnam'] || '0'
+// lookup the layer associated with the object
   for (let layer of layers) {
     if (layer['name'] === lname) {
       return layer
     }
   }
   return null
+}
+
+function findLayer0(layers) {
+  for (let layer of layers) {
+    if (layer['name'] === '0') {
+      return layer
+    }
+  }
+// this DXF did not specify so create
+  layer = {type: 'layer', name: '0'}
+  layer[getTLA(48)] = 1.0
+  layer[getTLA(60)] = 0
+  layer[getTLA(67)] = 0
+  layer['objects'] = []
+
+  layers.push(layer)
+  return layer
+}
+
+function addToLayer(obj, layers) {
+  let layer = findLayer(obj, layers)
+  if (layer === null) {
+  // hmmm... add to layer '0'
+    layer = findLayer0(layers)
+  }
+  if (! ('objects' in layer)) {
+    layer['objects'] = []
+  }
+  layer['objects'].push(obj)
 }
 
 // get the color number of the object, possibly looking at layer
@@ -360,8 +428,8 @@ function getColorNumber(obj,layers) {
 }
 
 function mod(num, mod) {
-  let remain = num % mod;
-  return Math.floor(remain >= 0 ? remain : remain + mod);
+  let remain = num % mod
+  return Math.floor(remain >= 0 ? remain : remain + mod)
 }
 
 function getColor(index,colorindex) {
@@ -387,8 +455,8 @@ function getPolyType(obj) {
   if ((flags & d3mesh) == 1) {
     ptype = new CSG()
   } else {
-    let isclosed = ((flags & closed) === 1);
-    ptype = new CSG.Path2D([],isclosed);
+    let isclosed = ((flags & closed) === 1)
+    ptype = new CSG.Path2D([],isclosed)
   }
   return ptype
 }
@@ -406,11 +474,6 @@ function translateShared(shared) {
   return script
 }
 
-function translateVector3D(vector) {
-  let script = 'new CSG.Vector3D(' + vector.x + ',' + vector.y + ',' + vector.z + ')'
-  return script
-}
-
 function translateVertex(vertex) {
   let script = 'new CSG.Vertex('
   script += translateVector3D(vertex.pos)
@@ -418,17 +481,7 @@ function translateVertex(vertex) {
   return script
 }
 
-function translatePolygon(polygon) {
-  let script = 'new CSG.Polygon('
-  for (let vertex of polygon.vertices) {
-    script += translateVertex(vertex) + ','
-  }
-  script += translateShared(polygon.shared) + ','
-  script += translatePlane(polygon.plane) + ')'
-  return script
-}
-
-function translateCurrent(script,baseobj,polygons,vectors) {
+function translateCurrent(objects,baseobj,polygons,vectors) {
   if (baseobj instanceof CSG.Path2D) {
 console.log('##### completing Path2D')
     script += "const path = new CSG.Path2D()\n"
@@ -436,30 +489,43 @@ console.log('##### completing Path2D')
   }
   if (baseobj instanceof CSG) {
 console.log('##### completing CSG')
-    script += "function csg1() {\n"
+    let script = "function csg1() {\n"
     script += "  const polygons = [\n"
     for (let polygon of polygons) {
-      script += '  ' + translatePolygon(polygon) + ','
+      script += '  ' + polygon + ','
     }
     script += "\n  ]\n"
     script += "  return new CSG(polygons)\n"
     script += "}\n"
-    //objects.push( CSG.fromPolygons(polygons) )
+    objects.push( script )
   }
+  return null
+}
+
+function translateLayer(layer) {
+  let name = layer['name'] || 'Unknown'
+  let script = "function layer" + name + "() {\n"
+  for (let object of layer['objects']) {
+    script += object['script']
+  }
+  script += "  return ["
+  for (let object of layer['objects']) {
+    script += object['name']
+  }
+  script += "]\n}\n"
   return script
 }
 
 const translateAsciiDxf = function (reader, options) {
 console.log('**************************************************')
-console.log(JSON.stringify(reader.objstack));
+console.log(JSON.stringify(reader.objstack))
 console.log('**************************************************')
 
   let layers   = []   // list of layers with various information like color
   let current  = null // the object being created
-  let polygons = []   // the list of 3D polygons
-  let objects  = []   // the list of objects instantiated
-  let vectors  = []   // the list of vectors for paths or meshes
-  let script   = ''
+  let polygons = []   // the list of 3D polygons translated
+  let objects  = []   // the list of objects translated
+  let vectors  = []   // the list of vectors translated
 
   let p = null
   for (let obj of reader.objstack) {
@@ -469,26 +535,28 @@ console.log('**************************************************')
       //console.log('##### skip')
       continue
     }
+    if (! ('name' in obj)) {
+      obj['name'] = 'jscad' + objects.length
+    }
 
     switch (obj.type) {
-//console.log(JSON.stringify(obj));
+//console.log(JSON.stringify(obj))
+    // control objects
       case 'dxf':
         break
       case 'layer':
 console.log('##### layer')
-        script = translateCurrent(script,current,polygons,vectors)
-        current = null
+        current = translateCurrent(objects,current,polygons,vectors)
         layers.push(obj)
         break
       case 'variable':
-        script = translateCurrent(script,current,polygons,vectors)
-        current = null
+        current = translateCurrent(objects,current,polygons,vectors)
         break
 
     // 3D entities
       case '3dface':
 console.log('##### 3dface')
-        p = instantiatePolygon(obj,layers,options.colorindex)
+        p = translatePolygon(obj,layers,options.colorindex)
         if (current === null) {
 console.log('##### start of 3dfaces CSG')
           current = new CSG()
@@ -496,35 +564,30 @@ console.log('##### start of 3dfaces CSG')
         break
       case 'mesh':
 console.log('##### mesh')
-        script = translateCurrent(script,current,polygons,vectors)
-        current = null
+        current = translateCurrent(objects,current,polygons,vectors)
         objects.push( instantiateMesh(obj,layers,options.colorindex) )
         break
 
     // 2D or 3D entities
       case 'arc':
 console.log('##### arc')
-        script = translateCurrent(script,current,polygons,vectors)
-        current = null
-        objects.push( instantiateArc(obj,layers,options.colorindex) )
+        current = translateCurrent(objects,current,polygons,vectors)
+        translateArc(obj,layers,options.colorindex)
         break
       case 'circle':
 console.log('##### circle')
-        script = translateCurrent(script,current,polygons,vectors)
-        current = null
-        script += translateCircle(obj,layers,options.colorindex)
+        current = translateCurrent(objects,current,polygons,vectors)
+        translateCircle(obj,layers,options.colorindex)
         break
       case 'ellipse':
 console.log('##### ellipse')
-        script = translateCurrent(script,current,polygons,vectors)
-        current = null
-        //objects.push( instantiateCircle(obj,layers,options.colorindex) )
+        current = translateCurrent(objects,current,polygons,vectors)
+        //instantiateEllipse(obj,layers,options.colorindex)
         break
       case 'line':
 console.log('##### line')
-        script = translateCurrent(script,current,polygons,vectors)
-        current = null
-        objects.push( instantiateLine3D(obj) )
+        current = translateCurrent(objects,current,polygons,vectors)
+        translateLine(obj,layers,options.colorindex)
         break
       case 'polyline':
         if (current === null) {
@@ -537,16 +600,14 @@ console.log('##### vertex')
         p = instantiateVertex(obj)
         break
       case 'seqend':
-        script = translateCurrent(script,current,polygons,vectors)
-        current = null
+        current = translateCurrent(objects,current,polygons,vectors)
         break
 
     // 2D entities
       case 'lwpolyline':
 console.log('##### lwpolyline')
-        script = translateCurrent(script,current,polygons,vectors)
-        current = null
-        objects.push( instantiatePath2D(obj,layers) )
+        current = translateCurrent(objects,current,polygons,vectors)
+        translatePath2D(obj,layers,options)
         break
 
       default:
@@ -555,28 +616,31 @@ console.log(obj.type)
         break
     }
   // accumlate polygons if necessary
-    if (p instanceof CSG.Polygon) {
+    if (p !== null & current instanceof CSG) {
       polygons.push(p)
     }
   // accumlate vectors if necessary
-    if (p instanceof CSG.Vector3D) {
+    if (p !== null & current instanceof CSG.Path2D) {
       vectors.push(p)
     }
-    if (p instanceof CSG.Vector2D) {
+    if (p !== null & current instanceof CSG.Path2D) {
       vectors.push(p)
     }
   }
 // translate the last object if necessary
-  script = translateCurrent(script,current,polygons,vectors)
+  current = translateCurrent(objects,current,polygons,vectors)
 
 // debug output
-//console.log('**************************************************')
-//  objects.forEach(
-//    function(e) {
-//      console.log(JSON.stringify(e));
-//    }
-//  );
-//console.log('**************************************************')
+console.log('**************************************************')
+  let script = ''
+  layers.forEach(
+    function(layer) {
+      script += translateLayer(layer)
+      //script += "\n"
+    }
+  )
+console.log(script)
+console.log('**************************************************')
   return script
 }
 
