@@ -80,16 +80,13 @@ function addSection(path,x1,y1,bulg) {
   } else {
   // add arc to the end of the path
     let prev   = path.points[path.points.length-1]
-    let x0 = prev.x
-    let y0 = prev.y
     let curr = new CSG.Vector2D(x1,y1)
-//console.log("bulg: ["+x0+","+y0+"],["+x1+","+y1+"],"+bulg)
     let u = prev.distanceTo(curr)
     let r = u * ((1 + Math.pow(bulg,2)) / (4 * bulg))
     let clockwise = (bulg < 0)
     let large     = false // FIXME how to determine?
     let d = Math.atan(bulg) / (Math.PI/180) * 4
-//console.log("u: "+u+", r: "+r+", cw: "+clockwise+", d: "+d)
+  // FIXME; add resolution
     path = path.appendArc([x1,y1],{radius: r,xaxisrotation: d,clockwise: clockwise,large: large});
   }
   return path
@@ -127,7 +124,7 @@ function instantiatePath2D (obj, layers, options) {
 // FIXME add optional to create CAG from the path
   if (isclosed) {
   // apply the last section between last and first points
-    path = addSection(path, pptxs[0], pptys[0], bulgs[bulgs.length-1])
+    path = addSection(path, pptxs[0], pptys[0], bulgs[vlen-1])
     path = path.close()
     return CAG.fromPoints(path.points)
   }
