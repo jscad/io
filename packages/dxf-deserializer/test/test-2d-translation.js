@@ -107,14 +107,6 @@ SECTION
 ENTITIES
   0
 LWPOLYLINE
-  5
-24
-100
-AcDbEntity
-  8
-Title Block
-100
-AcDbPolyline
  90
         4
  70
@@ -144,6 +136,47 @@ ENDSEC`
   t.is(ss5.length,10)
 
 // DXF LWPOLYLINE with bulges, translates to script with CSG.Path2D and CAG.fromPoints()
+  let dxf6 = `0
+SECTION
+2
+ENTITIES
+  0
+LWPOLYLINE
+ 90
+        4
+ 70
+     1
+ 43
+0.02
+ 10
+1.5
+ 20
+1.25
+ 42
+5.00
+ 10
+32.25
+ 20
+1.25
+ 42
+5.00
+ 10
+32.25
+ 20
+21.75
+ 42
+5.00
+ 10
+1.5
+ 20
+21.75
+ 42
+5.00
+0
+ENDSEC`
+  let src6 = deserialize(dxf6,'dxf6-test',{output: 'jscad'})
+  let ss6 = src6.split("\n")
+  t.is(ss6.length,10)
 
 })
 
