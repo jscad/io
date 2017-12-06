@@ -93,23 +93,20 @@ function instantiateVertex (obj) {
 //
 // append a section to the given script
 //
-function addSection(script,x1,y1,bulg) {
+function addSection(script,x1,y1,bulg,px,py) {
   if (bulg === 0) {
   // add straight line to the end of the path
     script += '.appendPoint( [' + x1 + ',' + y1 + '] )'
   } else {
   // add arc to the end of the path
-    let prev   = path.points[path.points.length-1]
-    let x0 = prev.x
-    let y0 = prev.y
+    let prev = new CSG.Vector2D(px,py)
     let curr = new CSG.Vector2D(x1,y1)
-//console.log("bulg: ["+x0+","+y0+"],["+x1+","+y1+"],"+bulg)
     let u = prev.distanceTo(curr)
     let r = u * ((1 + Math.pow(bulg,2)) / (4 * bulg))
     let clockwise = (bulg < 0)
     let large     = false // FIXME how to determine?
     let d = Math.atan(bulg) / (Math.PI/180) * 4
-//console.log("u: "+u+", r: "+r+", cw: "+clockwise+", d: "+d)
+  // FIXME; add resolution
     script += '.appendArc([' + x1 + ',' + y1 + '],{radius: ' + r + ',xaxisrotation: ' + d + ',clockwise: ' + clockwise + ',large: ' + large + '})'
   }
   return script
@@ -135,12 +132,15 @@ function translatePath2D (obj, layers, options) {
     script += '  ' + name + ' = ' + name
     pptxs.forEach(function(item, index, array) {
       let bulg = 0
+      let px = 0
+      let py = 0
       if (index > 0) {
         bulg = bulgs[index-1] // apply the previous bulg
+        px = pptxs[index-1]
+        py = pptys[index-1]
       }
-      script = addSection(script, pptxs[index], pptys[index], bulg)
+      script = addSection(script, pptxs[index], pptys[index], bulg, px, py)
     })
-    script += '\n'
   } else {
   // FIXME flag this DXF error
     return
@@ -148,9 +148,14 @@ function translatePath2D (obj, layers, options) {
 // FIXME add optional to create CAG from the path
   if (isclosed) {
   // apply the last section between last and first points
-    //path = addSection(path, pptxs[0], pptys[0], bulgs[bulgs.length-1])
-    script += '  ' + name + ' = ' + name + '.close()\n'
+    let bulg = bulgs[vlen-1] // apply the previous bulg
+    let px = pptxs[vlen-1]
+    let py = pptys[vlen-1]
+    script = addSection(script, pptxs[0], pptys[0], bulg, px, py)
+    script += '\n  ' + name + ' = ' + name + '.close()\n'
     script += '  ' + name + ' = CAG.fromPoints(' + name + '.points)\n'
+  } else {
+    script += '\n'
   }
   obj['script'] = script
   addToLayer( obj,layers )
