@@ -31,7 +31,6 @@ function handleEnd(reader,data) {
   console.log('DXF reader completed');
 }
 
-// Common Group Codes per Entity
 function handleEntity(reader,group,value) {
   //console.log('entity: '+group+','+value);
 
@@ -360,7 +359,7 @@ function handleLen(reader,group,value) {
 }
 
 //
-// special handling of group 90 (aaa) for various mesh values
+// special handling of group 90 (32 bit integer values) for various mesh values
 //
 function handleValue(reader,group,value) {
   //console.log('int: '+group+','+value)
@@ -471,16 +470,6 @@ function createReader(src, options) {
 // start the reader
   reader.write(src).close()
   return reader
-}
-
-function findLayer(obj, layers) {
-  let lname = obj['lnam'] || '0'
-  for (let layer of layers) {
-    if (layer['name'] === lname) {
-      return layer
-    }
-  }
-  return null
 }
 
 /*
