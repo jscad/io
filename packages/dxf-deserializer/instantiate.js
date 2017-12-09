@@ -10,7 +10,8 @@ const { CSG, CAG } = require('@jscad/csg')
 
 const {BYBLOCK, BYLAYER} = require('./autocad')
 
-// return Polygon
+//
+// instantiate the given object (3dface) as a polygon
 //
 function instantiatePolygon (obj,layers,colorindex) {
   let vertices = []
@@ -33,7 +34,7 @@ function instantiatePolygon (obj,layers,colorindex) {
 }
 
 //
-// instantiate the given DXF as 2D or 3D line
+// instantiate the given object (line) as CSG.Line2D or CSG.Line3D
 //
 function instantiateLine (obj, layers, colorindex) {
   let csg = null
@@ -49,6 +50,9 @@ function instantiateLine (obj, layers, colorindex) {
   return csg;
 }
 
+//
+// instantiate the give object as CSG.Vector2D or CSG.Vector3D
+//
 function instantiateVertex (obj) {
   const d3line = parseInt('00000000000100000', 2)
   const d3mesh = parseInt('00000000001000000', 2)
@@ -93,12 +97,10 @@ function addSection(path,x1,y1,bulg) {
 }
 
 //
-// convert the given obj (lwpolyline) into a path
+// instantiate the given object (lwpolyline) into a CSG.Path2D
 //
 function instantiatePath2D (obj, layers, options) {
   const closed = parseInt('00000000000000001', 2)
-
-//console.log(JSON.stringify(obj));
 
 // expected values
   let vlen  = obj['vlen']
@@ -132,7 +134,7 @@ function instantiatePath2D (obj, layers, options) {
 }
 
 //
-// convert the given obj (arc) into CAG or CSG
+// instantiate the given object (arc) into CSG.Path2D or CSG??
 //
 function instantiateArc (obj, layers, colorindex) {
 // expected values
@@ -154,7 +156,7 @@ function instantiateArc (obj, layers, colorindex) {
 }
 
 //
-// convert the given obj (circle) into CAG or CSG
+// instantiate the given object (circle) into CAG.circle (or extrude to CSG)
 //
 function instantiateCircle (obj, layers, colorindex) {
 // expected values
@@ -166,18 +168,48 @@ function instantiateCircle (obj, layers, colorindex) {
 // conversion
   let cn = getColorNumber(obj,layers)
   let shared = getColor(cn,colorindex)
+// convert to 2D object
+// FIXME need to determine resolution from object/layer/variables
+  let cag = CAG.circle({center: [pptx,ppty],radius: swid,resolution: CSG.defaultResolution2D})
   if (lthk === 0.0) {
-  // convert to 2D object
-  // FIXME need to determine resolution from object/layer/variables
-    return new CAG.circle({center: [pptx,ppty],radius: swid,resolution: CSG.defaultResolution2D})
+    return cag
   }
-  // convert to 3D object
+// convert to 3D object
+  csg = cag.extrude({offset: [0,0,lthk]})
+// FIXME need to use 210/220/230 for direction of extrusion
+  return csg
+}
+
+//
+// instantiate the give object (ellipse) into CAG.ellipse (or extrude to CSG)
+//
+function translateEllipse (obj, layers, colorindex) {
+// expected values
+  let pptx = obj['pptx'] // center point
+  let ppty = obj['ppty']
+  let pptz = obj['pptz']
+  let bulg = obj['bulg']
+  let sptx = obj['sptx'] // MAJOR axis point (about center point)
+  let spty = obj['spty']
+  let sptz = obj['sptz']
+  let swid = obj['swid'] // Ratio of minor axis to major axis
+  let name = obj['name']
+// convert to 2D object
   // FIXME need to determine resolution from object/layer/variables
-  // FIXME need to use 210/220/230 for direction of extrusion
-  let x = pptx
-  let y = ppty
-  let z = pptz + swid
-  return new CAG.cylinder({start: [pptx,ppty,pptz],end: [x,y,z],radius: swid,resolution: CSG.defaultResolution3D})
+  let center = new CSG.Vector2D(pptx,ppty)
+  let mjaxis = new CSG.Vector2D(sptx,spty)
+  let rx = center.distanceTo(mjaxis)
+  let ry = rx * swid
+  // FIXME add start and end angle when supported
+  let cag = CAG.ellipse({center: [pptx,ppty],radius: [rx,ry],resolution: CSG.defaultResolution2D})
+  if (ppty !== spty) {
+  // FIXME need to apply rotation about Z
+  }
+  if (pptz === 0.0 && sptz == 0.0) {
+    return cag
+  }
+// FIXME convert to 3D object
+  return cag
 }
 
 function createEdges(vlen, faces) {
@@ -210,6 +242,7 @@ function createEdges(vlen, faces) {
   }
   return edges
 }
+
 function createFaces(edgesByVertex) {
   let v1 = edgesByVertex.length
   let faces = []
@@ -249,6 +282,7 @@ function instantiateFaces(fvals) {
   }
   return faces
 }
+
 function instantiatePoints(pptxs,pptys,pptzs) {
   let points = []
   let vi = 0
@@ -263,7 +297,7 @@ function instantiatePoints(pptxs,pptys,pptzs) {
 }
 
 //
-// instantiate the MESH as an CSG object, consisting of the polygons given
+// instantiate the given object (mesh) into a CSG
 //
 // Note: See Face-Vertex meshes on Wikipedia
 //
@@ -327,41 +361,6 @@ function instantiateMesh (obj, layers, colorindex) {
 
         fi++
       }
-/*
-        let v1 = fvals[fi++]
-        let v2 = fvals[fi++]
-        let v3 = fvals[fi++]
-//console.log('Vs: '+v1+','+v2+','+v3)
-        if (v1 === v2 || v1 === v3 || v2 === v3) continue
-        let p1 = new CSG.Vector3D([pptxs[v1],pptys[v1],pptzs[v1]])
-        let p2 = new CSG.Vector3D([pptxs[v2],pptys[v2],pptzs[v2]])
-        let p3 = new CSG.Vector3D([pptxs[v3],pptys[v3],pptzs[v3]])
-    // check for CW vs CCW polygons
-        let plane = CSG.Plane.fromVector3Ds(p1,p2,p3)
-//console.log("plane: "+plane.toString())
-        let normal = plane.normal
-        if (isNaN(normal.x)) continue
-//console.log("normal: "+normal.toString())
-
-      let w1 = new CSG.Vector3D(p1)
-      let w2 = new CSG.Vector3D(p2)
-      let w3 = new CSG.Vector3D(p3)
-      let e1 = w2.minus(w1)
-      let e2 = w3.minus(w1)
-      let t = new CSG.Vector3D(normal).dot(e1.cross(e2))
-      if (t > 0) {    // 1,2,3 -> 3,2,1
-//console.log('reverse')
-        let tmp = p1
-        p1 = p3
-        p3 = tmp
-      }
-      let poly = CSG.Polygon.createFromPoints([p1,p2,p3],shared,plane)
-      }
-        let poly = CSG.Polygon.createFromPoints([p1,p2,p3],shared)
-//console.log("polygon: "+poly.toString())
-        //let c = poly.checkIfConvex()
-//console.log("poly convex: "+c)
-*/
     } else {
     }
   } else {
@@ -370,6 +369,9 @@ function instantiateMesh (obj, layers, colorindex) {
   return CSG.fromPolygons(polygons)
 }
 
+//
+// find the layer referenced by the given object
+//
 function findLayer(obj, layers) {
   let lname = obj['lnam'] || '0'
   for (let layer of layers) {
@@ -380,8 +382,10 @@ function findLayer(obj, layers) {
   return null
 }
 
+//
 // get the color number of the object, possibly looking at layer
 // returns -1 if a color number was not found
+//
 function getColorNumber(obj,layers) {
   let cn = obj['cnmb'] || -1
   if (cn === BYLAYER) {
@@ -394,6 +398,7 @@ function getColorNumber(obj,layers) {
   } else
   if (cn === BYBLOCK) {
   // use the color number from the block
+    cn = -1
   }
   return cn
 }
@@ -403,6 +408,9 @@ function mod(num, mod) {
   return Math.floor(remain >= 0 ? remain : remain + mod);
 }
 
+//
+// instantiate Polygon.Shared(color) using the given index into the given color index
+//
 function getColor(index,colorindex) {
   if (index < 0) { return null }
 
@@ -432,13 +440,18 @@ function getPolyType(obj) {
   return ptype
 }
 
+//
+// complete a complex object from the given base object and parts
+// - a series of 3dfaces => polygons => CSG
+// - a series of vertex => vectors => Path2D
+//
 function completeCurrent(objects,baseobj,polygons,vectors) {
   if (baseobj instanceof CSG.Path2D) {
-console.log('##### completing Path2D')
+  //console.log('##### completing Path2D')
     objects.push( new CSG.Path2D(vectors, baseobj.closed) )
   }
   if (baseobj instanceof CSG) {
-console.log('##### completing CSG')
+  //console.log('##### completing CSG')
     objects.push( CSG.fromPolygons(polygons) )
   }
   return null
