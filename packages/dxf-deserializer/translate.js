@@ -25,7 +25,7 @@ function translateVector3D(vector) {
 //
 function translatePolygon (obj,layers,colorindex) {
   let vertices = []
-// FIXME: should check global variable to instantiate in the proper orientation
+// FIXME: should check global variable to create in the proper orientation
   vertices.push( new CSG.Vertex(new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] ) ) )
   vertices.push( new CSG.Vertex(new CSG.Vector3D( [obj['sptx'],obj['spty'],obj['sptz']] ) ) )
   vertices.push( new CSG.Vertex(new CSG.Vector3D( [obj['tptx'],obj['tpty'],obj['tptz']] ) ) )
@@ -113,7 +113,7 @@ function addSection(script,x1,y1,bulg,px,py) {
 }
 
 //
-// convert the given obj (lwpolyline) into a path
+// translate the given obj (lwpolyline) into a CSG.Path2D
 //
 function translatePath2D (obj, layers, options) {
   const closed = parseInt('00000000000000001', 2)
@@ -162,7 +162,7 @@ function translatePath2D (obj, layers, options) {
 }
 
 //
-// convert the given obj (arc) into CAG or CSG
+// translate the given object (arc) into CAG.Path2D or CSG??
 //
 function translateArc (obj, layers, colorindex) {
 // expected values
@@ -184,11 +184,10 @@ function translateArc (obj, layers, colorindex) {
     return
   }
   // FIXME how to represent 3D arc?
-  //return CSG.Path2D.arc({center: [pptx,ppty],radius: swid,startangle: ang0,endangle: ang1, resolution: CSG.defaultResolution2D})
 }
 
 //
-// convert the given obj (circle) into CAG or CSG
+// translate the given obj (circle) into CAG.circle (or extrude to CSG)
 //
 function translateCircle (obj, layers, colorindex) {
 // expected values
@@ -212,66 +211,44 @@ function translateCircle (obj, layers, colorindex) {
   }
   // convert to 3D object
   // FIXME need to determine resolution from object/layer/variables
-  // FIXME need to use 210/220/230 for direction of extrusion
-  let x = pptx
-  let y = ppty
-  let z = pptz + swid
-  //return CAG.cylinder({start: [pptx,ppty,pptz],end: [x,y,z],radius: swid,resolution: CSG.defaultResolution3D})
+  let script = '  let ' + name + ' = CAG.circle({center: [' + pptx + ',' + ppty + '],radius: ' + swid + ',resolution: CSG.defaultResolution2D})'
+  script += '.extrude({offset: [0,0,' + lthk + ']})\n'
+  // FIXME need to use 210/220/230 for direction of rotation
+  obj['script'] = script
+  addToLayer( obj,layers )
 }
 
-function createEdges(vlen, faces) {
-  let edges = []
-  while (vlen > 0) {
-    edges.push([])
-    vlen--
-  }
-  let mod3 = Math.floor(faces.length / 3) * 3
-  if (mod3 === faces.length) {
-    let fi = 0
-    while (fi < faces.length) {
-      let v1 = faces[fi++]
-      let v2 = faces[fi++]
-      let v3 = faces[fi++]
-      if (v1 === v2 || v1 === v3 || v2 === v3) continue
-
-      let edge = edges[v1]
-      if (edge.indexOf(v2) < 0) { edge.push(v2) }
-      if (edge.indexOf(v3) < 0) { edge.push(v3) }
-
-      edge = edges[v2]
-      if (edge.indexOf(v3) < 0) { edge.push(v3) }
-      if (edge.indexOf(v1) < 0) { edge.push(v1) }
-
-      edge = edges[v3]
-      if (edge.indexOf(v1) < 0) { edge.push(v1) }
-      if (edge.indexOf(v2) < 0) { edge.push(v2) }
+//
+// translate the given object (ellipse) into CAG.ellipse or CSG??
+//
+function translateEllipse (obj, layers, colorindex) {
+// expected values
+  let pptx = obj['pptx'] // center point
+  let ppty = obj['ppty']
+  let pptz = obj['pptz']
+  let bulg = obj['bulg']
+  let sptx = obj['sptx'] // MAJOR axis point (about center point)
+  let spty = obj['spty']
+  let sptz = obj['sptz']
+  let swid = obj['swid'] // Ratio of minor axis to major axis
+  let name = obj['name']
+  if (pptz === 0.0 && sptz == 0.0) {
+  // convert to 2D object
+  // FIXME need to determine resolution from object/layer/variables
+    let center = new CSG.Vector2D(pptx,ppty)
+    let mjaxis = new CSG.Vector2D(sptx,spty)
+    let rx = center.distanceTo(mjaxis)
+    let ry = rx * swid
+  // FIXME add start and end angle when supported
+    let script = '  let ' + name + ' = CAG.ellipse({center: [' + pptx + ',' + ppty + '],radius: [' + rx + ',' + ry + '],resolution: CSG.defaultResolution2D})\n'
+    if (ppty !== spty) {
+    // FIXME need to apply rotation about Z
     }
+    obj['script'] = script
+    addToLayer( obj,layers )
+    return
   }
-  return edges
-}
-function createFaces(edgesByVertex) {
-  let v1 = edgesByVertex.length
-  let faces = []
-  while (v1 > 0) {
-    v1--
-    let v1edges = edgesByVertex[v1]
-    let e1i = v1edges.length
-    while (e1i > 0) {
-      e1i--
-      let v2 = v1edges[e1i]
-      let v2edges = edgesByVertex[v2]
-    // search for common vertexes
-      let e2i = v2edges.length
-      while (e2i > 0) {
-        e2i--
-        let v3 = v2edges[e2i]
-        if (v1edges.indexOf(v3) < 0) continue
-      // save this face
-        faces.push([v1,v2,v3])
-      }
-    }
-  }
-  return faces
+  // convert to 3D object
 }
 
 function instantiateFaces(fvals) {
@@ -414,8 +391,10 @@ function addToLayer(obj, layers) {
   layer['objects'].push(obj)
 }
 
+//
 // get the color number of the object, possibly looking at layer
 // returns -1 if a color number was not found
+//
 function getColorNumber(obj,layers) {
   let cn = obj['cnmb'] || -1
   if (cn === BYLAYER) {
@@ -437,6 +416,9 @@ function mod(num, mod) {
   return Math.floor(remain >= 0 ? remain : remain + mod)
 }
 
+//
+// instantiate Polygon.Shared(color) using the given index into the given color index
+//
 function getColor(index,colorindex) {
   if (index < 0) { return null }
 
@@ -486,6 +468,10 @@ function translateVertex(vertex) {
   return script
 }
 
+// translate a complex object from the given base object and parts
+// - a series of 3dface => polygons => CSG
+// - a series of vertex => vectors => Path2D
+//
 function translateCurrent(objects,baseobj,polygons,vectors) {
   if (baseobj instanceof CSG.Path2D) {
 console.log('##### completing Path2D')
@@ -507,6 +493,9 @@ console.log('##### completing CSG')
   return null
 }
 
+//
+// translate the given layer into a wrapper function for the previous translated objects
+//
 function translateLayer(layer) {
   let name = layer['name'] || 'Unknown'
   let script = "function layer" + name + "() {\n"
@@ -587,7 +576,7 @@ console.log('##### circle')
       case 'ellipse':
 console.log('##### ellipse')
         current = translateCurrent(objects,current,polygons,vectors)
-        //instantiateEllipse(obj,layers,options.colorindex)
+        translateEllipse(obj,layers,options.colorindex)
         break
       case 'line':
 console.log('##### line')
