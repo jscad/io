@@ -219,3 +219,163 @@ ENDSEC`
 
 })
 
+test('ASCII DXF Polylines translated to JSCAD Scripts', t => {
+// DXF 2D POLYLINE without bulges, translates to script with CSG.Path2D
+  let dxf1 = `0
+SECTION
+2
+ENTITIES
+  0
+POLYLINE
+  5
+28
+  8
+0
+ 66
+     1
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+0.02
+ 41
+0.02
+  0
+VERTEX
+  5
+ED
+  8
+0
+ 10
+0.0
+ 20
+2.0
+ 30
+0.0
+  0
+VERTEX
+  5
+ED
+  8
+0
+ 10
+2.0
+ 20
+4.0
+ 30
+0.0
+0
+SEQEND
+0
+ENDSEC`
+  let src1 = deserialize(dxf1,'dxf1-test',{output: 'jscad'})
+  let ss1 = src1.split("\n")
+  t.is(ss1.length,8)
+
+// DXF 2D POLYLINE with bulges, translates to script with CSG.Path2D
+  let dxf2 = `0
+SECTION
+2
+ENTITIES
+0
+POLYLINE
+8
+0
+66
+1
+40
+0.00617
+41
+0.00617
+70
+1
+0
+VERTEX
+8
+0
+10
+-0.0030849869
+20
+0
+42
+1
+0
+VERTEX
+8
+0
+10
+0.0030849869
+20
+0
+42
+1
+0
+SEQEND
+0
+ENDSEC`
+  let src2 = deserialize(dxf2,'dxf2-test',{output: 'jscad'})
+  let ss2 = src2.split("\n")
+  t.is(ss2.length,10)
+
+// DXF 3D POLYLINE with mesh, translates to script with CSG
+  let dxf3 = `0
+SECTION
+2
+ENTITIES
+0
+POLYLINE
+5
+B1
+100
+AcDbEntity
+8
+SOLIDS
+100
+AcDbPolygonMesh
+66
+1
+10
+0
+20
+0
+30
+0
+70
+16
+71
+6
+72
+3
+0
+VERTEX
+5
+B2
+100
+AcDbEntity
+8
+SOLIDS
+100
+AcDbVertex
+100
+AcDbPolygonMeshVertex
+10
+-144
+20
+-684
+30
+240
+70
+64
+0
+SEQEND
+0
+ENDSEC`
+  let src3 = deserialize(dxf3,'dxf3-test',{output: 'jscad'})
+  let ss3 = src3.split("\n")
+  t.is(ss3.length,8)
+
+})
+
