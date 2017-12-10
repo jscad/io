@@ -445,7 +445,7 @@ function getPolyType(obj) {
 // - a series of 3dfaces => polygons => CSG
 // - a series of vertex => vectors => Path2D
 //
-function completeCurrent(objects,baseobj,polygons,vectors) {
+function completeCurrent(objects,baseobj,polygons,vectors,options) {
   if (baseobj instanceof CSG.Path2D) {
   //console.log('##### completing Path2D')
     objects.push( new CSG.Path2D(vectors, baseobj.closed) )
@@ -484,11 +484,11 @@ console.log('**************************************************')
         break
       case 'layer':
 console.log('##### layer')
-        current = completeCurrent(objects,current,polygons,vectors)
+        current = completeCurrent(objects,current,polygons,vectors,options)
         layers.push(obj)
         break
       case 'variable':
-        current = completeCurrent(objects,current,polygons,vectors)
+        current = completeCurrent(objects,current,polygons,vectors,options)
         break
 
     // 3D entities
@@ -502,29 +502,29 @@ console.log('##### start of 3dfaces CSG')
         break
       case 'mesh':
 console.log('##### mesh')
-        current = completeCurrent(objects,current,polygons,vectors)
+        current = completeCurrent(objects,current,polygons,vectors,options)
         objects.push( instantiateMesh(obj,layers,options.colorindex) )
         break
 
     // 2D or 3D entities
       case 'arc':
 console.log('##### arc')
-        current = completeCurrent(objects,current,polygons,vectors)
+        current = completeCurrent(objects,current,polygons,vectors,options)
         objects.push( instantiateArc(obj,layers,options.colorindex) )
         break
       case 'circle':
 console.log('##### circle')
-        current = completeCurrent(objects,current,polygons,vectors)
+        current = completeCurrent(objects,current,polygons,vectors,options)
         objects.push( instantiateCircle(obj,layers,options.colorindex) )
         break
       case 'ellipse':
 console.log('##### ellipse')
-        current = completeCurrent(objects,current,polygons,vectors)
+        current = completeCurrent(objects,current,polygons,vectors,options)
         //objects.push( instantiateCircle(obj,layers,options.colorindex) )
         break
       case 'line':
 console.log('##### line')
-        current = completeCurrent(objects,current,polygons,vectors)
+        current = completeCurrent(objects,current,polygons,vectors,options)
         objects.push( instantiateLine(obj,layers,options.colorindex) )
         break
       case 'polyline':
@@ -538,13 +538,13 @@ console.log('##### vertex')
         p = instantiateVertex(obj)
         break
       case 'seqend':
-        current = completeCurrent(objects,current,polygons,vectors)
+        current = completeCurrent(objects,current,polygons,vectors,options)
         break
 
     // 2D entities
       case 'lwpolyline':
 console.log('##### lwpolyline')
-        current = completeCurrent(objects,current,polygons,vectors)
+        current = completeCurrent(objects,current,polygons,vectors,options)
         objects.push( instantiatePath2D(obj,layers,options) )
         break
 
@@ -566,7 +566,7 @@ console.log(obj.type)
     }
   }
 // instantiate the last object if necessary
-  current = completeCurrent(objects,current,polygons,vectors)
+  current = completeCurrent(objects,current,polygons,vectors,options)
 // add accumulated objects
 
 // debug output
