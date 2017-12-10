@@ -76,16 +76,17 @@ function instantiateVertex (obj) {
 
   let flags = obj['lflg']
   let vtype = null
-  if ((flags & d3line) == 1) {
+  if ((flags & d3line) === d3line) {
     vtype = new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] )
   } else
-  if ((flags & d3mesh) == 1) {
+  if ((flags & d3mesh) === d3mesh) {
     vtype = new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] )
   } else
-  if ((flags & d3face) == 1) {
+  if ((flags & d3face) === d3face) {
     vtype = new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] )
   } else {
     vtype = new CSG.Vector2D( obj['pptx'],obj['ppty'] )
+    vtype['bulg'] = obj['bulg'] // for rendering curved sections
   }
   return vtype
 }
@@ -265,6 +266,7 @@ function instantiateFaces(fvals) {
   }
   return faces
 }
+
 function instantiatePoints(pptxs,pptys,pptzs) {
   let points = []
   let vi = 0
@@ -436,13 +438,13 @@ function getPolyType(obj) {
 
   let flags = obj['lflg']
   let ptype = null
-  if ((flags & d3line) == 1) {
+  if ((flags & d3line) === d3line) {
     ptype = null // FIXME what to do?
   } else
-  if ((flags & d3mesh) == 1) {
+  if ((flags & d3mesh) === d3mesh) {
     ptype = new CSG()
   } else {
-    let isclosed = ((flags & closed) === 1)
+    let isclosed = ((flags & closed) === closed)
     ptype = new CSG.Path2D([],isclosed)
   }
   return ptype
@@ -472,13 +474,26 @@ function translateVertex(vertex) {
 // - a series of 3dface => polygons => CSG
 // - a series of vertex => vectors => Path2D
 //
-function translateCurrent(objects,baseobj,polygons,vectors) {
-  if (baseobj instanceof CSG.Path2D) {
+function translateCurrent(current,layers,polygons,vectors,options) {
+  if (current instanceof CSG.Path2D) {
 console.log('##### completing Path2D')
-    script += "const path = new CSG.Path2D()\n"
-    //objects.push( new CSG.Path2D(vectors, baseobj.closed) )
+    current['vlen'] = vectors.length
+    current['pptxs'] = []
+    current['pptys'] = []
+    current['bulgs'] = []
+    for (vector of vectors) {
+      current['pptxs'].push(vector.x)
+      current['pptys'].push(vector.y)
+      current['bulgs'].push(vector['bulg'])
+    }
+    if (current.closed) {
+      current['lflg'] = parseInt('00000000000000001', 2)
+    } else {
+      current['lflg'] = 0
+    }
+    translatePath2D(current,layers,options)
   }
-  if (baseobj instanceof CSG) {
+  if (current instanceof CSG) {
 console.log('##### completing CSG')
     let script = "function csg1() {\n"
     script += "  const polygons = [\n"
@@ -488,7 +503,8 @@ console.log('##### completing CSG')
     script += "\n  ]\n"
     script += "  return new CSG(polygons)\n"
     script += "}\n"
-    objects.push( script )
+    current['script'] = script
+    addToLayer( current,layers )
   }
   return null
 }
@@ -518,8 +534,9 @@ console.log('**************************************************')
   let layers   = []   // list of layers with various information like color
   let current  = null // the object being created
   let polygons = []   // the list of 3D polygons translated
-  let objects  = []   // the list of objects translated
   let vectors  = []   // the list of vectors translated
+  let objects  = []   // the list of objects translated
+  let numobjs  = 0
 
   let p = null
   for (let obj of reader.objstack) {
@@ -530,7 +547,8 @@ console.log('**************************************************')
       continue
     }
     if (! ('name' in obj)) {
-      obj['name'] = 'jscad' + objects.length
+      obj['name'] = 'jscad' + numobjs
+      numobjs = numobjs + 1
     }
 
     switch (obj.type) {
@@ -540,11 +558,11 @@ console.log('**************************************************')
         break
       case 'layer':
 console.log('##### layer')
-        current = translateCurrent(objects,current,polygons,vectors)
+        current = translateCurrent(current,layers,polygons,vectors,options)
         layers.push(obj)
         break
       case 'variable':
-        current = translateCurrent(objects,current,polygons,vectors)
+        current = translateCurrent(current,layers,polygons,vectors,options)
         break
 
     // 3D entities
@@ -554,39 +572,43 @@ console.log('##### 3dface')
         if (current === null) {
 console.log('##### start of 3dfaces CSG')
           current = new CSG()
+          current['name'] = 'jscad' + numobjs
+          numobjs = numobjs + 1
         }
         break
       case 'mesh':
 console.log('##### mesh')
-        current = translateCurrent(objects,current,polygons,vectors)
+        current = translateCurrent(current,layers,polygons,vectors,options)
         objects.push( instantiateMesh(obj,layers,options.colorindex) )
         break
 
     // 2D or 3D entities
       case 'arc':
 console.log('##### arc')
-        current = translateCurrent(objects,current,polygons,vectors)
+        current = translateCurrent(current,layers,polygons,vectors,options)
         translateArc(obj,layers,options.colorindex)
         break
       case 'circle':
 console.log('##### circle')
-        current = translateCurrent(objects,current,polygons,vectors)
+        current = translateCurrent(current,layers,polygons,vectors,options)
         translateCircle(obj,layers,options.colorindex)
         break
       case 'ellipse':
 console.log('##### ellipse')
-        current = translateCurrent(objects,current,polygons,vectors)
+        current = translateCurrent(current,layers,polygons,vectors,options)
         translateEllipse(obj,layers,options.colorindex)
         break
       case 'line':
 console.log('##### line')
-        current = translateCurrent(objects,current,polygons,vectors)
+        current = translateCurrent(current,layers,polygons,vectors,options)
         translateLine(obj,layers,options.colorindex)
         break
       case 'polyline':
         if (current === null) {
 console.log('##### start of polyline')
           current = getPolyType(obj)
+          current['name'] = 'jscad' + numobjs
+          numobjs = numobjs + 1
         }
         break
       case 'vertex':
@@ -594,13 +616,13 @@ console.log('##### vertex')
         p = instantiateVertex(obj)
         break
       case 'seqend':
-        current = translateCurrent(objects,current,polygons,vectors)
+        current = translateCurrent(current,layers,polygons,vectors,options)
         break
 
     // 2D entities
       case 'lwpolyline':
 console.log('##### lwpolyline')
-        current = translateCurrent(objects,current,polygons,vectors)
+        current = translateCurrent(current,layers,polygons,vectors,options)
         translatePath2D(obj,layers,options)
         break
 
@@ -610,19 +632,19 @@ console.log(obj.type)
         break
     }
   // accumlate polygons if necessary
-    if (p !== null & current instanceof CSG) {
+    if (p instanceof CSG.Polygon) {
       polygons.push(p)
     }
   // accumlate vectors if necessary
-    if (p !== null & current instanceof CSG.Path2D) {
+    if (p instanceof CSG.Vector3D) {
       vectors.push(p)
     }
-    if (p !== null & current instanceof CSG.Path2D) {
+    if (p instanceof CSG.Vector2D) {
       vectors.push(p)
     }
   }
 // translate the last object if necessary
-  current = translateCurrent(objects,current,polygons,vectors)
+  current = translateCurrent(current,layers,polygons,vectors,options)
 
 // debug output
 console.log('**************************************************')
