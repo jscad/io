@@ -1,9 +1,15 @@
 /*
- * AutoCAD Constants
- */
+AutoCAD Constants
+
+## License
+
+Copyright (c) 2017 Z3 Development https://github.com/z3dev
+
+All code released under MIT license
+*/
 
 //
-// translate group codes to names for internal use
+// translate group codes to names for use as object attributes
 //
 let dxfTLA = [
     [0  ,'etyp'], [1 ,'text'], [2 ,'name'], [3 ,'nam1'],
@@ -11,7 +17,7 @@ let dxfTLA = [
     [10 ,'pptx'], [11,'sptx'], [12,'tptx'], [13,'fptx'],
     [20 ,'ppty'], [21,'spty'], [22,'tpty'], [23,'fpty'],
     [30 ,'pptz'], [31,'sptz'], [32,'tptz'], [33,'fptz'],
-    [38, 'elev'], [39 ,'lthk'],
+    [38, 'elev'], [39,'lthk'],
     [40 ,'swid'], [41,'ewid'], [42,'bulg'], [43,'cwid'],
     [48 ,'lscl'],
     [50 ,'ang0'], [51,'ang1'],
