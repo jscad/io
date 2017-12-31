@@ -481,9 +481,9 @@ console.log('**************************************************')
       //console.log('##### skip')
       continue
     }
+//console.log(JSON.stringify(obj));
 
     switch (obj.type) {
-//console.log(JSON.stringify(obj));
     // control objects
       case 'dxf':
         break
