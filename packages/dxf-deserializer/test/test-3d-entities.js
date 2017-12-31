@@ -107,7 +107,7 @@ test('ASCII DXF from Autocad2017 3D Lines to Object Conversion',  t => {
   obj = objs[1]
   t.true(obj instanceof CSG.Path2D)
   obj = objs[2]
-  t.true(obj instanceof CSG.Line3D)
+  t.true(obj instanceof CSG.Line2D) // FYI the DXF is incorrect
 })
 
 
@@ -149,13 +149,13 @@ test('ASCII DXF from exdxf 3D Mesh to Object Conversion',  t => {
   t.is(objs.length,5)
 
   let obj4 = objs[4]
+  t.true(obj4 instanceof CSG)
   t.is(obj4.toPolygons().length,6)
 })
 
 
 test('ASCII DXF from Autocad2017 3D Mesh to Object Conversion',  t => {
   let dxfPath = path.resolve(__dirname, '../../../../sample-files/dxf/autocad2017/3Dmesh01.dxf')
-  //let dxfPath = path.resolve(__dirname, '../../../../sample-files/dxf/ezdxf/AC1027_mesh.dxf')
   t.deepEqual(true, fs.existsSync(dxfPath))
 
   let dxf  = fs.readFileSync(dxfPath, 'UTF8')
