@@ -60,16 +60,17 @@ function instantiateVertex (obj) {
 
   let flags = obj['lflg']
   let vtype = null
-  if ((flags & d3line) == 1) {
+  if ((flags & d3line) == d3line) {
     vtype = new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] )
   } else
-  if ((flags & d3mesh) == 1) {
+  if ((flags & d3mesh) == d3mesh) {
     vtype = new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] )
   } else
-  if ((flags & d3face) == 1) {
+  if ((flags & d3face) == d3face) {
     vtype = new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] )
   } else {
     vtype = new CSG.Vector2D( obj['pptx'],obj['ppty'] )
+    vtype['bulg'] = obj['bulg'] // for rendering curved sections
   }
   return vtype
 }
@@ -110,7 +111,7 @@ function instantiatePath2D (obj, layers, options) {
   let flags = obj['lflg']
 // conversion
   let path = new CSG.Path2D()
-  let isclosed = ((flags & closed) === 1)
+  let isclosed = ((flags & closed) === closed)
   if (vlen === pptxs.length && vlen === pptys.length && vlen === bulgs.length) {
     pptxs.forEach(function(item, index, array) {
       let bulg = 0
@@ -149,10 +150,10 @@ function instantiateArc (obj, layers, colorindex) {
   if (lthk === 0.0) {
   // convert to 2D object
   // FIXME need to determine resolution from object/layer/variables
-    return CSG.Path2D.arc({center: [pptx,ppty],radius: swid,startangle: ang0,endangle: ang1, resolution: CSG.defaultResolution2D})
+    return CSG.Path2D.arc({center: [pptx,ppty],radius: swid,startangle: ang0,endangle: ang1,resolution: CSG.defaultResolution2D})
   }
   // FIXME how to represent 3D arc?
-  return CSG.Path2D.arc({center: [pptx,ppty],radius: swid,startangle: ang0,endangle: ang1, resolution: CSG.defaultResolution2D})
+  return CSG.Path2D.arc({center: [pptx,ppty],radius: swid,startangle: ang0,endangle: ang1,resolution: CSG.defaultResolution2D})
 }
 
 //
@@ -166,15 +167,18 @@ function instantiateCircle (obj, layers, colorindex) {
   let pptz = obj['pptz']
   let swid = obj['swid']
 // conversion
-  let cn = getColorNumber(obj,layers)
-  let shared = getColor(cn,colorindex)
+  // FIXME add color when supported
+  //let cn = getColorNumber(obj,layers)
+  //let shared = getColor(cn,colorindex)
+  // FIXME need to determine resolution from object/layer/variables
+  let res = CSG.defaultResolution2D
 // convert to 2D object
-// FIXME need to determine resolution from object/layer/variables
-  let cag = CAG.circle({center: [pptx,ppty],radius: swid,resolution: CSG.defaultResolution2D})
   if (lthk === 0.0) {
+    let cag = CAG.circle({center: [pptx,ppty],radius: swid,resolution: res})
     return cag
   }
 // convert to 3D object
+  let cag = CAG.circle({center: [pptx,ppty],radius: swid,resolution: res})
   csg = cag.extrude({offset: [0,0,lthk]})
 // FIXME need to use 210/220/230 for direction of extrusion
   return csg
@@ -183,7 +187,7 @@ function instantiateCircle (obj, layers, colorindex) {
 //
 // instantiate the give object (ellipse) into CAG.ellipse (or extrude to CSG)
 //
-function translateEllipse (obj, layers, colorindex) {
+function instantiateEllipse (obj, layers, colorindex) {
 // expected values
   let pptx = obj['pptx'] // center point
   let ppty = obj['ppty']
@@ -194,22 +198,23 @@ function translateEllipse (obj, layers, colorindex) {
   let sptz = obj['sptz']
   let swid = obj['swid'] // Ratio of minor axis to major axis
   let name = obj['name']
-// convert to 2D object
   // FIXME need to determine resolution from object/layer/variables
-  let center = new CSG.Vector2D(pptx,ppty)
-  let mjaxis = new CSG.Vector2D(sptx,spty)
-  let rx = center.distanceTo(mjaxis)
-  let ry = rx * swid
-  // FIXME add start and end angle when supported
-  let cag = CAG.ellipse({center: [pptx,ppty],radius: [rx,ry],resolution: CSG.defaultResolution2D})
-  if (ppty !== spty) {
-  // FIXME need to apply rotation about Z
-  }
+  let res = CSG.defaultResolution2D
+
+// convert to 2D object
   if (pptz === 0.0 && sptz == 0.0) {
+    let center = new CSG.Vector2D(pptx,ppty)
+    let mjaxis = new CSG.Vector2D(sptx,spty)
+    let rx = center.distanceTo(mjaxis)
+    let ry = rx * swid
+    // FIXME add start and end angle when supported
+    let cag = CAG.ellipse({center: [pptx,ppty],radius: [rx,ry],resolution: res})
+    if (ppty !== spty) {
+    // FIXME need to apply rotation about Z
+    }
     return cag
   }
-// FIXME convert to 3D object
-  return cag
+// convert to 3D object
 }
 
 function createEdges(vlen, faces) {
@@ -520,7 +525,7 @@ console.log('##### circle')
       case 'ellipse':
 console.log('##### ellipse')
         current = completeCurrent(objects,current,polygons,vectors,options)
-        //objects.push( instantiateCircle(obj,layers,options.colorindex) )
+        objects.push( instantiateEllipse(obj,layers,options.colorindex) )
         break
       case 'line':
 console.log('##### line')
