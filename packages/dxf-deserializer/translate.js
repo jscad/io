@@ -8,24 +8,14 @@ All code released under MIT license
 */
 const { CSG, CAG } = require('@jscad/csg')
 
-const {BYBLOCK, BYLAYER, getTLA} = require('./autocad')
-
-function translateVector2D(vector) {
-  let script = 'new CSG.Vector2D(' + vector.x + ',' + vector.y + ')'
-  return script
-}
-
-function translateVector3D(vector) {
-  let script = 'new CSG.Vector3D(' + vector.x + ',' + vector.y + ',' + vector.z + ')'
-  return script
-}
+const {BYBLOCK, BYLAYER} = require('./autocad')
 
 //
-// translate the give object (3Dface) into CSG.Polygon
+// instantiate the given object (3dface) as a polygon
 //
-function translatePolygon (obj,layers,colorindex) {
+function instantiatePolygon (obj,layers,colorindex) {
   let vertices = []
-// FIXME: should check global variable to create in the proper orientation
+// FIXME: should check global variable to instantiate in the proper orientation
   vertices.push( new CSG.Vertex(new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] ) ) )
   vertices.push( new CSG.Vertex(new CSG.Vector3D( [obj['sptx'],obj['spty'],obj['sptz']] ) ) )
   vertices.push( new CSG.Vertex(new CSG.Vector3D( [obj['tptx'],obj['tpty'],obj['tptz']] ) ) )
@@ -40,33 +30,7 @@ function translatePolygon (obj,layers,colorindex) {
   }
   let cn = getColorNumber(obj,layers)
   let shared = getColor(cn,colorindex)
-  const polygon = new CSG.Polygon(vertices,shared)
-
-  let script = 'new CSG.Polygon('
-  for (let vertex of polygon.vertices) {
-    script += translateVertex(vertex) + ','
-  }
-  script += translateShared(polygon.shared) + ','
-  script += translatePlane(polygon.plane) + ')'
-  return script
-}
-
-//
-// translate the given DXF object (line) into 2D or 3D line
-//
-function translateLine (obj, layers, colorindex) {
-  let script = '  let ' + obj['name'] + ' = '
-  if (obj['pptz'] === obj['sptz'] & obj['pptz'] === 0) {
-    let p1 = new CSG.Vector2D( [obj['pptx'],obj['ppty']] )
-    let p2 = new CSG.Vector2D( [obj['sptx'],obj['spty']] )
-    script += 'CSG.Line2D.fromPoints(' + translateVector2D(p1) + ',' + translateVector2D(p2) + ')\n'
-  } else {
-    let p1 = new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] )
-    let p2 = new CSG.Vector3D( [obj['sptx'],obj['spty'],obj['sptz']] )
-    script += 'CSG.Line3D.fromPoints(' + translateVector3D(p1) + ',' + translateVector3D(p2) + ')\n'
-  }
-  obj['script'] = script
-  addToLayer(obj,layers)
+  return new CSG.Polygon(vertices,shared)
 }
 
 function instantiateVertex (obj) {
@@ -92,7 +56,54 @@ function instantiateVertex (obj) {
 }
 
 //
-// append a section to the given script
+// translate the give 2D vector to JSCAD script
+//
+function translateVector2D(vector) {
+  let script = 'new CSG.Vector2D(' + vector.x + ',' + vector.y + ')'
+  return script
+}
+
+//
+// translate the give 3D vector to JSCAD script
+//
+function translateVector3D(vector) {
+  let script = 'new CSG.Vector3D(' + vector.x + ',' + vector.y + ',' + vector.z + ')'
+  return script
+}
+
+//
+// translate the given CSG.Polygon into JSCAD script
+//
+function translatePolygon (polygon) {
+  let script = 'new CSG.Polygon(['
+  for (let vertex of polygon.vertices) {
+    script += translateVertex(vertex) + ','
+  }
+  script += '],' + translateShared(polygon.shared) + ','
+  script += translatePlane(polygon.plane) + ')'
+  return script
+}
+
+//
+// translate the given DXF object (line) into 2D or 3D line
+//
+function translateLine (obj, layers, colorindex) {
+  let script = '  let ' + obj['name'] + ' = '
+  if (obj['pptz'] === obj['sptz'] & obj['pptz'] === 0) {
+    let p1 = new CSG.Vector2D( [obj['pptx'],obj['ppty']] )
+    let p2 = new CSG.Vector2D( [obj['sptx'],obj['spty']] )
+    script += 'CSG.Line2D.fromPoints(' + translateVector2D(p1) + ',' + translateVector2D(p2) + ')\n'
+  } else {
+    let p1 = new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] )
+    let p2 = new CSG.Vector3D( [obj['sptx'],obj['spty'],obj['sptz']] )
+    script += 'CSG.Line3D.fromPoints(' + translateVector3D(p1) + ',' + translateVector3D(p2) + ')\n'
+  }
+  obj['script'] = script
+  addToLayer(obj,layers)
+}
+
+//
+// append a Path section to the given script
 //
 function addSection(script,x1,y1,bulg,px,py) {
   if (bulg === 0) {
@@ -128,7 +139,7 @@ function translatePath2D (obj, layers, options) {
   let name  = obj['name']
 // translation
   let script = '  let ' + name + ' = new CSG.Path2D()\n'
-  let isclosed = ((flags & closed) === 1)
+  let isclosed = ((flags & closed) === closed)
   if (vlen === pptxs.length && vlen === pptys.length && vlen === bulgs.length) {
     script += '  ' + name + ' = ' + name
     pptxs.forEach(function(item, index, array) {
@@ -202,17 +213,17 @@ function translateCircle (obj, layers, colorindex) {
   // FIXME add color when supported
   //let cn = getColorNumber(obj,layers)
   //let shared = getColor(cn,colorindex)
-  if (lthk === 0.0) {
-  // convert to 2D object
   // FIXME need to determine resolution from object/layer/variables
-    let script = '  let ' + name + ' = CAG.circle({center: [' + pptx + ',' + ppty + '],radius: ' + swid + ',resolution: CSG.defaultResolution2D})\n'
+  let res = CSG.defaultResolution2D
+// convert to 2D object
+  if (lthk === 0.0) {
+    let script = '  let ' + name + ' = CAG.circle({center: [' + pptx + ',' + ppty + '],radius: ' + swid + ',resolution: '+res+'})\n'
     obj['script'] = script
     addToLayer( obj,layers )
     return
   }
-  // convert to 3D object
-  // FIXME need to determine resolution from object/layer/variables
-  let script = '  let ' + name + ' = CAG.circle({center: [' + pptx + ',' + ppty + '],radius: ' + swid + ',resolution: CSG.defaultResolution2D})'
+// convert to 3D object
+  let script = '  let ' + name + ' = CAG.circle({center: [' + pptx + ',' + ppty + '],radius: ' + swid + ',resolution: '+res+'})'
   script += '.extrude({offset: [0,0,' + lthk + ']})\n'
   // FIXME need to use 210/220/230 for direction of rotation
   obj['script'] = script
@@ -233,15 +244,17 @@ function translateEllipse (obj, layers, colorindex) {
   let sptz = obj['sptz']
   let swid = obj['swid'] // Ratio of minor axis to major axis
   let name = obj['name']
-  if (pptz === 0.0 && sptz == 0.0) {
-  // convert to 2D object
   // FIXME need to determine resolution from object/layer/variables
+  let res = CSG.defaultResolution2D
+
+// convert to 2D object
+  if (pptz === 0.0 && sptz == 0.0) {
     let center = new CSG.Vector2D(pptx,ppty)
     let mjaxis = new CSG.Vector2D(sptx,spty)
     let rx = center.distanceTo(mjaxis)
     let ry = rx * swid
-  // FIXME add start and end angle when supported
-    let script = '  let ' + name + ' = CAG.ellipse({center: [' + pptx + ',' + ppty + '],radius: [' + rx + ',' + ry + '],resolution: CSG.defaultResolution2D})\n'
+    // FIXME add start and end angle when supported
+    let script = '  let ' + name + ' = CAG.ellipse({center: [' + pptx + ',' + ppty + '],radius: [' + rx + ',' + ry + '],resolution: '+res+'})\n'
     if (ppty !== spty) {
     // FIXME need to apply rotation about Z
     }
@@ -249,7 +262,7 @@ function translateEllipse (obj, layers, colorindex) {
     addToLayer( obj,layers )
     return
   }
-  // convert to 3D object
+// convert to 3D object
 }
 
 function instantiateFaces(fvals) {
@@ -339,7 +352,6 @@ function instantiateMesh (obj, layers, colorindex) {
           //vertices.reverse()
         }
 
-        //let poly = CSG.Polygon.createFromPoints([p1,p2,p3],shared)
         let poly = new CSG.Polygon(vertices,shared)
         polygons.push( poly )
 
@@ -371,10 +383,11 @@ function findLayer0(layers) {
     }
   }
 // this DXF did not specify so create
-  layer = {type: 'layer', name: '0'}
-  layer[getTLA(48)] = 1.0
-  layer[getTLA(60)] = 0
-  layer[getTLA(67)] = 0
+  layer = {type: 'layer'}
+  layer['name'] = '0'
+  layer['lscl'] = 1.0
+  layer['visb'] = 0
+  layer['spac'] = 0
   layer['objects'] = []
 
   layers.push(layer)
@@ -430,11 +443,21 @@ function getColor(index,colorindex) {
   return new CSG.Polygon.Shared(rgba)
 }
 
-// works for both POLYLINE
+//
+// get the (internal) object type from the given object
+//
+// This assumes the given object is a POLYLINE.
+// DXF POLYLINE entities are over-loaded objects with various shapes.
+// - 2D line, with following 2D VERTEX entities
+// - 3D line, with following 3D VERTEX entities
+// - 3D mesh, with following 3D VERTEX mesh entities
+// - 3D solid, with following faces composed of VERTEX and aa entities
+//
 function getPolyType(obj) {
-  const closed = parseInt('00000000000000001', 2)
-  const d3line = parseInt('00000000000001000', 2)
-  const d3mesh = parseInt('00000000000010000', 2)
+  const closedM = parseInt('00000000000000001', 2)
+  const d3line  = parseInt('00000000000001000', 2)
+  const d3mesh  = parseInt('00000000000010000', 2)
+  const closedN = parseInt('00000000000100000', 2)
 
   let flags = obj['lflg']
   let ptype = null
@@ -443,18 +466,31 @@ function getPolyType(obj) {
   } else
   if ((flags & d3mesh) === d3mesh) {
     ptype = new CSG()
+  // need the mesh shape for interpretation
+    ptype['fvia'] = obj['fvia']
+    ptype['fvib'] = obj['fvib']
+    let closed = ((flags & closedM) === closedM)
+    ptype.closedM = closed
+    closed = ((flags & closedN) === closedN)
+    ptype.closedN = closed
   } else {
-    let isclosed = ((flags & closed) === closed)
+    let isclosed = ((flags & closedM) === closedM)
     ptype = new CSG.Path2D([],isclosed)
   }
   return ptype
 }
 
+//
+// translate the given CSG.Plane to JSCAD script
+//
 function translatePlane(plane) {
   let script = 'new CSG.Plane(' + translateVector3D(plane.normal) + ',' + plane.w + ')'
   return script
 }
 
+//
+// translate the given CSG.Polygon.Shared to JSCAD script
+//
 function translateShared(shared) {
   let script = 'CSG.Polygon.defaultShared'
   if (shared !== null && shared.color !== null) {
@@ -463,6 +499,9 @@ function translateShared(shared) {
   return script
 }
 
+//
+// translate the given CSG.Vertex to JSCAD script
+//
 function translateVertex(vertex) {
   let script = 'new CSG.Vertex('
   script += translateVector3D(vertex.pos)
@@ -470,41 +509,92 @@ function translateVertex(vertex) {
   return script
 }
 
-// translate a complex object from the given base object and parts
-// - a series of 3dface => polygons => CSG
-// - a series of vertex => vectors => Path2D
-//
-function translateCurrent(current,layers,polygons,vectors,options) {
-  if (current instanceof CSG.Path2D) {
-console.log('##### completing Path2D')
-    current['vlen'] = vectors.length
-    current['pptxs'] = []
-    current['pptys'] = []
-    current['bulgs'] = []
-    for (vector of vectors) {
-      current['pptxs'].push(vector.x)
-      current['pptys'].push(vector.y)
-      current['bulgs'].push(vector['bulg'])
-    }
-    if (current.closed) {
-      current['lflg'] = parseInt('00000000000000001', 2)
-    } else {
-      current['lflg'] = 0
-    }
-    translatePath2D(current,layers,options)
+function instantiateFacets(meshM,meshN,vectors) {
+// TODO: add shared color to all polygons
+
+  function getVector(x,y) {
+    let n = (((x-1)*meshN)+(y-1))
+    return vectors[n]
   }
-  if (current instanceof CSG) {
-console.log('##### completing CSG')
-    let script = "function csg1() {\n"
-    script += "  const polygons = [\n"
-    for (let polygon of polygons) {
-      script += '  ' + polygon + ','
+
+  let facets = []
+// sanity check
+  let fcount = meshM * meshN
+  if (fcount !== vectors.length) {
+    return facets
+  }
+  if (meshM < 2 | meshN < 2) {
+    return facets
+  }
+  let i = 1
+  while (i < meshM) {
+    let j = 1
+    while (j < meshN) {
+      let v0 = getVector(i,j)
+      let v1 = getVector(i+1,j)
+      let v2 = getVector(i+1,j+1)
+      let v3 = getVector(i,j+1) // CCW vectors
+      let facet = [v0,v1,v2,v3]
+      let polygon = CSG.Polygon.createFromPoints(facet)
+      //if (!polygon.checkIfConvex()) {
+      //  facet = [v0,v3,v2,v1]
+      //  polygon = CSG.Polygon.createFromPoints(facet)
+      //}
+      if (Number.isFinite(polygon.plane.w)) {
+        facets.push(polygon)
+      }
+      j++
     }
-    script += "\n  ]\n"
-    script += "  return new CSG(polygons)\n"
-    script += "}\n"
-    current['script'] = script
-    addToLayer( current,layers )
+    i++
+  }
+  return facets
+}
+
+//
+// translate a complex object from the given base object and parts
+// - CSG plus a series of polygons => CSG
+// - Path2D plus a series of 2D vectors => Path2D
+// - CSG plus a series of 3D vectors => CSG
+//
+function translateCurrent(obj,layers,parts,options) {
+  if (obj instanceof CSG.Path2D) {
+console.log('##### completing Path2D using vectors')
+    obj['vlen'] = parts.length
+    obj['pptxs'] = []
+    obj['pptys'] = []
+    obj['bulgs'] = []
+    for (vector of parts) {
+      obj['pptxs'].push(vector.x)
+      obj['pptys'].push(vector.y)
+      obj['bulgs'].push(vector['bulg'])
+    }
+    if (obj.closed) {
+      obj['lflg'] = parseInt('00000000000000001', 2)
+    } else {
+      obj['lflg'] = 0
+    }
+    translatePath2D(obj,layers,options)
+  }
+  if (obj instanceof CSG) {
+    if ('fvia' in obj) {
+      console.log('##### completing CSG using vectors')
+      let m = obj['fvia']
+      let n = obj['fvib']
+      let closed = obj.closedN
+      let facets = instantiateFacets(m,n,parts)
+      parts = facets
+    }
+    //else {
+      console.log('##### completing CSG using polygons')
+      let script = '  const ' + obj['name'] + '_polygons = [\n'
+      for (let polygon of parts) {
+        script += '    ' + translatePolygon(polygon) + ',\n'
+      }
+      script += '  ]\n'
+      script += '  let ' + obj['name'] + ' = CSG.fromPolygons(' + obj['name'] + '_polygons)\n'
+      obj['script'] = script
+      addToLayer( obj,layers )
+    //}
   }
   return null
 }
@@ -533,6 +623,7 @@ console.log('**************************************************')
 
   let layers   = []   // list of layers with various information like color
   let current  = null // the object being created
+  let parts    = []   // the list of object subparts (polygons or vectors)
   let polygons = []   // the list of 3D polygons translated
   let vectors  = []   // the list of vectors translated
   let objects  = []   // the list of objects translated
@@ -558,17 +649,17 @@ console.log('**************************************************')
         break
       case 'layer':
 console.log('##### layer')
-        current = translateCurrent(current,layers,polygons,vectors,options)
+        current = translateCurrent(current,layers,parts,options)
         layers.push(obj)
         break
       case 'variable':
-        current = translateCurrent(current,layers,polygons,vectors,options)
+        current = translateCurrent(current,layers,parts,options)
         break
 
     // 3D entities
       case '3dface':
 console.log('##### 3dface')
-        p = translatePolygon(obj,layers,options.colorindex)
+        p = instantiatePolygon(obj,layers,options.colorindex)
         if (current === null) {
 console.log('##### start of 3dfaces CSG')
           current = new CSG()
@@ -578,29 +669,29 @@ console.log('##### start of 3dfaces CSG')
         break
       case 'mesh':
 console.log('##### mesh')
-        current = translateCurrent(current,layers,polygons,vectors,options)
+        current = translateCurrent(current,layers,parts,options)
         objects.push( instantiateMesh(obj,layers,options.colorindex) )
         break
 
     // 2D or 3D entities
       case 'arc':
 console.log('##### arc')
-        current = translateCurrent(current,layers,polygons,vectors,options)
+        current = translateCurrent(current,layers,parts,options)
         translateArc(obj,layers,options.colorindex)
         break
       case 'circle':
 console.log('##### circle')
-        current = translateCurrent(current,layers,polygons,vectors,options)
+        current = translateCurrent(current,layers,parts,options)
         translateCircle(obj,layers,options.colorindex)
         break
       case 'ellipse':
 console.log('##### ellipse')
-        current = translateCurrent(current,layers,polygons,vectors,options)
+        current = translateCurrent(current,layers,parts,options)
         translateEllipse(obj,layers,options.colorindex)
         break
       case 'line':
 console.log('##### line')
-        current = translateCurrent(current,layers,polygons,vectors,options)
+        current = translateCurrent(current,layers,parts,options)
         translateLine(obj,layers,options.colorindex)
         break
       case 'polyline':
@@ -616,13 +707,13 @@ console.log('##### vertex')
         p = instantiateVertex(obj)
         break
       case 'seqend':
-        current = translateCurrent(current,layers,polygons,vectors,options)
+        current = translateCurrent(current,layers,parts,options)
         break
 
     // 2D entities
       case 'lwpolyline':
 console.log('##### lwpolyline')
-        current = translateCurrent(current,layers,polygons,vectors,options)
+        current = translateCurrent(current,layers,parts,options)
         translatePath2D(obj,layers,options)
         break
 
@@ -633,18 +724,23 @@ console.log(obj.type)
     }
   // accumlate polygons if necessary
     if (p instanceof CSG.Polygon) {
-      polygons.push(p)
+console.log('##### push Polygon')
+      parts.push(p)
     }
   // accumlate vectors if necessary
     if (p instanceof CSG.Vector3D) {
+console.log('##### push Vector3D')
       vectors.push(p)
+      parts.push(p)
     }
     if (p instanceof CSG.Vector2D) {
+console.log('##### push Vector2D')
       vectors.push(p)
+      parts.push(p)
     }
   }
 // translate the last object if necessary
-  current = translateCurrent(current,layers,polygons,vectors,options)
+  current = translateCurrent(current,layers,parts,options)
 
 // debug output
 console.log('**************************************************')
