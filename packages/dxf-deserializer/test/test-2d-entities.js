@@ -44,9 +44,10 @@ test('ASCII DXF 2D Lines from Autocad 2017 to Object Conversion', t => {
 // expect array containing 23 objects (6 CSG.Path2D, 17 CSG.Line3D)
   t.true(Array.isArray(objs))
   t.is(objs.length,23)
-  t.true(objs[20] instanceof CSG.Line3D)
-  t.true(objs[21] instanceof CSG.Line3D)
-  t.true(objs[22] instanceof CSG.Line3D)
+  // NOTE: the extra objects are from the page layout
+  t.true(objs[20] instanceof CSG.Line2D)
+  t.true(objs[21] instanceof CSG.Line2D)
+  t.true(objs[22] instanceof CSG.Line2D)
 })
 
 test('ASCII DXF 2D Circles from Autocad 2017 to Object Conversion', t => {
@@ -97,6 +98,10 @@ test('ASCII DXF 2D Donuts from Autocad 2017 to Object Conversion', t => {
 // expect array containing 23 objects (3 CAG)
   t.true(Array.isArray(objs))
   t.is(objs.length,23)
+  // NOTE: the extra ojbects are from the page layout
+  t.true(objs[20] instanceof CAG)
+  t.true(objs[21] instanceof CAG)
+  t.true(objs[22] instanceof CAG)
 })
 
 test('ASCII DXF 2D Ellipses from Autocad 2017 to Object Conversion', t => {
@@ -108,7 +113,7 @@ test('ASCII DXF 2D Ellipses from Autocad 2017 to Object Conversion', t => {
 
 // expect array containing 23 objects (3 CAG)
   t.true(Array.isArray(objs))
-  t.is(objs.length,20)
+  t.is(objs.length,23)
 })
 
 test('ASCII DXF 2D Arcs from Autocad 2017 to Object Conversion', t => {
