@@ -13,24 +13,24 @@ const {BYBLOCK, BYLAYER} = require('./autocad')
 //
 // instantiate the given object (3dface) as a polygon
 //
-function instantiatePolygon (obj,layers,colorindex) {
+function instantiatePolygon (obj, layers, colorindex) {
   let vertices = []
-// FIXME: should check global variable to instantiate in the proper orientation
-  vertices.push( new CSG.Vertex(new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] ) ) )
-  vertices.push( new CSG.Vertex(new CSG.Vector3D( [obj['sptx'],obj['spty'],obj['sptz']] ) ) )
-  vertices.push( new CSG.Vertex(new CSG.Vector3D( [obj['tptx'],obj['tpty'],obj['tptz']] ) ) )
+  // FIXME: should check global variable to instantiate in the proper orientation
+  vertices.push(new CSG.Vertex(new CSG.Vector3D([obj['pptx'], obj['ppty'], obj['pptz']])))
+  vertices.push(new CSG.Vertex(new CSG.Vector3D([obj['sptx'], obj['spty'], obj['sptz']])))
+  vertices.push(new CSG.Vertex(new CSG.Vector3D([obj['tptx'], obj['tpty'], obj['tptz']])))
   if (obj['fptx']) {
     let pushit = false
     if (obj['tptx'] !== obj['fptx']) { pushit = true }
     if (obj['tpty'] !== obj['fpty']) { pushit = true }
     if (obj['tptz'] !== obj['fptz']) { pushit = true }
     if (pushit) {
-      vertices.push( new CSG.Vertex(new CSG.Vector3D( [obj['fptx'],obj['fpty'],obj['fptz']] ) ) )
+      vertices.push(new CSG.Vertex(new CSG.Vector3D([obj['fptx'], obj['fpty'], obj['fptz']])))
     }
   }
-  let cn = getColorNumber(obj,layers)
-  let shared = getColor(cn,colorindex)
-  return new CSG.Polygon(vertices,shared)
+  let cn = getColorNumber(obj, layers)
+  let shared = getColor(cn, colorindex)
+  return new CSG.Polygon(vertices, shared)
 }
 
 //
@@ -39,15 +39,15 @@ function instantiatePolygon (obj,layers,colorindex) {
 function instantiateLine (obj, layers, colorindex) {
   let csg = null
   if (obj['pptz'] === obj['sptz'] & obj['pptz'] === 0) {
-    let p1 = new CSG.Vector2D( [obj['pptx'],obj['ppty']] )
-    let p2 = new CSG.Vector2D( [obj['sptx'],obj['spty']] )
+    let p1 = new CSG.Vector2D([obj['pptx'], obj['ppty']])
+    let p2 = new CSG.Vector2D([obj['sptx'], obj['spty']])
     csg = CSG.Line2D.fromPoints(p1, p2)
   } else {
-    let p1 = new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] )
-    let p2 = new CSG.Vector3D( [obj['sptx'],obj['spty'],obj['sptz']] )
+    let p1 = new CSG.Vector3D([obj['pptx'], obj['ppty'], obj['pptz']])
+    let p2 = new CSG.Vector3D([obj['sptx'], obj['spty'], obj['sptz']])
     csg = CSG.Line3D.fromPoints(p1, p2)
   }
-  return csg;
+  return csg
 }
 
 //
@@ -60,16 +60,16 @@ function instantiateVertex (obj) {
 
   let flags = obj['lflg']
   let vtype = null
-  if ((flags & d3line) == d3line) {
-    vtype = new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] )
+  if ((flags & d3line) === d3line) {
+    vtype = new CSG.Vector3D([obj['pptx'], obj['ppty'], obj['pptz']])
   } else
-  if ((flags & d3mesh) == d3mesh) {
-    vtype = new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] )
+  if ((flags & d3mesh) === d3mesh) {
+    vtype = new CSG.Vector3D([obj['pptx'], obj['ppty'], obj['pptz']])
   } else
-  if ((flags & d3face) == d3face) {
-    vtype = new CSG.Vector3D( [obj['pptx'],obj['ppty'],obj['pptz']] )
+  if ((flags & d3face) === d3face) {
+    vtype = new CSG.Vector3D([obj['pptx'], obj['ppty'], obj['pptz']])
   } else {
-    vtype = new CSG.Vector2D( obj['pptx'],obj['ppty'] )
+    vtype = new CSG.Vector2D(obj['pptx'], obj['ppty'])
     vtype['bulg'] = obj['bulg'] // for rendering curved sections
   }
   return vtype
@@ -78,21 +78,21 @@ function instantiateVertex (obj) {
 //
 // append a section to the given path
 //
-function addSection(path,x1,y1,bulg) {
+function addSection (path, x1, y1, bulg) {
   if (bulg === 0) {
   // add straight line to the end of the path
-    path = path.appendPoint( [x1, y1] )
+    path = path.appendPoint([x1, y1])
   } else {
   // add arc to the end of the path
-    let prev   = path.points[path.points.length-1]
-    let curr = new CSG.Vector2D(x1,y1)
+    let prev = path.points[path.points.length - 1]
+    let curr = new CSG.Vector2D(x1, y1)
     let u = prev.distanceTo(curr)
-    let r = u * ((1 + Math.pow(bulg,2)) / (4 * bulg))
+    let r = u * ((1 + Math.pow(bulg, 2)) / (4 * bulg))
     let clockwise = (bulg < 0)
-    let large     = false // FIXME how to determine?
-    let d = Math.atan(bulg) / (Math.PI/180) * 4
-  // FIXME; add resolution
-    path = path.appendArc([x1,y1],{radius: r,xaxisrotation: d,clockwise: clockwise,large: large});
+    let large = false // FIXME how to determine?
+    let d = Math.atan(bulg) / (Math.PI / 180) * 4
+    // FIXME; add resolution
+    path = path.appendArc([x1, y1], {radius: r, xaxisrotation: d, clockwise: clockwise, large: large})
   }
   return path
 }
@@ -103,31 +103,32 @@ function addSection(path,x1,y1,bulg) {
 function instantiatePath2D (obj, layers, options) {
   const closed = parseInt('00000000000000001', 2)
 
-// expected values
-  let vlen  = obj['vlen']
+  // expected values
+  let  vlen = obj['vlen']
   let pptxs = obj['pptxs']
   let pptys = obj['pptys']
   let bulgs = obj['bulgs']
   let flags = obj['lflg']
-// conversion
+
+  // conversion
   let path = new CSG.Path2D()
   let isclosed = ((flags & closed) === closed)
   if (vlen === pptxs.length && vlen === pptys.length && vlen === bulgs.length) {
-    pptxs.forEach(function(item, index, array) {
+    pptxs.forEach(function (item, index, array) {
       let bulg = 0
       if (index > 0) {
-        bulg = bulgs[index-1] // apply the previous bulg
+        bulg = bulgs[index - 1] // apply the previous bulg
       }
       path = addSection(path, pptxs[index], pptys[index], bulg)
-    });
+    })
   } else {
   // FIXME flag this DXF error
     return path
   }
-// FIXME add optional to create CAG from the path
+  // FIXME add optional to create CAG from the path
   if (isclosed) {
   // apply the last section between last and first points
-    path = addSection(path, pptxs[0], pptys[0], bulgs[vlen-1])
+    path = addSection(path, pptxs[0], pptys[0], bulgs[vlen - 1])
     path = path.close()
     return CAG.fromPoints(path.points)
   }
@@ -138,49 +139,53 @@ function instantiatePath2D (obj, layers, options) {
 // instantiate the given object (arc) into CSG.Path2D or CSG??
 //
 function instantiateArc (obj, layers, colorindex) {
-// expected values
+  // expected values
   let lthk = obj['lthk']
   let pptx = obj['pptx']
   let ppty = obj['ppty']
-  let pptz = obj['pptz']
+  // let pptz = obj['pptz']
   let swid = obj['swid']
   let ang0 = obj['ang0'] // start angle
   let ang1 = obj['ang1'] // end angle
-// conversion
-  if (lthk === 0.0) {
-  // convert to 2D object
   // FIXME need to determine resolution from object/layer/variables
-    return CSG.Path2D.arc({center: [pptx,ppty],radius: swid,startangle: ang0,endangle: ang1,resolution: CSG.defaultResolution2D})
+  let res = CSG.defaultResolution2D
+
+  // conversion
+  if (lthk === 0.0) {
+    // convert to 2D object
+    return CSG.Path2D.arc({center: [pptx, ppty], radius: swid, startangle: ang0, endangle: ang1, resolution: res})
   }
   // FIXME how to represent 3D arc?
-  return CSG.Path2D.arc({center: [pptx,ppty],radius: swid,startangle: ang0,endangle: ang1,resolution: CSG.defaultResolution2D})
+  return CSG.Path2D.arc({center: [pptx, ppty], radius: swid, startangle: ang0, endangle: ang1, resolution: res})
 }
 
 //
 // instantiate the given object (circle) into CAG.circle (or extrude to CSG)
 //
 function instantiateCircle (obj, layers, colorindex) {
-// expected values
+  // expected values
   let lthk = obj['lthk']
   let pptx = obj['pptx']
   let ppty = obj['ppty']
-  let pptz = obj['pptz']
+  // let pptz = obj['pptz']
   let swid = obj['swid']
-// conversion
+
+  // conversion
   // FIXME add color when supported
-  //let cn = getColorNumber(obj,layers)
-  //let shared = getColor(cn,colorindex)
+  // let cn = getColorNumber(obj,layers)
+  // let shared = getColor(cn,colorindex)
   // FIXME need to determine resolution from object/layer/variables
   let res = CSG.defaultResolution2D
-// convert to 2D object
+
+  // convert to 2D object
   if (lthk === 0.0) {
-    let cag = CAG.circle({center: [pptx,ppty],radius: swid,resolution: res})
+    let cag = CAG.circle({center: [pptx, ppty], radius: swid, resolution: res})
     return cag
   }
-// convert to 3D object
-  let cag = CAG.circle({center: [pptx,ppty],radius: swid,resolution: res})
-  csg = cag.extrude({offset: [0,0,lthk]})
-// FIXME need to use 210/220/230 for direction of extrusion
+  // convert to 3D object
+  let cag = CAG.circle({center: [pptx, ppty], radius: swid, resolution: res})
+  let csg = cag.extrude({offset: [0, 0, lthk]})
+  // FIXME need to use 210/220/230 for direction of extrusion
   return csg
 }
 
@@ -188,36 +193,34 @@ function instantiateCircle (obj, layers, colorindex) {
 // instantiate the give object (ellipse) into CAG.ellipse (or extrude to CSG)
 //
 function instantiateEllipse (obj, layers, colorindex) {
-// expected values
+  // expected values
   let pptx = obj['pptx'] // center point
   let ppty = obj['ppty']
   let pptz = obj['pptz']
-  let bulg = obj['bulg']
   let sptx = obj['sptx'] // MAJOR axis point (about center point)
   let spty = obj['spty']
   let sptz = obj['sptz']
   let swid = obj['swid'] // Ratio of minor axis to major axis
-  let name = obj['name']
   // FIXME need to determine resolution from object/layer/variables
   let res = CSG.defaultResolution2D
 
-// convert to 2D object
-  if (pptz === 0.0 && sptz == 0.0) {
-    let center = new CSG.Vector2D(pptx,ppty)
-    let mjaxis = new CSG.Vector2D(sptx,spty)
+  // convert to 2D object
+  if (pptz === 0.0 && sptz === 0.0) {
+    let center = new CSG.Vector2D(pptx, ppty)
+    let mjaxis = new CSG.Vector2D(sptx, spty)
     let rx = center.distanceTo(mjaxis)
     let ry = rx * swid
     // FIXME add start and end angle when supported
-    let cag = CAG.ellipse({center: [pptx,ppty],radius: [rx,ry],resolution: res})
+    let cag = CAG.ellipse({center: [pptx, ppty], radius: [rx, ry], resolution: res})
     if (ppty !== spty) {
     // FIXME need to apply rotation about Z
     }
     return cag
   }
-// convert to 3D object
+  // convert to 3D object
 }
 
-function createEdges(vlen, faces) {
+function createEdges (vlen, faces) {
   let edges = []
   while (vlen > 0) {
     edges.push([])
@@ -248,7 +251,7 @@ function createEdges(vlen, faces) {
   return edges
 }
 
-function createFaces(edgesByVertex) {
+function createFaces (edgesByVertex) {
   let v1 = edgesByVertex.length
   let faces = []
   while (v1 > 0) {
@@ -259,21 +262,20 @@ function createFaces(edgesByVertex) {
       e1i--
       let v2 = v1edges[e1i]
       let v2edges = edgesByVertex[v2]
-    // search for common vertexes
+      // search for common vertexes
       let e2i = v2edges.length
       while (e2i > 0) {
         e2i--
         let v3 = v2edges[e2i]
         if (v1edges.indexOf(v3) < 0) continue
-      // save this face
-        faces.push([v1,v2,v3])
+        faces.push([v1, v2, v3])
       }
     }
   }
   return faces
 }
 
-function instantiateFaces(fvals) {
+function instantiateFaces (fvals) {
   let faces = []
   let vi = 0
   while (vi < fvals.length) {
@@ -288,14 +290,14 @@ function instantiateFaces(fvals) {
   return faces
 }
 
-function instantiatePoints(pptxs,pptys,pptzs) {
+function instantiatePoints (pptxs, pptys, pptzs) {
   let points = []
   let vi = 0
   while (vi < pptxs.length) {
     let x = pptxs[vi]
     let y = pptys[vi]
     let z = pptzs[vi]
-    points.push([x,y,z])
+    points.push([x, y, z])
     vi++
   }
   return points
@@ -307,8 +309,8 @@ function instantiatePoints(pptxs,pptys,pptzs) {
 // Note: See Face-Vertex meshes on Wikipedia
 //
 function instantiateMesh (obj, layers, colorindex) {
-// expected values
-  let vlen = obj['vlen']
+  // expected values
+  let  vlen = obj['vlen']
   let pptxs = obj['pptxs'] // vertices
   let pptys = obj['pptys']
   let pptzs = obj['pptzs']
@@ -316,24 +318,22 @@ function instantiateMesh (obj, layers, colorindex) {
   let flen = obj['flen']
   let fvals = obj['fvals'] // faces
 
-// conversion
-  let cn = getColorNumber(obj,layers)
-  let shared = getColor(cn,colorindex)
+  // conversion
+  let cn = getColorNumber(obj, layers)
+  let shared = getColor(cn, colorindex)
 
   CSG._CSGDEBUG = false
 
   let polygons = []
   if (vlen === pptxs.length && vlen === pptys.length && vlen === pptzs.length) {
     if (flen === fvals.length) {
-      let faces  = instantiateFaces(fvals)
-//console.log(faces)
-      let points = instantiatePoints(pptxs,pptys,pptzs)
-//console.log(points)
+      let faces = instantiateFaces(fvals)
+      let points = instantiatePoints(pptxs, pptys, pptzs)
 
       let fi = 0
       while (fi < faces.length) {
         let face = faces[fi]
-        let vectors  = []
+        let vectors = []
         let vertices = [] // did i hear someone say REDUNDANCY
         let vi = 0
         while (vi < face.length) {
@@ -344,9 +344,9 @@ function instantiateMesh (obj, layers, colorindex) {
           vertices.push(vertex)
           vi++
         }
-        let plane = CSG.Plane.fromVector3Ds(vectors[0],vectors[1],vectors[2])
-//console.log("plane: "+plane.toString())
-     // polygons need to be CCW rotation about the normal
+        let plane = CSG.Plane.fromVector3Ds(vectors[0], vectors[1], vectors[2])
+        // console.log("plane: "+plane.toString())
+        // polygons need to be CCW rotation about the normal
 
         let normal = plane.normal
         let w1 = vectors[0]
@@ -355,21 +355,20 @@ function instantiateMesh (obj, layers, colorindex) {
         let e1 = w2.minus(w1)
         let e2 = w3.minus(w1)
         let t = new CSG.Vector3D(normal).dot(e1.cross(e2))
-        if (t > 0) {    // 1,2,3 -> 3,2,1
-//console.log('reverse')
-          //vertices.reverse()
+        if (t > 0) { // 1,2,3 -> 3,2,1
+          // vertices.reverse()
         }
 
-        //let poly = CSG.Polygon.createFromPoints([p1,p2,p3],shared)
-        let poly = new CSG.Polygon(vertices,shared)
-        polygons.push( poly )
+        let poly = new CSG.Polygon(vertices, shared)
+        polygons.push(poly)
 
         fi++
       }
     } else {
+      // invalid flen
     }
   } else {
-  // invalid vlen
+    // invalid vlen
   }
   return CSG.fromPolygons(polygons)
 }
@@ -377,7 +376,7 @@ function instantiateMesh (obj, layers, colorindex) {
 //
 // find the layer referenced by the given object
 //
-function findLayer(obj, layers) {
+function findLayer (obj, layers) {
   let lname = obj['lnam'] || '0'
   for (let layer of layers) {
     if (layer['name'] === lname) {
@@ -391,12 +390,12 @@ function findLayer(obj, layers) {
 // get the color number of the object, possibly looking at layer
 // returns -1 if a color number was not found
 //
-function getColorNumber(obj,layers) {
+function getColorNumber (obj, layers) {
   let cn = obj['cnmb'] || -1
   if (cn === BYLAYER) {
   // use the color number from the layer
     cn = -1
-    let layer = findLayer(obj,layers)
+    let layer = findLayer(obj, layers)
     if (layer !== null) {
       cn = layer['cnmb'] || -1
     }
@@ -408,39 +407,39 @@ function getColorNumber(obj,layers) {
   return cn
 }
 
-function mod(num, mod) {
-  let remain = num % mod;
-  return Math.floor(remain >= 0 ? remain : remain + mod);
+function mod (num, mod) {
+  let remain = num % mod
+  return Math.floor(remain >= 0 ? remain : remain + mod)
 }
 
 //
 // instantiate Polygon.Shared(color) using the given index into the given color index
 //
-function getColor(index,colorindex) {
+function getColor (index, colorindex) {
   if (index < 0) { return null }
 
-  index = mod(index,colorindex.length)
+  index = mod(index, colorindex.length)
   let rgba = colorindex[index]
-// FIXME : colors should be cached and shared
+  // FIXME : colors should be cached and shared
   return new CSG.Polygon.Shared(rgba)
 }
 
 // works for both POLYLINE
-function getPolyType(obj) {
+function getPolyType (obj) {
   const closed = parseInt('00000000000000001', 2)
   const d3line = parseInt('00000000000001000', 2)
   const d3mesh = parseInt('00000000000010000', 2)
 
   let flags = obj['lflg']
   let ptype = null
-  if ((flags & d3line) == 1) {
+  if ((flags & d3line) === d3line) {
     ptype = null // FIXME what to do?
   } else
-  if ((flags & d3mesh) == 1) {
+  if ((flags & d3mesh) === d3mesh) {
     ptype = new CSG()
   } else {
-    let isclosed = ((flags & closed) === 1);
-    ptype = new CSG.Path2D([],isclosed);
+    let isclosed = ((flags & closed) === closed)
+    ptype = new CSG.Path2D([], isclosed)
   }
   return ptype
 }
@@ -450,119 +449,119 @@ function getPolyType(obj) {
 // - a series of 3dfaces => polygons => CSG
 // - a series of vertex => vectors => Path2D
 //
-function completeCurrent(objects,baseobj,polygons,vectors,options) {
+function completeCurrent (objects, baseobj, polygons, vectors, options) {
   if (baseobj instanceof CSG.Path2D) {
-  //console.log('##### completing Path2D')
-    objects.push( new CSG.Path2D(vectors, baseobj.closed) )
+    // console.log('##### completing Path2D')
+    objects.push(new CSG.Path2D(vectors, baseobj.closed))
   }
   if (baseobj instanceof CSG) {
-  //console.log('##### completing CSG')
-    objects.push( CSG.fromPolygons(polygons) )
+    // console.log('##### completing CSG')
+    objects.push(CSG.fromPolygons(polygons))
   }
   return null
 }
 
 const instantiateAsciiDxf = function (reader, options) {
-console.log('**************************************************')
-//console.log(JSON.stringify(reader.objstack));
-//console.log('**************************************************')
+  console.log('**************************************************')
+  // console.log(JSON.stringify(reader.objstack));
+  // console.log('**************************************************')
 
-  let layers   = []   // list of layers with various information like color
-  let current  = null // the object being created
-  let polygons = []   // the list of 3D polygons
-  let objects  = []   // the list of objects instantiated
-  let vectors  = []   // the list of vectors for paths or meshes
+  let   layers = [] // list of layers with various information like color
+  let  current = null // the object being created
+  let polygons = [] // the list of 3D polygons
+  let  objects = [] // the list of objects instantiated
+  let  vectors = [] // the list of vectors for paths or meshes
 
   let p = null
   for (let obj of reader.objstack) {
     p = null
 
-    if (! ('type' in obj)) {
-      //console.log('##### skip')
+    if (!('type' in obj)) {
+      // console.log('##### skip')
       continue
     }
-//console.log(JSON.stringify(obj));
+    // console.log(JSON.stringify(obj));
 
     switch (obj.type) {
     // control objects
       case 'dxf':
         break
       case 'layer':
-console.log('##### layer')
-        current = completeCurrent(objects,current,polygons,vectors,options)
+        console.log('##### layer')
+        current = completeCurrent(objects, current, polygons, vectors, options)
         layers.push(obj)
         break
       case 'variable':
-        current = completeCurrent(objects,current,polygons,vectors,options)
+        current = completeCurrent(objects, current, polygons, vectors, options)
         break
 
-    // 3D entities
+      // 3D entities
       case '3dface':
-console.log('##### 3dface')
-        p = instantiatePolygon(obj,layers,options.colorindex)
+        console.log('##### 3dface')
+        p = instantiatePolygon(obj, layers, options.colorindex)
         if (current === null) {
-console.log('##### start of 3dfaces CSG')
+          console.log('##### start of 3dfaces CSG')
           current = new CSG()
         }
         break
       case 'mesh':
-console.log('##### mesh')
-        current = completeCurrent(objects,current,polygons,vectors,options)
-        objects.push( instantiateMesh(obj,layers,options.colorindex) )
+        console.log('##### mesh')
+        current = completeCurrent(objects, current, polygons, vectors, options)
+        objects.push(instantiateMesh(obj, layers, options.colorindex))
         break
 
-    // 2D or 3D entities
+      // 2D or 3D entities
       case 'arc':
-console.log('##### arc')
-        current = completeCurrent(objects,current,polygons,vectors,options)
-        objects.push( instantiateArc(obj,layers,options.colorindex) )
+        console.log('##### arc')
+        current = completeCurrent(objects, current, polygons, vectors, options)
+        objects.push(instantiateArc(obj, layers, options.colorindex))
         break
       case 'circle':
-console.log('##### circle')
-        current = completeCurrent(objects,current,polygons,vectors,options)
-        objects.push( instantiateCircle(obj,layers,options.colorindex) )
+        console.log('##### circle')
+        current = completeCurrent(objects, current, polygons, vectors, options)
+        objects.push(instantiateCircle(obj, layers, options.colorindex))
         break
       case 'ellipse':
-console.log('##### ellipse')
-        current = completeCurrent(objects,current,polygons,vectors,options)
-        objects.push( instantiateEllipse(obj,layers,options.colorindex) )
+        console.log('##### ellipse')
+        current = completeCurrent(objects, current, polygons, vectors, options)
+        objects.push(instantiateEllipse(obj, layers, options.colorindex))
         break
       case 'line':
-console.log('##### line')
-        current = completeCurrent(objects,current,polygons,vectors,options)
-        objects.push( instantiateLine(obj,layers,options.colorindex) )
+        console.log('##### line')
+        current = completeCurrent(objects, current, polygons, vectors, options)
+        objects.push(instantiateLine(obj, layers, options.colorindex))
         break
       case 'polyline':
         if (current === null) {
-console.log('##### start of polyline')
+          console.log('##### start of polyline')
           current = getPolyType(obj)
         }
         break
       case 'vertex':
-console.log('##### vertex')
+        console.log('##### vertex')
         p = instantiateVertex(obj)
         break
       case 'seqend':
-        current = completeCurrent(objects,current,polygons,vectors,options)
+        current = completeCurrent(objects, current, polygons, vectors, options)
         break
 
-    // 2D entities
+      // 2D entities
       case 'lwpolyline':
-console.log('##### lwpolyline')
-        current = completeCurrent(objects,current,polygons,vectors,options)
-        objects.push( instantiatePath2D(obj,layers,options) )
+        console.log('##### lwpolyline')
+        current = completeCurrent(objects, current, polygons, vectors, options)
+        objects.push(instantiatePath2D(obj, layers, options))
         break
 
       default:
-console.log('##### ERROR')
-console.log(obj.type)
+        console.log('##### ERROR')
+        console.log(obj.type)
         break
     }
-  // accumlate polygons if necessary
+    // accumlate polygons if necessary
     if (p instanceof CSG.Polygon) {
       polygons.push(p)
     }
-  // accumlate vectors if necessary
+    // accumlate vectors if necessary
     if (p instanceof CSG.Vector3D) {
       vectors.push(p)
     }
@@ -570,20 +569,18 @@ console.log(obj.type)
       vectors.push(p)
     }
   }
-// instantiate the last object if necessary
-  current = completeCurrent(objects,current,polygons,vectors,options)
-// add accumulated objects
+  // instantiate the last object if necessary
+  current = completeCurrent(objects, current, polygons, vectors, options)
 
-// debug output
-//console.log('**************************************************')
-//  objects.forEach(
-//    function(e) {
-//      console.log(JSON.stringify(e));
-//    }
-//  );
-//console.log('**************************************************')
+  // debug output
+  // console.log('**************************************************')
+  // objects.forEach(
+  //   function(e) {
+  //     console.log(JSON.stringify(e));
+  //   }
+  // );
+  // console.log('**************************************************')
   return objects
 }
 
 module.exports = instantiateAsciiDxf
-
