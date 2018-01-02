@@ -6,10 +6,10 @@
   dxf.reader = function (options) { return new DxfReader(options) }
 
   dxf.STATES = [
-      'start',
-      'end',
-      'error',
-    ]
+    'start',
+    'end',
+    'error'
+  ]
 
   /**
    * Class DxfReader
@@ -36,7 +36,7 @@
     var reader = this
     reader.options = options || {}
 
-    reader.trackPosition = reader.options.track != false
+    reader.trackPosition = (reader.options.track !== false)
     if (reader.trackPosition) {
       reader.line = reader.column = reader.c = 0
     }
@@ -49,49 +49,49 @@
     // verify the state
     // set the callback
       var reader = this
-      reader['on'+state] = callback
+      reader['on' + state] = callback
     },
 
-  // set a handler for the given group and value
+    // set a handler for the given group and value
     absorb: function (group, callback) {
       if (this.absorbers === undefined) {
         this.absorbers = new Map()
       }
-      this.absorbers.set(group,callback)
+      this.absorbers.set(group, callback)
     },
 
-  // write the given data into the reader, initiating parsing
+    // write the given data into the reader, initiating parsing
     write: function (data) {
       var reader = this
-      parse(reader,data)
+      parse(reader, data)
       return reader
     },
 
-  // close and clear all state
+    // close and clear all state
     close: function () {
       var reader = this
       reader.isclosed = true
-      return reader;
-    },
+      return reader
+    }
   }
 
   //
   // emit the start of processing to the onstart handler if any
   //
   function emitstart (reader) {
-    return emitstate(reader,'onstart',reader.data)
+    return emitstate(reader, 'onstart', reader.data)
   }
-  
+
   //
   // emit the group (code and value) to asorbers
   //
   function emitgroup (reader, group, value) {
-    //console.log(group+": "+value)
-  // emit this group to all listeners
+    // console.log(group+": "+value)
+    // emit this group to all listeners
     if (reader.absorbers !== undefined) {
       var absorber = reader.absorbers.get(group)
       if (absorber !== undefined) {
-        absorber(reader,group,value)
+        absorber(reader, group, value)
       }
     }
   }
@@ -100,7 +100,7 @@
   // wrap and emit the given error to the onerror handler if any
   //
   function emiterror (reader, er) {
-    //closeText(reader)
+    // closeText(reader)
     if (reader.trackPosition) {
       er += '\nLine: ' + reader.line +
         '\nColumn: ' + reader.column +
@@ -108,19 +108,19 @@
     }
     er = new Error(er)
     reader.error = er
-    return emitstate(reader,'onerror',er)
+    return emitstate(reader, 'onerror', er)
   }
 
   //
   // emit the end of processing to the onend handler if any
   //
   function emitend (reader) {
-    return emitstate(reader,'onend',reader.data)
+    return emitstate(reader, 'onend', reader.data)
   }
 
-  function emitstate (reader,state,data) {
+  function emitstate (reader, state, data) {
     var onhandler = state.toString()
-    reader[onhandler] && reader[onhandler](reader,data)
+    reader[onhandler] && reader[onhandler](reader, data)
     return reader
   }
 
@@ -133,7 +133,7 @@
       throw reader.error // throw the last error
     }
     if (reader.isclosed) {
-      return error(reader, 'Cannot write after close')
+      return emiterror(reader, 'Cannot write after close')
     }
 
     emitstart(reader)
@@ -142,16 +142,16 @@
       return emitend(reader)
     }
 
-  // initial state to initiate parsing
+    // initial state to initiate parsing
     reader.group = null
     reader.value = null
     reader.error = null
-    
+
     reader.position = 0
     reader.line = 0
     reader.column = 0
 
-  // use or convert the data to String
+    // use or convert the data to String
     var i = 0
     var c = ''
     var l = ''
@@ -169,7 +169,7 @@
           reader.column++
         }
       }
-    // dxf files are parsed line by line
+      // dxf files are parsed line by line
       if (c === '\n') {
         parseLine(reader, l)
         l = ''
@@ -177,7 +177,7 @@
         l += c
       }
     }
-  // emit state change
+    // emit state change
     emitend(reader)
     return reader
   }
@@ -189,15 +189,15 @@
   function parseLine (reader, line) {
     line = line.trim()
     if (reader.group === null) {
-      setDxfGroup(reader,line)
+      setDxfGroup(reader, line)
       reader.value = null
     } else {
-      setDxfValue(reader,line)
+      setDxfValue(reader, line)
     }
-  // handle group and value pairs
+    // handle group and value pairs
     if (reader.group !== null && reader.value !== null) {
-    // emit events for group and value pairs
-      emitgroup(reader,reader.group,reader.value)
+      // emit events for group and value pairs
+      emitgroup(reader, reader.group, reader.value)
 
       reader.group = null
       reader.value = null
@@ -212,7 +212,7 @@
   // groups are numeric
     var code = parseInt(line)
     if (isNaN(code)) {
-      emiterror(reader,'Invalid group (int)')
+      emiterror(reader, 'Invalid group (int)')
       reader.group = null
     } else {
       reader.group = code
@@ -224,9 +224,9 @@
    * @param line {String} - line to parse
    */
   function setDxfValue (reader, line) {
-    var g = reader.group // alias
     if (reader.options.strict) {
-    // evaluate the value based on DXF specifications
+      // TODO evaluate the value based on DXF specifications
+      reader.value = line
     } else {
       reader.value = line
     }
@@ -241,5 +241,4 @@
     }
     return ''
   }
-
 })(typeof exports === 'undefined' ? this.dxf = {} : exports)
