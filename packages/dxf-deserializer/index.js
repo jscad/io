@@ -178,6 +178,11 @@ function handleEntity (reader, group, value) {
       obj[getTLA(41)] = 0
       obj[getTLA(42)] = 0
       obj[getTLA(70)] = 0
+      // polyface defaults (optional)
+      obj[getTLA(71)] = 0
+      obj[getTLA(72)] = 0
+      obj[getTLA(73)] = 0
+      obj[getTLA(74)] = 0
 
       reader.objstack.push(obj)
       break
@@ -473,13 +478,8 @@ function createReader (src, options) {
 }
 
 /*
- * Options
- * - colorIndex list of colors for use rendering, default AutoCad.colorIndex
  */
 function instantiate (src, filename, options) {
-  options = options || {}
-  options.colorindex = options.colorindex || colorIndex
-
   let reader = createReader(src, options)
   let objs = instantiateAsciiDxf(reader, options)
   return objs
@@ -488,9 +488,6 @@ function instantiate (src, filename, options) {
 // Options:
 //
 function translate (src, filename, options) {
-  options = options || {}
-  options.colorindex = options.colorindex || colorIndex
-
   let reader = createReader(src, options)
 
   let code = ''
@@ -504,17 +501,23 @@ function translate (src, filename, options) {
 
 /**
  * Deserialize the given source and return the requested 'output'
- * @param  {string} DXF data stream
+ * @param  {string} src DXF data stream
  * @param  {string} filename (optional) original filename of DXF data stream if any
  * @param  {object} options (optional) anonymous object with:
  *  output {string} type of output to produce, either 'jscad' script or 'csg' objects
  *  strict {boolean} obey strict DXF specifications
- *  colorindex {array} list of 256 colors
+ *  colorindex {array} list of colors (256) for use during rendering
  */
 const deserialize = function (src, filename, options) {
   const defaults = {
+    version: '0.0.0',
     output: 'jscad',
-    version: '0.0.0'
+    strict: true,
+    colorindex: colorIndex,
+    dxf: {
+      drawingUnit: 4, // millimeters
+      verticesPerFace: 4
+    }
   }
   options = Object.assign({}, defaults, options)
   return options.output === 'jscad' ? translate(src, filename, options) : instantiate(src, filename, options)
