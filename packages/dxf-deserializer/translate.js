@@ -10,22 +10,26 @@ const { CSG } = require('@jscad/csg')
 
 const {BYBLOCK, BYLAYER} = require('./autocad')
 
+function createVertex(vector) {
+  return new CSG.Vertex(vector)
+}
+
 //
 // instantiate the given object (3dface) as a polygon
 //
 function instantiatePolygon (obj, layers, colorindex) {
   let vertices = []
   // FIXME: should check global variable to instantiate in the proper orientation
-  vertices.push(new CSG.Vertex(new CSG.Vector3D([obj['pptx'], obj['ppty'], obj['pptz']])))
-  vertices.push(new CSG.Vertex(new CSG.Vector3D([obj['sptx'], obj['spty'], obj['sptz']])))
-  vertices.push(new CSG.Vertex(new CSG.Vector3D([obj['tptx'], obj['tpty'], obj['tptz']])))
+  vertices.push(createVertex(new CSG.Vector3D([obj['pptx'], obj['ppty'], obj['pptz']])))
+  vertices.push(createVertex(new CSG.Vector3D([obj['sptx'], obj['spty'], obj['sptz']])))
+  vertices.push(createVertex(new CSG.Vector3D([obj['tptx'], obj['tpty'], obj['tptz']])))
   if (obj['fptx']) {
     let pushit = false
     if (obj['tptx'] !== obj['fptx']) { pushit = true }
     if (obj['tpty'] !== obj['fpty']) { pushit = true }
     if (obj['tptz'] !== obj['fptz']) { pushit = true }
     if (pushit) {
-      vertices.push(new CSG.Vertex(new CSG.Vector3D([obj['fptx'], obj['fpty'], obj['fptz']])))
+      vertices.push(createVertex(new CSG.Vector3D([obj['fptx'], obj['fpty'], obj['fptz']])))
     }
   }
   let cn = getColorNumber(obj, layers)
@@ -33,7 +37,7 @@ function instantiatePolygon (obj, layers, colorindex) {
   return new CSG.Polygon(vertices, shared)
 }
 
-function instantiateVertex (obj) {
+function instantiateVector (obj) {
   const d3line = parseInt('00000000000100000', 2)
   const d3mesh = parseInt('00000000001000000', 2)
   const d3face = parseInt('00000000010000000', 2)
@@ -41,13 +45,21 @@ function instantiateVertex (obj) {
   let flags = obj['lflg']
   let vtype = null
   if ((flags & d3line) === d3line) {
+//console.log('##### 3dline vector')
     vtype = new CSG.Vector3D([obj['pptx'], obj['ppty'], obj['pptz']])
   } else
   if ((flags & d3mesh) === d3mesh) {
+//console.log('##### 3dmesh vector')
     vtype = new CSG.Vector3D([obj['pptx'], obj['ppty'], obj['pptz']])
   } else
   if ((flags & d3face) === d3face) {
+//console.log('##### 3dface indexes')
     vtype = new CSG.Vector3D([obj['pptx'], obj['ppty'], obj['pptz']])
+    // pass on face indexes
+    vtype['fvia'] = obj['fvia']
+    vtype['fvib'] = obj['fvib']
+    vtype['fvic'] = obj['fvic']
+    vtype['fvid'] = obj['fvid']
   } else {
     vtype = new CSG.Vector2D(obj['pptx'], obj['ppty'])
     vtype['bulg'] = obj['bulg'] // for rendering curved sections
@@ -251,15 +263,13 @@ function translateEllipse (obj, layers, colorindex) {
 
   // convert to 2D object
   if (pptz === 0.0 && sptz === 0.0) {
-    let center = new CSG.Vector2D(pptx, ppty)
+    let center = new CSG.Vector2D(0, 0)
     let mjaxis = new CSG.Vector2D(sptx, spty)
     let rx = center.distanceTo(mjaxis)
     let ry = rx * swid
+    let angle = Math.atan2(spty, sptx) * 180 / Math.PI
     // FIXME add start and end angle when supported
-    let script = '  let ' + name + ' = CAG.ellipse({center: [' + pptx + ',' + ppty + '],radius: [' + rx + ',' + ry + '],resolution: ' + res + '})\n'
-    if (ppty !== spty) {
-    // FIXME need to apply rotation about Z
-    }
+    let script = '  let ' + name + ' = CAG.ellipse({center: [0,0],radius: [' + rx + ',' + ry + '],resolution: ' + res + '}).rotateZ('+angle+').translate(['+pptx+','+ppty+'])\n'
     obj['script'] = script
     addToLayer(obj, layers)
     return
@@ -334,7 +344,7 @@ function instantiateMesh (obj, layers, colorindex) {
           let pi = face[vi]
           let vector = new CSG.Vector3D(points[pi])
           vectors.push(vector)
-          let vertex = new CSG.Vertex(vector)
+          let vertex = createVertex(vector)
           vertices.push(vertex)
           vi++
         }
@@ -436,14 +446,14 @@ function mod (num, mod) {
 
 //
 // instantiate Polygon.Shared(color) using the given index into the given color index
-//
+// Note: 0 > index <= length of colorindex
 function getColor (index, colorindex) {
-  if (index < 0) { return null }
+  if (index < 1) { return null }
 
   index = mod(index, colorindex.length)
-  let rgba = colorindex[index]
+  let rgba = colorindex[index-1]
   // FIXME : colors should be cached and shared
-  return new CSG.Polygon.Shared(rgba)
+  return new CSG.Polygon.Shared.fromColor([rgba[0]/255,rgba[1]/255,rgba[2]/255,rgba[3]/255])
 }
 
 //
@@ -461,14 +471,16 @@ function getPolyType (obj) {
   const  d3line = parseInt('00000000000001000', 2)
   const  d3mesh = parseInt('00000000000010000', 2)
   const closedN = parseInt('00000000000100000', 2)
+  const  d3face = parseInt('00000000001000000', 2)
 
   let flags = obj['lflg']
   let ptype = null
   if ((flags & d3line) === d3line) {
-    ptype = null // FIXME what to do?
+    let isclosed = ((flags & closedM) === closedM)
+    ptype = {type: '3dline',isclosed: isclosed}
   } else
   if ((flags & d3mesh) === d3mesh) {
-    ptype = new CSG()
+    ptype = {type: '3dpolymesh'}
     // need the mesh shape for interpretation
     ptype['fvia'] = obj['fvia']
     ptype['fvib'] = obj['fvib']
@@ -476,10 +488,18 @@ function getPolyType (obj) {
     ptype.closedM = closed
     closed = ((flags & closedN) === closedN)
     ptype.closedN = closed
+  } else
+  if ((flags & d3face) === d3face) {
+    ptype = {type: '3dpolyfaces'}
+    // need the vertex and face counts for interpretation
+    ptype['fvia'] = obj['fvia']
+    ptype['fvib'] = obj['fvib']
   } else {
     let isclosed = ((flags & closedM) === closedM)
-    ptype = new CSG.Path2D([], isclosed)
+    ptype = {type: '2dline',isclosed: isclosed}
   }
+  if ('cnmb' in obj) { ptype['cnmb'] = obj['cnmb'] }
+  if ('lnam' in obj) { ptype['lnam'] = obj['lnam'] }
   return ptype
 }
 
@@ -497,7 +517,8 @@ function translatePlane (plane) {
 function translateShared (shared) {
   let script = 'CSG.Polygon.defaultShared'
   if (shared !== null && shared.color !== null) {
-    script = 'new CSG.Polygon.Shared([0, 0, 0, 1])'
+    let rgb = shared.color
+    script = 'new CSG.Polygon.Shared(['+rgb[0]+','+rgb[1]+','+rgb[2]+','+rgb[3]+'])'
   }
   return script
 }
@@ -556,48 +577,143 @@ function instantiateFacets (meshM, meshN, vectors) {
 }
 
 //
+// DXF POLYLINE entities can contain a face mesh defined by a series of vertices.
+// The first part of the series (meshM) are the vertices.
+// The second part of the series (meshN) are the faces.
+// Each face of the mesh is defined by the indexes provided by the face (group codes 71-74).
+// The first zero(0) index marks the end of the vertices.
+// Negative indexes indicate invisible edges (not implemented).
+//
+function instantiatePolyFaces (meshM, meshN, vectors, shared, options) {
+console.log('##### instantiatePolyFaces('+meshM+','+meshN+')')
+  console.log(JSON.stringify(shared))
+  let faces = []
+
+  // sanity check
+  if ((meshM + meshN) !== vectors.length) {
+    return faces
+  }
+  // conversion
+  let i = meshM // skip to the faces
+  while (i < vectors.length) {
+    let face = vectors[i]
+    let indexes = [Math.abs(face['fvia']),Math.abs(face['fvib']),Math.abs(face['fvic']),Math.abs(face['fvid'])]
+//console.log(indexes)
+    let vertices = []
+    if (indexes[0] > 0) {
+      vertices.push(createVertex(vectors[indexes[0] - 1]))
+      if (indexes[1] > 0) {
+        vertices.push(createVertex(vectors[indexes[1] - 1]))
+        if (indexes[2] > 0) {
+          vertices.push(createVertex(vectors[indexes[2] - 1]))
+          if (indexes[3] > 0) {
+            vertices.push(createVertex(vectors[indexes[3] - 1]))
+          }
+        }
+      }
+    }
+    // only use valid face definitions
+    if (vertices.length > 2) {
+      // reverse the order of vertices if necessary
+      if (vertices.length === 3) {
+        let v1 = vertices[1]
+        let v2 = vertices[2]
+        vertices[1] = v2
+        vertices[2] = v1
+      }
+      if (vertices.length === 4) {
+        let v1 = vertices[1]
+        let v2 = vertices[2]
+        let v3 = vertices[3]
+        vertices[1] = v3
+        vertices[2] = v2
+        vertices[3] = v1
+      }
+
+      faces.push(new CSG.Polygon(vertices, shared))
+    }
+    i++
+  }
+  return faces
+}
+
+//
+// Translate a complex object from the given base object and parts.
+// The translation uses the parts as 2D vertexes from POLYLINE.
+//
+function translateAs2Dline(obj, layers, parts, options) {
+  console.log('##### completing Path2D using vectors')
+  // convert the parts to a series of X/Y/BULG lists
+  obj['vlen'] = parts.length
+  obj['pptxs'] = []
+  obj['pptys'] = []
+  obj['bulgs'] = []
+  for (let vector of parts) {
+    obj['pptxs'].push(vector.x)
+    obj['pptys'].push(vector.y)
+    obj['bulgs'].push(vector['bulg'])
+  }
+  if (obj.closed) {
+    obj['lflg'] = parseInt('00000000000000001', 2)
+  } else {
+    obj['lflg'] = 0
+  }
+  translatePath2D(obj, layers, options)
+  return null
+}
+
+//
 // translate a complex object from the given base object and parts
 // - CSG plus a series of polygons => CSG
 // - Path2D plus a series of 2D vectors => Path2D
 // - CSG plus a series of 3D vectors => CSG
 //
 function translateCurrent (obj, layers, parts, options) {
-  if (obj instanceof CSG.Path2D) {
-    console.log('##### completing Path2D using vectors')
-    obj['vlen'] = parts.length
-    obj['pptxs'] = []
-    obj['pptys'] = []
-    obj['bulgs'] = []
-    for (let vector of parts) {
-      obj['pptxs'].push(vector.x)
-      obj['pptys'].push(vector.y)
-      obj['bulgs'].push(vector['bulg'])
-    }
-    if (obj.closed) {
-      obj['lflg'] = parseInt('00000000000000001', 2)
-    } else {
-      obj['lflg'] = 0
-    }
-    translatePath2D(obj, layers, options)
+  if (obj === null) return null
+
+  let type = obj.type
+  console.log('##### translating Current as '+type)
+  console.log(JSON.stringify(obj))
+  if (type === '2dline') {
+    return translateAs2Dline(obj, layers, parts, options)
   }
-  if (obj instanceof CSG) {
+
+  if (type === '2dline') {
+    // FIXME what to do?
+    return null
+  }
+
+  if (type === '3dpolymesh') {
+    let m = obj['fvia']
+    let n = obj['fvib']
+    let i = parts.length
+    console.log('##### m: '+m+' n: '+n+' i: '+i)
+    let facets = instantiateFacets(m, n, parts)
+    parts = facets
+    // fall through, translating the parts (polygons)
+  }
+
+  if (type === '3dpolyfaces') {
     if ('fvia' in obj) {
-      console.log('##### completing CSG using vectors')
       let m = obj['fvia']
       let n = obj['fvib']
-      let facets = instantiateFacets(m, n, parts)
-      parts = facets
+      let cn = getColorNumber(obj, layers)
+console.log(cn)
+      let shared = getColor(cn, options.colorindex)
+      let faces = instantiatePolyFaces(m, n, parts, shared, options)
+      parts = faces
+      // fall through, translating the parts (polygons)
     }
-    console.log('##### completing CSG using polygons')
-    let script = '  const ' + obj['name'] + '_polygons = [\n'
-    for (let polygon of parts) {
-      script += '    ' + translatePolygon(polygon) + ',\n'
-    }
-    script += '  ]\n'
-    script += '  let ' + obj['name'] + ' = CSG.fromPolygons(' + obj['name'] + '_polygons)\n'
-    obj['script'] = script
-    addToLayer(obj, layers)
   }
+  // convert the polygons into a script
+  let script = '  const ' + obj['name'] + '_polygons = [\n'
+  for (let polygon of parts) {
+    script += '    ' + translatePolygon(polygon) + ',\n'
+  }
+  script += '  ]\n'
+  script += '  let ' + obj['name'] + ' = CSG.fromPolygons(' + obj['name'] + '_polygons)\n'
+  obj['script'] = script
+  addToLayer(obj, layers)
   return null
 }
 
@@ -606,6 +722,8 @@ function translateCurrent (obj, layers, parts, options) {
 //
 function translateLayer (layer) {
   let name = layer['name'] || 'Unknown'
+  name = name.replace(/ /g,'_')
+
   let script = 'function layer' + name + '() {\n'
   for (let object of layer['objects']) {
     script += object['script']
@@ -613,6 +731,7 @@ function translateLayer (layer) {
   script += '  return ['
   for (let object of layer['objects']) {
     script += object['name']
+    script += ','
   }
   script += ']\n}\n'
   return script
@@ -620,13 +739,12 @@ function translateLayer (layer) {
 
 const translateAsciiDxf = function (reader, options) {
   console.log('**************************************************')
-  console.log(JSON.stringify(reader.objstack))
-  console.log('**************************************************')
+  //console.log(JSON.stringify(reader.objstack))
+  //console.log('**************************************************')
 
   let  layers = [] // list of layers with various information like color
   let current = null // the object being created
   let   parts = [] // the list of object subparts (polygons or vectors)
-  let vectors = [] // the list of vectors translated
   let objects = [] // the list of objects translated
   let numobjs = 0
 
@@ -651,10 +769,15 @@ const translateAsciiDxf = function (reader, options) {
       case 'layer':
         console.log('##### layer')
         current = translateCurrent(current, layers, parts, options)
+        parts = []
+        // save the layer for later reference
+        obj['objects'] = [] // with a list of objects
         layers.push(obj)
         break
       case 'variable':
+        console.log(JSON.stringify(obj))
         current = translateCurrent(current, layers, parts, options)
+        parts = []
         break
 
       // 3D entities
@@ -663,14 +786,16 @@ const translateAsciiDxf = function (reader, options) {
         p = instantiatePolygon(obj, layers, options.colorindex)
         if (current === null) {
           console.log('##### start of 3dfaces CSG')
-          current = new CSG()
+          current = {type: '3dfaces'}
           current['name'] = 'jscad' + numobjs
           numobjs = numobjs + 1
         }
         break
       case 'mesh':
+// FIXME complete translation
         console.log('##### mesh')
         current = translateCurrent(current, layers, parts, options)
+        parts = []
         objects.push(instantiateMesh(obj, layers, options.colorindex))
         break
 
@@ -678,21 +803,25 @@ const translateAsciiDxf = function (reader, options) {
       case 'arc':
         console.log('##### arc')
         current = translateCurrent(current, layers, parts, options)
+        parts = []
         translateArc(obj, layers, options.colorindex)
         break
       case 'circle':
         console.log('##### circle')
         current = translateCurrent(current, layers, parts, options)
         translateCircle(obj, layers, options.colorindex)
+        parts = []
         break
       case 'ellipse':
         console.log('##### ellipse')
         current = translateCurrent(current, layers, parts, options)
+        parts = []
         translateEllipse(obj, layers, options.colorindex)
         break
       case 'line':
         console.log('##### line')
         current = translateCurrent(current, layers, parts, options)
+        parts = []
         translateLine(obj, layers, options.colorindex)
         break
       case 'polyline':
@@ -704,17 +833,19 @@ const translateAsciiDxf = function (reader, options) {
         }
         break
       case 'vertex':
-        console.log('##### vertex')
-        p = instantiateVertex(obj)
+        //console.log('##### vertex')
+        p = instantiateVector(obj)
         break
       case 'seqend':
         current = translateCurrent(current, layers, parts, options)
+        parts = []
         break
 
       // 2D entities
       case 'lwpolyline':
         console.log('##### lwpolyline')
         current = translateCurrent(current, layers, parts, options)
+        parts = []
         translatePath2D(obj, layers, options)
         break
 
@@ -725,18 +856,16 @@ const translateAsciiDxf = function (reader, options) {
     }
     // accumlate polygons if necessary
     if (p instanceof CSG.Polygon) {
-      console.log('##### push Polygon')
+      // console.log('##### push Polygon')
       parts.push(p)
     }
     // accumlate vectors if necessary
     if (p instanceof CSG.Vector3D) {
-      console.log('##### push Vector3D')
-      vectors.push(p)
+      // console.log('##### push Vector3D')
       parts.push(p)
     }
     if (p instanceof CSG.Vector2D) {
-      console.log('##### push Vector2D')
-      vectors.push(p)
+      // console.log('##### push Vector2D')
       parts.push(p)
     }
   }
