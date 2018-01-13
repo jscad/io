@@ -515,7 +515,8 @@ const deserialize = function (src, filename, options) {
     strict: true,
     colorindex: colorIndex,
     dxf: {
-      drawingUnit: 4, // millimeters
+      angdir: 0, // counter clockwise
+      insunits: 4, // millimeters
       verticesPerFace: 4
     }
   }
