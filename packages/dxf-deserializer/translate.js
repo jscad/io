@@ -79,7 +79,7 @@ function translateVector2D (vector) {
 // translate the give 3D vector to JSCAD script
 //
 function translateVector3D (vector) {
-  let script = 'new CSG.Vector3D(' + vector.x + ',' + vector.y + ',' + vector.z + ')'
+  let script = vector.x + ',' + vector.y + ',' + vector.z
   return script
 }
 
@@ -87,7 +87,7 @@ function translateVector3D (vector) {
 // translate the given CSG.Polygon into JSCAD script
 //
 function translatePolygon (polygon) {
-  let script = 'new CSG.Polygon(['
+  let script = 'createPolygon(['
   for (let vertex of polygon.vertices) {
     script += translateVertex(vertex) + ','
   }
@@ -507,7 +507,7 @@ function getPolyType (obj) {
 // translate the given CSG.Plane to JSCAD script
 //
 function translatePlane (plane) {
-  let script = 'new CSG.Plane(' + translateVector3D(plane.normal) + ',' + plane.w + ')'
+  let script = '[' + translateVector3D(plane.normal) + ',' + plane.w + ']'
   return script
 }
 
@@ -518,7 +518,7 @@ function translateShared (shared) {
   let script = 'CSG.Polygon.defaultShared'
   if (shared !== null && shared.color !== null) {
     let rgb = shared.color
-    script = 'new CSG.Polygon.Shared(['+rgb[0]+','+rgb[1]+','+rgb[2]+','+rgb[3]+'])'
+    script = '['+rgb[0]+','+rgb[1]+','+rgb[2]+','+rgb[3]+']'
   }
   return script
 }
@@ -527,9 +527,9 @@ function translateShared (shared) {
 // translate the given CSG.Vertex to JSCAD script
 //
 function translateVertex (vertex) {
-  let script = 'new CSG.Vertex('
+  let script = '['
   script += translateVector3D(vertex.pos)
-  script += ')'
+  script += ']'
   return script
 }
 
@@ -615,21 +615,22 @@ console.log('##### instantiatePolyFaces('+meshM+','+meshN+')')
     // only use valid face definitions
     if (vertices.length > 2) {
       // reverse the order of vertices if necessary
-      if (vertices.length === 3) {
-        let v1 = vertices[1]
-        let v2 = vertices[2]
-        vertices[1] = v2
-        vertices[2] = v1
+      if (options.dxf.angdir === 1) {
+        if (vertices.length === 3) {
+          let v1 = vertices[1]
+          let v2 = vertices[2]
+          vertices[1] = v2
+          vertices[2] = v1
+        }
+        if (vertices.length === 4) {
+          let v1 = vertices[1]
+          let v2 = vertices[2]
+          let v3 = vertices[3]
+          vertices[1] = v3
+          vertices[2] = v2
+          vertices[3] = v1
+        }
       }
-      if (vertices.length === 4) {
-        let v1 = vertices[1]
-        let v2 = vertices[2]
-        let v3 = vertices[3]
-        vertices[1] = v3
-        vertices[2] = v2
-        vertices[3] = v1
-      }
-
       faces.push(new CSG.Polygon(vertices, shared))
     }
     i++
@@ -722,7 +723,9 @@ console.log(cn)
 //
 function translateLayer (layer) {
   let name = layer['name'] || 'Unknown'
+  // UGG... javascript variable names
   name = name.replace(/ /g,'_')
+  name = name.replace(/-/g,'_')
 
   let script = 'function layer' + name + '() {\n'
   for (let object of layer['objects']) {
@@ -874,7 +877,32 @@ const translateAsciiDxf = function (reader, options) {
 
   // debug output
   console.log('**************************************************')
-  let script = ''
+  let script = 'function main() {\n  let layers = []\n  return layers.concat('
+  layers.forEach(
+    function (layer) {
+      let name = layer['name'] || 'Unknown'
+      script += 'layer' + name + '(),'
+    }
+  )
+  script += '[])\n}\n'
+
+  // add helper functions for polygons and lines
+  script += 'function createVertex(point) {\n'
+  script += '  return new CSG.Vertex(new CSG.Vector3D(point[0],point[1],point[2]))\n'
+  script += '}\n'
+  script += 'function createPlane(pointandw) {\n'
+  script += '  return new CSG.Plane(new CSG.Vector3D(pointandw[0],pointandw[1],pointandw[2]),pointandw[3])\n'
+  script += '}\n'
+  script += 'function createPolygon(listofpoints,color,pointandw) {\n'
+  script += '  let vertices = []\n'
+  script += '  for (let point of listofpoints) {\n'
+  script += '    vertices.push(createVertex(point))\n'
+  script += '  }\n'
+  script += '  let shared = new CSG.Polygon.Shared(color)\n'
+  script += '  let plane = createPlane(pointandw)\n'
+  script += '  return new CSG.Polygon(vertices,shared,plane)\n'
+  script += '}\n'
+
   layers.forEach(
     function (layer) {
       script += translateLayer(layer)
