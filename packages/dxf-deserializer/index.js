@@ -9,7 +9,7 @@ All code released under MIT license
 
 const {colorIndex, BYLAYER, getTLA} = require('./autocad')
 const dxf = require('./DxfReader')
-const instantiateAsciiDxf = require('./instantiate')
+const {instantiateAsciiDxf} = require('./instantiate')
 const translateAsciiDxf = require('./translate')
 
 // //////////////////////////////////////////

@@ -13,7 +13,7 @@ const {BYBLOCK, BYLAYER} = require('./autocad')
 //
 // instantiate the given object (3dface) as a polygon
 //
-function instantiatePolygon (obj, layers, colorindex) {
+function instantiatePolygon (obj, layers, options) {
   let vertices = []
   // FIXME: should check global variable to instantiate in the proper orientation
   vertices.push(new CSG.Vertex(new CSG.Vector3D([obj['pptx'], obj['ppty'], obj['pptz']])))
@@ -29,7 +29,7 @@ function instantiatePolygon (obj, layers, colorindex) {
     }
   }
   let cn = getColorNumber(obj, layers)
-  let shared = getColor(cn, colorindex)
+  let shared = getColor(cn, options.colorindex)
   return new CSG.Polygon(vertices, shared)
 }
 
@@ -53,7 +53,7 @@ function instantiateLine (obj, layers, colorindex) {
 //
 // instantiate the give object as CSG.Vector2D or CSG.Vector3D
 //
-function instantiateVertex (obj) {
+function instantiateVector (obj) {
   const d3line = parseInt('00000000000100000', 2)
   const d3mesh = parseInt('00000000001000000', 2)
   const d3face = parseInt('00000000010000000', 2)
@@ -68,6 +68,11 @@ function instantiateVertex (obj) {
   } else
   if ((flags & d3face) === d3face) {
     vtype = new CSG.Vector3D([obj['pptx'], obj['ppty'], obj['pptz']])
+    // pass on face indexes
+    vtype['fvia'] = obj['fvia']
+    vtype['fvib'] = obj['fvib']
+    vtype['fvic'] = obj['fvic']
+    vtype['fvid'] = obj['fvid']
   } else {
     vtype = new CSG.Vector2D(obj['pptx'], obj['ppty'])
     vtype['bulg'] = obj['bulg'] // for rendering curved sections
@@ -498,7 +503,7 @@ const instantiateAsciiDxf = function (reader, options) {
       // 3D entities
       case '3dface':
         console.log('##### 3dface')
-        p = instantiatePolygon(obj, layers, options.colorindex)
+        p = instantiatePolygon(obj, layers, options)
         if (current === null) {
           console.log('##### start of 3dfaces CSG')
           current = new CSG()
@@ -539,7 +544,7 @@ const instantiateAsciiDxf = function (reader, options) {
         break
       case 'vertex':
         console.log('##### vertex')
-        p = instantiateVertex(obj)
+        p = instantiateVector(obj)
         break
       case 'seqend':
         current = completeCurrent(objects, current, polygons, vectors, options)
@@ -583,4 +588,8 @@ const instantiateAsciiDxf = function (reader, options) {
   return objects
 }
 
-module.exports = instantiateAsciiDxf
+module.exports = {
+  instantiatePolygon,
+  instantiateVector,
+  instantiateAsciiDxf
+}
