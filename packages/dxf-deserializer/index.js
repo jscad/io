@@ -29,6 +29,11 @@ function handleEnd (reader, data) {
   console.log('DXF reader completed')
 }
 
+//
+// handle a entity as provided by the reader
+// groups: 0
+// special handling to set defaults as per DXF specifications
+//
 function handleEntity (reader, group, value) {
   // console.log('entity: '+group+','+value)
 
@@ -211,12 +216,21 @@ function handleEntity (reader, group, value) {
   }
 }
 
-function handleVarible (reader, group, value) {
+//
+// handle a varible as provided by the reader
+// groups: 9
+// special handling to push a new entity
+//
+function handleVariable (reader, group, value) {
   // console.log('variable: '+group+','+value)
   let obj = {type: 'variable', name: value}
   reader.objstack.push(obj)
 }
 
+//
+// handle a int as provided by the reader
+// groups: 62, 70, 71, 72, 73, 74, 75, 210, 220, 230
+//
 function handleInt (reader, group, value) {
   // console.log('int: '+group+','+value)
   let obj = reader.objstack.pop()
@@ -226,6 +240,10 @@ function handleInt (reader, group, value) {
   reader.objstack.push(obj)
 }
 
+//
+// handle a double as provided by the reader
+// groups: 11, 12, 13, 21, 22, 23, 31, 32, 33, 39, 40, 41, 50, 51
+//
 function handleDouble (reader, group, value) {
   // console.log('double: '+group+','+value)
   let obj = reader.objstack.pop()
@@ -235,6 +253,11 @@ function handleDouble (reader, group, value) {
   reader.objstack.push(obj)
 }
 
+//
+// handle a X coordinate as provided by the reader
+// groups: 10
+// special handling of (lwpolyline and mesh) float values
+//
 function handleXcoord (reader, group, value) {
   // console.log('xcoord: '+group+','+value)
   let obj = reader.objstack.pop()
@@ -262,6 +285,11 @@ function handleXcoord (reader, group, value) {
   reader.objstack.push(obj)
 }
 
+//
+// handle a Y coordinate as provided by the reader
+// groups: 20
+// special handling of (lwpolyline and mesh) float values
+//
 function handleYcoord (reader, group, value) {
   // console.log('ycoord: '+group+','+value)
   let obj = reader.objstack.pop()
@@ -279,6 +307,11 @@ function handleYcoord (reader, group, value) {
   reader.objstack.push(obj)
 }
 
+//
+// handle a Z coordinate as provided by the reader
+// groups: 30
+// special handling of (mesh) float values
+//
 function handleZcoord (reader, group, value) {
   // console.log('ycoord: '+group+','+value)
   let obj = reader.objstack.pop()
@@ -296,6 +329,11 @@ function handleZcoord (reader, group, value) {
   reader.objstack.push(obj)
 }
 
+//
+// handle a bulge as provided by the reader
+// groups: 41
+// special handling of (lwpolyline) float values
+//
 function handleBulge (reader, group, value) {
   // console.log('bulg: '+group+','+value)
   let obj = reader.objstack.pop()
@@ -316,6 +354,11 @@ function handleBulge (reader, group, value) {
   reader.objstack.push(obj)
 }
 
+//
+// handle a len as provided by the reader
+// groups: 91, 92, 93, 94, 95
+// special handling of (mesh) float values based on group and state
+//
 function handleLen (reader, group, value) {
   // console.log('len: '+group+','+value)
   let obj = reader.objstack.pop()
@@ -362,7 +405,9 @@ function handleLen (reader, group, value) {
 }
 
 //
-// special handling of group 90 (32 bit integer values) for various mesh values
+// handle a value as provided by the reader
+// groups: 90
+// special handling of (mesh) float values based on state
 //
 function handleValue (reader, group, value) {
   // console.log('int: '+group+','+value)
@@ -395,6 +440,10 @@ function handleValue (reader, group, value) {
   reader.objstack.push(obj)
 }
 
+//
+// handle a string as provided by the reader
+// groups: 1,6,7,8,
+//
 function handleString (reader, group, value) {
   // console.log('string: '+group+','+value)
   let obj = reader.objstack.pop()
@@ -404,6 +453,10 @@ function handleString (reader, group, value) {
   reader.objstack.push(obj)
 }
 
+//
+// handle a name as provided by the reader
+// groups: 2,3
+//
 function handleName (reader, group, value) {
   // console.log('name: '+group+','+value)
   let obj = reader.objstack.pop()
@@ -415,6 +468,14 @@ function handleName (reader, group, value) {
   reader.objstack.push(obj)
 }
 
+//
+// Create a DXF reader using the given source and options.
+// This routine sets up a series of callbacks (absorb calls) to handle the various DXF groups, then starts the reader.
+// While reading, the callback routine (handle*) converts the value and then:
+// - pushes a new group onto the objstack
+// OR
+// - adds a new attribute to the current object
+//
 function createReader (src, options) {
   // create a reader for the DXF
   let reader = dxf.reader(options)
@@ -432,7 +493,7 @@ function createReader (src, options) {
   reader.absorb(6, handleString)
   reader.absorb(7, handleString)
   reader.absorb(8, handleString)
-  reader.absorb(9, handleVarible)
+  reader.absorb(9, handleVariable)
   reader.absorb(10, handleXcoord)
   reader.absorb(11, handleDouble)
   reader.absorb(12, handleDouble)
@@ -477,15 +538,17 @@ function createReader (src, options) {
   return reader
 }
 
-/*
- */
+//
+// instantiate the give DXF definition (src) into a set of CSG library objects
+//
 function instantiate (src, filename, options) {
   let reader = createReader(src, options)
   let objs = instantiateAsciiDxf(reader, options)
   return objs
 }
 
-// Options:
+//
+// translate the give DXF definition (src) into a  JSCAD script
 //
 function translate (src, filename, options) {
   let reader = createReader(src, options)
@@ -510,7 +573,7 @@ function translate (src, filename, options) {
  */
 const deserialize = function (src, filename, options) {
   const defaults = {
-    version: '0.0.0',
+    version: '0.0.1',
     output: 'jscad',
     strict: true,
     colorindex: colorIndex,
