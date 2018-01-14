@@ -11,11 +11,15 @@ const { deserialize } = require( '../index' )
 // Test suite for DXF deserialization (import)
 //
 test('ASCII DXF 2D Entities translated to JSCAD Scripts', t => {
-// DXF empty source, translate to header only
+// DXF empty source, translate to main and helper functions
   let dxf1 = ''
   let src1 = deserialize(dxf1,'dxf1 test',{output: 'jscad'})
   let ss1 = src1.split("\n")
-  t.is(ss1.length,3)
+  t.is(ss1.length,22)
+  t.true(src1.indexOf('main()') > 0)
+  t.true(src1.indexOf('createVertex(') > 0)
+  t.true(src1.indexOf('createPlane(') > 0)
+  t.true(src1.indexOf('createPolygon(') > 0)
 
 // DXF CIRCLE, translates to script with CAG.circle
   let dxf2 = `0
@@ -38,7 +42,8 @@ CIRCLE
 ENDSEC`
   let src2 = deserialize(dxf2,'dxf2 test',{output: 'jscad'})
   let ss2 = src2.split("\n")
-  t.is(ss2.length,7)
+  t.is(ss2.length,26)
+  t.true(src2.indexOf('CAG.circle(') > 0)
 
 // DXF LINE, translates to script with CSG.Line2D.fromPoints
   let dxf3 = `0
@@ -63,7 +68,8 @@ LINE
 ENDSEC`
   let src3 = deserialize(dxf3,'dxf3-test',{output: 'jscad'})
   let ss3 = src3.split("\n")
-  t.is(ss3.length,7)
+  t.is(ss3.length,26)
+  t.true(src3.indexOf('CSG.Line2D.fromPoints(') > 0)
 
 // DXF ARC, translates to script with 'CSG.Path2D.arc'
   let dxf4 = `0
@@ -98,7 +104,8 @@ AcDbArc
 ENDSEC`
   let src4 = deserialize(dxf4,'dxf4-test',{output: 'jscad'})
   let ss4 = src4.split("\n")
-  t.is(ss4.length,7)
+  t.is(ss4.length,26)
+  t.true(src4.indexOf('CSG.Path2D.arc(') > 0)
 
 // DXF LWPOLYLINE without bulges, translates to script with CSG.Path2D, appendPoint, and CAG.fromPoints
   let dxf5 = `0
@@ -133,7 +140,11 @@ LWPOLYLINE
 ENDSEC`
   let src5 = deserialize(dxf5,'dxf5-test',{output: 'jscad'})
   let ss5 = src5.split("\n")
-  t.is(ss5.length,10)
+  t.is(ss5.length,29)
+  t.true(src5.indexOf('CSG.Path2D(') > 0)
+  t.true(src5.indexOf('appendPoint(') > 0)
+  t.true(src5.indexOf('close(') > 0)
+  t.true(src5.indexOf('CAG.fromPoints(') > 0)
 
 // DXF LWPOLYLINE with bulges, translates to script with CSG.Path2D and appendArc, and CAG.fromPoints
   let dxf6 = `0
@@ -176,7 +187,12 @@ LWPOLYLINE
 ENDSEC`
   let src6 = deserialize(dxf6,'dxf6-test',{output: 'jscad'})
   let ss6 = src6.split("\n")
-  t.is(ss6.length,10)
+  t.is(ss6.length,29)
+  t.true(src6.indexOf('CSG.Path2D(') > 0)
+  t.true(src6.indexOf('appendPoint(') > 0)
+  t.true(src6.indexOf('appendArc(') > 0)
+  t.true(src6.indexOf('close(') > 0)
+  t.true(src6.indexOf('CAG.fromPoints(') > 0)
 
 // DXF ELLIPSE, translates to script with CAG.ellipse
   let dxf7 = `0
@@ -215,7 +231,8 @@ ELLIPSE
 ENDSEC`
   let src7 = deserialize(dxf7,'dxf7-test',{output: 'jscad'})
   let ss7 = src7.split("\n")
-  t.is(ss7.length,7)
+  t.is(ss7.length,26)
+  t.true(src7.indexOf('CAG.ellipse(') > 0)
 
 })
 
@@ -273,9 +290,11 @@ SEQEND
 ENDSEC`
   let src1 = deserialize(dxf1,'dxf1-test',{output: 'jscad'})
   let ss1 = src1.split("\n")
-  t.is(ss1.length,8)
+  t.is(ss1.length,27)
+  t.true(src1.indexOf('CSG.Path2D(') > 0)
+  t.true(src1.indexOf('appendPoint(') > 0)
 
-// DXF 2D POLYLINE with bulges, translates to script with CSG.Path2D
+// DXF 2D POLYLINE with bulges, translates to script with CSG.Path2D, appendArc
   let dxf2 = `0
 SECTION
 2
@@ -318,7 +337,10 @@ SEQEND
 ENDSEC`
   let src2 = deserialize(dxf2,'dxf2-test',{output: 'jscad'})
   let ss2 = src2.split("\n")
-  t.is(ss2.length,10)
+  t.is(ss2.length,27)
+  t.true(src2.indexOf('CSG.Path2D(') > 0)
+  t.true(src2.indexOf('appendPoint(') > 0)
+  t.true(src2.indexOf('appendArc(') > 0)
 
 })
 
