@@ -7,11 +7,13 @@ import {nearlyEqual} from '../../../test/helpers/nearlyEqual'
 
 const { deserialize } = require( '../index' )
 
+const samples = path.resolve('../../node_modules/@jscad/sample-files')
+
 //
 // Test suite for DXF deserialization (import)
 //
 test('ASCII DXF 2D Entities from JSCAD to Object Conversion', t => {
-  let dxfPath = path.resolve(__dirname, '../../../../sample-files/dxf/jscad/square10x10.dxf')
+  let dxfPath = path.resolve(samples, 'dxf/jscad/square10x10.dxf')
   t.deepEqual(true, fs.existsSync(dxfPath))
 
   let dxf = fs.readFileSync(dxfPath, 'UTF8')
@@ -22,7 +24,7 @@ test('ASCII DXF 2D Entities from JSCAD to Object Conversion', t => {
   t.is(objs.length,1)
   t.true(objs[0] instanceof CAG)
 
-  dxfPath = path.resolve(__dirname, '../../../../sample-files/dxf/jscad/circle10.dxf')
+  dxfPath = path.resolve(samples, 'dxf/jscad/circle10.dxf')
   t.deepEqual(true, fs.existsSync(dxfPath))
 
   dxf = fs.readFileSync(dxfPath, 'UTF8')
@@ -35,7 +37,7 @@ test('ASCII DXF 2D Entities from JSCAD to Object Conversion', t => {
 })
 
 test('ASCII DXF 2D Lines from Autocad 2017 to Object Conversion', t => {
-  let dxfPath = path.resolve(__dirname, '../../../../sample-files/dxf/autocad2017/2Dlines.dxf')
+  let dxfPath = path.resolve(samples, 'dxf/autocad2017/2Dlines.dxf')
   t.deepEqual(true, fs.existsSync(dxfPath))
 
   let dxf = fs.readFileSync(dxfPath, 'UTF8')
@@ -51,7 +53,7 @@ test('ASCII DXF 2D Lines from Autocad 2017 to Object Conversion', t => {
 })
 
 test('ASCII DXF 2D Circles from Autocad 2017 to Object Conversion', t => {
-  let dxfPath = path.resolve(__dirname, '../../../../sample-files/dxf/autocad2017/2Dcircles.dxf')
+  let dxfPath = path.resolve(samples, 'dxf/autocad2017/2Dcircles.dxf')
   t.deepEqual(true, fs.existsSync(dxfPath))
 
   let dxf = fs.readFileSync(dxfPath, 'UTF8')
@@ -67,7 +69,7 @@ test('ASCII DXF 2D Circles from Autocad 2017 to Object Conversion', t => {
 })
 
 test('ASCII DXF 2D Rectangles from Autocad 2017 to Object Conversion', t => {
-  let dxfPath = path.resolve(__dirname, '../../../../sample-files/dxf/autocad2017/2Drectangles.dxf')
+  let dxfPath = path.resolve(samples, 'dxf/autocad2017/2Drectangles.dxf')
   t.deepEqual(true, fs.existsSync(dxfPath))
 
   let dxf = fs.readFileSync(dxfPath, 'UTF8')
@@ -89,7 +91,7 @@ test('ASCII DXF 2D Rectangles from Autocad 2017 to Object Conversion', t => {
 })
 
 test('ASCII DXF 2D Donuts from Autocad 2017 to Object Conversion', t => {
-  let dxfPath = path.resolve(__dirname, '../../../../sample-files/dxf/autocad2017/2Ddonuts.dxf')
+  let dxfPath = path.resolve(samples, 'dxf/autocad2017/2Ddonuts.dxf')
   t.deepEqual(true, fs.existsSync(dxfPath))
 
   let dxf = fs.readFileSync(dxfPath, 'UTF8')
@@ -105,7 +107,7 @@ test('ASCII DXF 2D Donuts from Autocad 2017 to Object Conversion', t => {
 })
 
 test('ASCII DXF 2D Ellipses from Autocad 2017 to Object Conversion', t => {
-  let dxfPath = path.resolve(__dirname, '../../../../sample-files/dxf/autocad2017/2Dellipses.dxf')
+  let dxfPath = path.resolve(samples, 'dxf/autocad2017/2Dellipses.dxf')
   t.deepEqual(true, fs.existsSync(dxfPath))
 
   let dxf = fs.readFileSync(dxfPath, 'UTF8')
@@ -117,7 +119,7 @@ test('ASCII DXF 2D Ellipses from Autocad 2017 to Object Conversion', t => {
 })
 
 test('ASCII DXF 2D Arcs from Autocad 2017 to Object Conversion', t => {
-  let dxfPath = path.resolve(__dirname, '../../../../sample-files/dxf/autocad2017/2Darcs.dxf')
+  let dxfPath = path.resolve(samples, 'dxf/autocad2017/2Darcs.dxf')
   t.deepEqual(true, fs.existsSync(dxfPath))
 
   let dxf = fs.readFileSync(dxfPath, 'UTF8')
