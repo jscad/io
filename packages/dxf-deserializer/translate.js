@@ -80,7 +80,7 @@ function translateVertex (vertex) {
 //
 // translate the given DXF object (line) into 2D or 3D line
 //
-function translateLine (obj, layers, colorindex) {
+function translateLine (obj, layers, options) {
   let script = '  let ' + obj['name'] + ' = '
   if (obj['pptz'] === obj['sptz'] & obj['pptz'] === 0) {
     let p1 = new CSG.Vector2D([obj['pptx'], obj['ppty']])
@@ -170,7 +170,7 @@ function translatePath2D (obj, layers, options) {
 //
 // translate the given object (arc) into CAG.Path2D or CSG??
 //
-function translateArc (obj, layers, colorindex) {
+function translateArc (obj, layers, options) {
 // expected values
   let lthk = obj['lthk']
   let pptx = obj['pptx']
@@ -195,7 +195,7 @@ function translateArc (obj, layers, colorindex) {
 //
 // translate the given obj (circle) into CAG.circle (or extrude to CSG)
 //
-function translateCircle (obj, layers, colorindex) {
+function translateCircle (obj, layers, options) {
 // expected values
   let lthk = obj['lthk']
   let pptx = obj['pptx']
@@ -206,7 +206,7 @@ function translateCircle (obj, layers, colorindex) {
 
   // FIXME add color when supported
   // let cn = getColorNumber(obj,layers)
-  // let shared = getColor(cn,colorindex)
+  // let shared = getColor(cn,options.colorindex)
   // FIXME need to determine resolution from object/layer/variables
   let res = CSG.defaultResolution2D
 
@@ -229,7 +229,7 @@ function translateCircle (obj, layers, colorindex) {
 //
 // translate the given object (ellipse) into CAG.ellipse or CSG??
 //
-function translateEllipse (obj, layers, colorindex) {
+function translateEllipse (obj, layers, options) {
 // expected values
   let pptx = obj['pptx'] // center point
   let ppty = obj['ppty']
@@ -249,6 +249,7 @@ function translateEllipse (obj, layers, colorindex) {
     let rx = center.distanceTo(mjaxis)
     let ry = rx * swid
     let angle = Math.atan2(spty, sptx) * 180 / Math.PI
+    if (angle < CSG.EPS) angle = 0
     // FIXME add start and end angle when supported
     let script = '  let ' + name + ' = CAG.ellipse({center: [0,0],radius: [' + rx + ',' + ry + '],resolution: ' + res + '}).rotateZ('+angle+').translate(['+pptx+','+ppty+'])\n'
     obj['script'] = script
@@ -291,7 +292,7 @@ function instantiatePoints (pptxs, pptys, pptzs) {
 //
 // Note: See Face-Vertex meshes on Wikipedia
 //
-function instantiateMesh (obj, layers, colorindex) {
+function instantiateMesh (obj, layers, options) {
 // expected values
   let vlen = obj['vlen']
   let pptxs = obj['pptxs'] // vertices
@@ -303,7 +304,7 @@ function instantiateMesh (obj, layers, colorindex) {
 
   // conversion
   let cn = getColorNumber(obj, layers)
-  let shared = getColor(cn, colorindex)
+  let shared = getColor(cn, options.colorindex)
 
   CSG._CSGDEBUG = false
 
@@ -637,7 +638,7 @@ function translateCurrent (obj, layers, parts, options) {
     return translateAs2Dline(obj, layers, parts, options)
   }
 
-  if (type === '2dline') {
+  if (type === '3dline') {
     // FIXME what to do?
     return null
   }
@@ -758,7 +759,7 @@ const translateAsciiDxf = function (reader, options) {
         console.log('##### mesh')
         current = translateCurrent(current, layers, parts, options)
         parts = []
-        objects.push(instantiateMesh(obj, layers, options.colorindex))
+        objects.push(instantiateMesh(obj, layers, options))
         break
 
       // 2D or 3D entities
@@ -766,25 +767,25 @@ const translateAsciiDxf = function (reader, options) {
         console.log('##### arc')
         current = translateCurrent(current, layers, parts, options)
         parts = []
-        translateArc(obj, layers, options.colorindex)
+        translateArc(obj, layers, options)
         break
       case 'circle':
         console.log('##### circle')
         current = translateCurrent(current, layers, parts, options)
-        translateCircle(obj, layers, options.colorindex)
+        translateCircle(obj, layers, options)
         parts = []
         break
       case 'ellipse':
         console.log('##### ellipse')
         current = translateCurrent(current, layers, parts, options)
         parts = []
-        translateEllipse(obj, layers, options.colorindex)
+        translateEllipse(obj, layers, options)
         break
       case 'line':
         console.log('##### line')
         current = translateCurrent(current, layers, parts, options)
         parts = []
-        translateLine(obj, layers, options.colorindex)
+        translateLine(obj, layers, options)
         break
       case 'polyline':
         if (current === null) {

@@ -36,7 +36,7 @@ function instantiatePolygon (obj, layers, options) {
 //
 // instantiate the given object (line) as CSG.Line2D or CSG.Line3D
 //
-function instantiateLine (obj, layers, colorindex) {
+function instantiateLine (obj, layers, options) {
   let csg = null
   if (obj['pptz'] === obj['sptz'] & obj['pptz'] === 0) {
     let p1 = new CSG.Vector2D([obj['pptx'], obj['ppty']])
@@ -143,7 +143,7 @@ function instantiatePath2D (obj, layers, options) {
 //
 // instantiate the given object (arc) into CSG.Path2D or CSG??
 //
-function instantiateArc (obj, layers, colorindex) {
+function instantiateArc (obj, layers, options) {
   // expected values
   let lthk = obj['lthk']
   let pptx = obj['pptx']
@@ -167,7 +167,7 @@ function instantiateArc (obj, layers, colorindex) {
 //
 // instantiate the given object (circle) into CAG.circle (or extrude to CSG)
 //
-function instantiateCircle (obj, layers, colorindex) {
+function instantiateCircle (obj, layers, options) {
   // expected values
   let lthk = obj['lthk']
   let pptx = obj['pptx']
@@ -178,7 +178,7 @@ function instantiateCircle (obj, layers, colorindex) {
   // conversion
   // FIXME add color when supported
   // let cn = getColorNumber(obj,layers)
-  // let shared = getColor(cn,colorindex)
+  // let shared = getColor(cn,options.colorindex)
   // FIXME need to determine resolution from object/layer/variables
   let res = CSG.defaultResolution2D
 
@@ -197,7 +197,7 @@ function instantiateCircle (obj, layers, colorindex) {
 //
 // instantiate the give object (ellipse) into CAG.ellipse (or extrude to CSG)
 //
-function instantiateEllipse (obj, layers, colorindex) {
+function instantiateEllipse (obj, layers, options) {
   // expected values
   let pptx = obj['pptx'] // center point
   let ppty = obj['ppty']
@@ -211,15 +211,14 @@ function instantiateEllipse (obj, layers, colorindex) {
 
   // convert to 2D object
   if (pptz === 0.0 && sptz === 0.0) {
-    let center = new CSG.Vector2D(pptx, ppty)
+    let center = new CSG.Vector2D(0, 0)
     let mjaxis = new CSG.Vector2D(sptx, spty)
     let rx = center.distanceTo(mjaxis)
     let ry = rx * swid
+    let angle = Math.atan2(spty, sptx) * 180 / Math.PI
+    if (angle < CSG.EPS) angle = 0
     // FIXME add start and end angle when supported
-    let cag = CAG.ellipse({center: [pptx, ppty], radius: [rx, ry], resolution: res})
-    if (ppty !== spty) {
-    // FIXME need to apply rotation about Z
-    }
+    let cag = CAG.ellipse({center: [0,0], radius: [rx, ry], resolution: res}).rotateZ(angle).translate([pptx,ppty])
     return cag
   }
   // convert to 3D object
@@ -313,7 +312,7 @@ function instantiatePoints (pptxs, pptys, pptzs) {
 //
 // Note: See Face-Vertex meshes on Wikipedia
 //
-function instantiateMesh (obj, layers, colorindex) {
+function instantiateMesh (obj, layers, options) {
   // expected values
   let  vlen = obj['vlen']
   let pptxs = obj['pptxs'] // vertices
@@ -325,7 +324,7 @@ function instantiateMesh (obj, layers, colorindex) {
 
   // conversion
   let cn = getColorNumber(obj, layers)
-  let shared = getColor(cn, colorindex)
+  let shared = getColor(cn, options.colorindex)
 
   CSG._CSGDEBUG = false
 
@@ -512,29 +511,29 @@ const instantiateAsciiDxf = function (reader, options) {
       case 'mesh':
         console.log('##### mesh')
         current = completeCurrent(objects, current, polygons, vectors, options)
-        objects.push(instantiateMesh(obj, layers, options.colorindex))
+        objects.push(instantiateMesh(obj, layers, options))
         break
 
       // 2D or 3D entities
       case 'arc':
         console.log('##### arc')
         current = completeCurrent(objects, current, polygons, vectors, options)
-        objects.push(instantiateArc(obj, layers, options.colorindex))
+        objects.push(instantiateArc(obj, layers, options))
         break
       case 'circle':
         console.log('##### circle')
         current = completeCurrent(objects, current, polygons, vectors, options)
-        objects.push(instantiateCircle(obj, layers, options.colorindex))
+        objects.push(instantiateCircle(obj, layers, options))
         break
       case 'ellipse':
         console.log('##### ellipse')
         current = completeCurrent(objects, current, polygons, vectors, options)
-        objects.push(instantiateEllipse(obj, layers, options.colorindex))
+        objects.push(instantiateEllipse(obj, layers, options))
         break
       case 'line':
         console.log('##### line')
         current = completeCurrent(objects, current, polygons, vectors, options)
-        objects.push(instantiateLine(obj, layers, options.colorindex))
+        objects.push(instantiateLine(obj, layers, options))
         break
       case 'polyline':
         if (current === null) {
