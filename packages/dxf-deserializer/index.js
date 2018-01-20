@@ -219,7 +219,6 @@ function handleEntity (reader, group, value) {
 //
 // handle a varible as provided by the reader
 // groups: 9
-// special handling to push a new entity
 //
 function handleVariable (reader, group, value) {
   // console.log('variable: '+group+','+value)
@@ -564,12 +563,14 @@ function translate (src, filename, options) {
 
 /**
  * Deserialize the given source and return the requested 'output'
- * @param  {string} src DXF data stream
- * @param  {string} filename (optional) original filename of DXF data stream if any
- * @param  {object} options (optional) anonymous object with:
- *  output {string} type of output to produce, either 'jscad' script or 'csg' objects
- *  strict {boolean} obey strict DXF specifications
- *  colorindex {array} list of colors (256) for use during rendering
+ * @param {string} src DXF data stream
+ * @param {string} filename (optional) original filename of DXF data stream if any
+ * @param {object} options (optional) anonymous object with:
+ * @param {string} [options.version='0.0.1'] version number to add to the metadata
+ * @param {string} [options.output='jscad'] either jscad or csg to set desired output
+ * @param {boolean} [options.strict=True] obey strict DXF specifications
+ * @param {array} [options.colorindex=[]] list of colors (256) for use during rendering
+ * @return {string|[objects]} a string (jscad script) or array of objects
  */
 const deserialize = function (src, filename, options) {
   const defaults = {
@@ -580,7 +581,7 @@ const deserialize = function (src, filename, options) {
     dxf: {
       angdir: 0, // counter clockwise
       insunits: 4, // millimeters
-      verticesPerFace: 4
+      pfacevmax: 4, // number of vertices per face
     }
   }
   options = Object.assign({}, defaults, options)
