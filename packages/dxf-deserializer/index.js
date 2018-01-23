@@ -15,7 +15,6 @@ const translateAsciiDxf = require('./translate')
 // //////////////////////////////////////////
 //
 // DXF (Drawing Exchange Format) is a CAD data file format developed by Autodesk
-// See http://www.autodesk.com/techpubs/autocad/dxf/
 //
 // //////////////////////////////////////////
 
