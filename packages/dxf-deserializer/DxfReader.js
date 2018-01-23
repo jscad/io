@@ -1,6 +1,15 @@
+/*
+## License
+
+Copyright (c) 2017 Z3 Development https://github.com/z3dev
+
+All code released under MIT license
+
+Thanks to @issacs for the sax js library, and inspiration for this reader
+
+*/
+
 // DXF reader to emit groups of interest to handlers
-// By Z3 Dev 'z3dev' 2017
-// Released under MIT license for JSCAD organization
 
 ;(function (dxf) { // wrapper for non-node envs
   dxf.reader = function (options) { return new DxfReader(options) }
