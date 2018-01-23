@@ -348,20 +348,10 @@ function instantiateMesh (obj, layers, options) {
           vertices.push(vertex)
           vi++
         }
-        let plane = CSG.Plane.fromVector3Ds(vectors[0], vectors[1], vectors[2])
-        // console.log("plane: "+plane.toString())
-        // polygons need to be CCW rotation about the normal
-
-        let normal = plane.normal
-        let w1 = vectors[0]
-        let w2 = vectors[1]
-        let w3 = vectors[2]
-        let e1 = w2.minus(w1)
-        let e2 = w3.minus(w1)
-        let t = new CSG.Vector3D(normal).dot(e1.cross(e2))
-        if (t > 0) { // 1,2,3 -> 3,2,1
-          // vertices.reverse()
+        if (options.dxf.angdir === 1) {
+          vertices = vertices.reverse()
         }
+        // FIXME how to correct bad normals?
 
         let poly = new CSG.Polygon(vertices, shared)
         polygons.push(poly)

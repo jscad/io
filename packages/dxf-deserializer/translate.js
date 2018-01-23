@@ -59,7 +59,7 @@ function translatePlane (plane) {
 // translate the given CSG.Polygon.Shared to JSCAD script
 //
 function translateShared (shared) {
-  let script = 'CSG.Polygon.defaultShared'
+  let script = 'null'
   if (shared !== null && shared.color !== null) {
     let rgb = shared.color
     script = '['+rgb[0]+','+rgb[1]+','+rgb[2]+','+rgb[3]+']'
@@ -292,7 +292,7 @@ function instantiatePoints (pptxs, pptys, pptzs) {
 //
 // Note: See Face-Vertex meshes on Wikipedia
 //
-function instantiateMesh (obj, layers, options) {
+function translateMesh (obj, layers, options) {
 // expected values
   let vlen = obj['vlen']
   let pptxs = obj['pptxs'] // vertices
@@ -312,9 +312,7 @@ function instantiateMesh (obj, layers, options) {
   if (vlen === pptxs.length && vlen === pptys.length && vlen === pptzs.length) {
     if (flen === fvals.length) {
       let faces = instantiateFaces(fvals)
-      // console.log(faces)
       let points = instantiatePoints(pptxs, pptys, pptzs)
-      // console.log(points)
 
       let fi = 0
       while (fi < faces.length) {
@@ -330,21 +328,10 @@ function instantiateMesh (obj, layers, options) {
           vertices.push(vertex)
           vi++
         }
-        let plane = CSG.Plane.fromVector3Ds(vectors[0], vectors[1], vectors[2])
-        // console.log("plane: "+plane.toString())
-        // polygons need to be CCW rotation about the normal
-
-        let normal = plane.normal
-        let w1 = vectors[0]
-        let w2 = vectors[1]
-        let w3 = vectors[2]
-        let e1 = w2.minus(w1)
-        let e2 = w3.minus(w1)
-        let t = new CSG.Vector3D(normal).dot(e1.cross(e2))
-        if (t > 0) { // 1,2,3 -> 3,2,1
-          // console.log('reverse')
-          // vertices.reverse()
+        if (options.dxf.angdir === 1) {
+          vertices = vertices.reverse()
         }
+        // FIXME how to correct bad normals?
 
         let poly = new CSG.Polygon(vertices, shared)
         polygons.push(poly)
@@ -356,7 +343,16 @@ function instantiateMesh (obj, layers, options) {
   } else {
   // invalid vlen
   }
-  return CSG.fromPolygons(polygons)
+  // convert the polygons into a script
+  let script = '  const ' + obj['name'] + '_polygons = [\n'
+  for (let polygon of polygons) {
+    script += '    ' + translatePolygon(polygon) + ',\n'
+  }
+  script += '  ]\n'
+  script += '  let ' + obj['name'] + ' = CSG.fromPolygons(' + obj['name'] + '_polygons)\n'
+  obj['script'] = script
+  addToLayer(obj, layers)
+  return null
 }
 
 function findLayer (obj, layers) {
@@ -684,8 +680,8 @@ function translateCurrent (obj, layers, parts, options) {
 function translateLayer (layer) {
   let name = layer['name'] || 'Unknown'
   // UGG... javascript variable names
-  name = name.replace(/ /g,'_')
-  name = name.replace(/-/g,'_')
+  //name = name.replace(/ /g,'_')
+  //name = name.replace(/-/g,'_')
 
   let script = 'function layer' + name + '() {\n'
   for (let object of layer['objects']) {
@@ -698,6 +694,21 @@ function translateLayer (layer) {
   }
   script += ']\n}\n'
   return script
+}
+
+function saveVariable (obj, options) {
+  let name = obj['name'] || 'Unknown'
+
+  switch (name) {
+    case '$ANGDIR':
+      if ('lflg' in obj) {
+        options.dxf.angdir = obj['lflg']
+      }
+      break
+
+    default:
+      break
+  }
 }
 
 const translateAsciiDxf = function (reader, options) {
@@ -722,6 +733,12 @@ const translateAsciiDxf = function (reader, options) {
     if (!('name' in obj)) {
       obj['name'] = 'jscad' + numobjs
       numobjs = numobjs + 1
+    } else {
+      // UGG... javascript variable names
+      name = obj['name']
+      name = name.replace(/ /g,'_')
+      name = name.replace(/-/g,'_')
+      obj['name'] = name
     }
     // console.log(JSON.stringify(obj))
 
@@ -741,6 +758,7 @@ const translateAsciiDxf = function (reader, options) {
         console.log(JSON.stringify(obj))
         current = translateCurrent(current, layers, parts, options)
         parts = []
+        saveVariable(obj, options)
         break
 
       // 3D entities
@@ -759,7 +777,8 @@ const translateAsciiDxf = function (reader, options) {
         console.log('##### mesh')
         current = translateCurrent(current, layers, parts, options)
         parts = []
-        objects.push(instantiateMesh(obj, layers, options))
+        //objects.push(instantiateMesh(obj, layers, options))
+        translateMesh(obj, layers, options)
         break
 
       // 2D or 3D entities
@@ -868,7 +887,7 @@ const translateAsciiDxf = function (reader, options) {
       script += translateLayer(layer)
     }
   )
-  // console.log(script)
+   console.log(script)
   // console.log('**************************************************')
   return script
 }
