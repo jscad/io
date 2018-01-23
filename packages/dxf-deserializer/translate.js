@@ -489,7 +489,8 @@ function getPolyType (obj) {
 // M and N specify the column and row position, respectively, of any given vertex.
 // The mesh is constructed row by row; M rows which contain N vertexes.
 //
-function instantiateFacets (meshM, meshN, vectors, shared) {
+function instantiateFacets (meshM, meshN, vectors, shared, options) {
+  console.log('##### instantiateFacets('+meshM+','+meshN+')')
 
   function getVector (x, y) {
     let n = (((x - 1) * meshN) + (y - 1))
@@ -516,12 +517,10 @@ function instantiateFacets (meshM, meshN, vectors, shared) {
       let v2 = createVertex(getVector(i + 1, j + 1))
       let v3 = createVertex(getVector(i, j + 1)) // CCW vectors
       let facet = [v0, v1, v2, v3]
+      if (options.dxf.angdir === 1) {
+        facet = facet.reverse()
+      }
       let polygon = new CSG.Polygon(facet, shared)
-      //let polygon = CSG.Polygon.createFromPoints(facet)
-      // if (!polygon.checkIfConvex()) {
-      // facet = [v0,v3,v2,v1]
-      // polygon = CSG.Polygon.createFromPoints(facet)
-      // }
       if (Number.isFinite(polygon.plane.w)) {
         facets.push(polygon)
       }
@@ -543,7 +542,7 @@ function instantiateFacets (meshM, meshN, vectors, shared) {
 // Negative indexes indicate invisible edges (not implemented).
 //
 function instantiatePolyFaces (meshM, meshN, vectors, shared, options) {
-  // console.log('##### instantiatePolyFaces('+meshM+','+meshN+')')
+  console.log('##### instantiatePolyFaces('+meshM+','+meshN+')')
   let faces = []
 
   // sanity check
@@ -572,20 +571,7 @@ function instantiatePolyFaces (meshM, meshN, vectors, shared, options) {
     if (vertices.length > 2) {
       // reverse the order of vertices if necessary
       if (options.dxf.angdir === 1) {
-        if (vertices.length === 3) {
-          let v1 = vertices[1]
-          let v2 = vertices[2]
-          vertices[1] = v2
-          vertices[2] = v1
-        }
-        if (vertices.length === 4) {
-          let v1 = vertices[1]
-          let v2 = vertices[2]
-          let v3 = vertices[3]
-          vertices[1] = v3
-          vertices[2] = v2
-          vertices[3] = v1
-        }
+        vertices = vertices.reverse()
       }
       faces.push(new CSG.Polygon(vertices, shared))
     }
@@ -629,7 +615,7 @@ function translateCurrent (obj, layers, parts, options) {
   if (obj === null) return null
 
   let type = obj.type
-  // console.log('##### translating Current as '+type)
+  console.log('##### translating Current as '+type)
   if (type === '2dline') {
     return translateAs2Dline(obj, layers, parts, options)
   }
@@ -646,7 +632,7 @@ function translateCurrent (obj, layers, parts, options) {
     // console.log('##### m: '+m+' n: '+n+' i: '+i)
     let cn = getColorNumber(obj, layers)
     let shared = getColor(cn, options.colorindex)
-    let facets = instantiateFacets(m, n, parts, shared)
+    let facets = instantiateFacets(m, n, parts, shared, options)
     parts = facets
     // fall through, translating the parts (polygons)
   }
@@ -679,9 +665,6 @@ function translateCurrent (obj, layers, parts, options) {
 //
 function translateLayer (layer) {
   let name = layer['name'] || 'Unknown'
-  // UGG... javascript variable names
-  //name = name.replace(/ /g,'_')
-  //name = name.replace(/-/g,'_')
 
   let script = 'function layer' + name + '() {\n'
   for (let object of layer['objects']) {
@@ -738,6 +721,7 @@ const translateAsciiDxf = function (reader, options) {
       name = obj['name']
       name = name.replace(/ /g,'_')
       name = name.replace(/-/g,'_')
+      name = name.replace(/\./g,'_')
       obj['name'] = name
     }
     // console.log(JSON.stringify(obj))
@@ -765,6 +749,7 @@ const translateAsciiDxf = function (reader, options) {
       case '3dface':
         console.log('##### 3dface')
         p = instantiatePolygon(obj, layers, options)
+//console.log(JSON.stringify(p))
         if (current === null) {
           console.log('##### start of 3dfaces CSG')
           current = {type: '3dfaces'}
@@ -887,7 +872,7 @@ const translateAsciiDxf = function (reader, options) {
       script += translateLayer(layer)
     }
   )
-   console.log(script)
+  // console.log(script)
   // console.log('**************************************************')
   return script
 }
