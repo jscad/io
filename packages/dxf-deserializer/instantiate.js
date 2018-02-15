@@ -456,7 +456,7 @@ function completeCurrent (objects, baseobj, polygons, vectors, options) {
 }
 
 const instantiateAsciiDxf = function (reader, options) {
-  console.log('**************************************************')
+  // console.log('**************************************************')
   // console.log(JSON.stringify(reader.objstack));
   // console.log('**************************************************')
 
@@ -481,7 +481,7 @@ const instantiateAsciiDxf = function (reader, options) {
       case 'dxf':
         break
       case 'layer':
-        console.log('##### layer')
+        // console.log('##### layer')
         current = completeCurrent(objects, current, polygons, vectors, options)
         layers.push(obj)
         break
@@ -491,48 +491,48 @@ const instantiateAsciiDxf = function (reader, options) {
 
       // 3D entities
       case '3dface':
-        console.log('##### 3dface')
+        // console.log('##### 3dface')
         p = instantiatePolygon(obj, layers, options)
         if (current === null) {
-          console.log('##### start of 3dfaces CSG')
+          // console.log('##### start of 3dfaces CSG')
           current = new CSG()
         }
         break
       case 'mesh':
-        console.log('##### mesh')
+        // console.log('##### mesh')
         current = completeCurrent(objects, current, polygons, vectors, options)
         objects.push(instantiateMesh(obj, layers, options))
         break
 
       // 2D or 3D entities
       case 'arc':
-        console.log('##### arc')
+        // console.log('##### arc')
         current = completeCurrent(objects, current, polygons, vectors, options)
         objects.push(instantiateArc(obj, layers, options))
         break
       case 'circle':
-        console.log('##### circle')
+        // console.log('##### circle')
         current = completeCurrent(objects, current, polygons, vectors, options)
         objects.push(instantiateCircle(obj, layers, options))
         break
       case 'ellipse':
-        console.log('##### ellipse')
+        // console.log('##### ellipse')
         current = completeCurrent(objects, current, polygons, vectors, options)
         objects.push(instantiateEllipse(obj, layers, options))
         break
       case 'line':
-        console.log('##### line')
+        // console.log('##### line')
         current = completeCurrent(objects, current, polygons, vectors, options)
         objects.push(instantiateLine(obj, layers, options))
         break
       case 'polyline':
         if (current === null) {
-          console.log('##### start of polyline')
+          // console.log('##### start of polyline')
           current = getPolyType(obj)
         }
         break
       case 'vertex':
-        console.log('##### vertex')
+        // console.log('##### vertex')
         p = instantiateVector(obj)
         break
       case 'seqend':
@@ -541,14 +541,14 @@ const instantiateAsciiDxf = function (reader, options) {
 
       // 2D entities
       case 'lwpolyline':
-        console.log('##### lwpolyline')
+        // console.log('##### lwpolyline')
         current = completeCurrent(objects, current, polygons, vectors, options)
         objects.push(instantiatePath2D(obj, layers, options))
         break
 
       default:
-        console.log('##### ERROR')
-        console.log(obj.type)
+        // console.log('##### ERROR')
+        // console.log(obj.type)
         break
     }
     // accumlate polygons if necessary

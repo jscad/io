@@ -490,7 +490,7 @@ function getPolyType (obj) {
 // The mesh is constructed row by row; M rows which contain N vertexes.
 //
 function instantiateFacets (meshM, meshN, vectors, shared, options) {
-  console.log('##### instantiateFacets('+meshM+','+meshN+')')
+  // console.log('##### instantiateFacets('+meshM+','+meshN+')')
 
   function getVector (x, y) {
     let n = (((x - 1) * meshN) + (y - 1))
@@ -542,7 +542,7 @@ function instantiateFacets (meshM, meshN, vectors, shared, options) {
 // Negative indexes indicate invisible edges (not implemented).
 //
 function instantiatePolyFaces (meshM, meshN, vectors, shared, options) {
-  console.log('##### instantiatePolyFaces('+meshM+','+meshN+')')
+  // console.log('##### instantiatePolyFaces('+meshM+','+meshN+')')
   let faces = []
 
   // sanity check
@@ -585,7 +585,7 @@ function instantiatePolyFaces (meshM, meshN, vectors, shared, options) {
 // The translation uses the parts as 2D vertexes from POLYLINE.
 //
 function translateAs2Dline(obj, layers, parts, options) {
-  console.log('##### completing Path2D using vectors')
+  // console.log('##### completing Path2D using vectors')
   // convert the parts to a series of X/Y/BULG lists
   obj['vlen'] = parts.length
   obj['pptxs'] = []
@@ -615,7 +615,7 @@ function translateCurrent (obj, layers, parts, options) {
   if (obj === null) return null
 
   let type = obj.type
-  console.log('##### translating Current as '+type)
+  // console.log('##### translating Current as '+type)
   if (type === '2dline') {
     return translateAs2Dline(obj, layers, parts, options)
   }
@@ -695,9 +695,9 @@ function saveVariable (obj, options) {
 }
 
 const translateAsciiDxf = function (reader, options) {
-  console.log('**************************************************')
-  //console.log(JSON.stringify(reader.objstack))
-  //console.log('**************************************************')
+  // console.log('**************************************************')
+  // console.log(JSON.stringify(reader.objstack))
+  // console.log('**************************************************')
 
   let  layers = [] // list of layers with various information like color
   let current = null // the object being created
@@ -731,7 +731,7 @@ const translateAsciiDxf = function (reader, options) {
       case 'dxf':
         break
       case 'layer':
-        console.log('##### layer')
+        // console.log('##### layer')
         current = translateCurrent(current, layers, parts, options)
         parts = []
         // save the layer for later reference
@@ -739,7 +739,7 @@ const translateAsciiDxf = function (reader, options) {
         layers.push(obj)
         break
       case 'variable':
-        console.log(JSON.stringify(obj))
+        // console.log(JSON.stringify(obj))
         current = translateCurrent(current, layers, parts, options)
         parts = []
         saveVariable(obj, options)
@@ -747,19 +747,17 @@ const translateAsciiDxf = function (reader, options) {
 
       // 3D entities
       case '3dface':
-        console.log('##### 3dface')
+        // console.log('##### 3dface')
         p = instantiatePolygon(obj, layers, options)
-//console.log(JSON.stringify(p))
         if (current === null) {
-          console.log('##### start of 3dfaces CSG')
+          // console.log('##### start of 3dfaces CSG')
           current = {type: '3dfaces'}
           current['name'] = 'jscad' + numobjs
           numobjs = numobjs + 1
         }
         break
       case 'mesh':
-// FIXME complete translation
-        console.log('##### mesh')
+        // console.log('##### mesh')
         current = translateCurrent(current, layers, parts, options)
         parts = []
         //objects.push(instantiateMesh(obj, layers, options))
@@ -768,39 +766,39 @@ const translateAsciiDxf = function (reader, options) {
 
       // 2D or 3D entities
       case 'arc':
-        console.log('##### arc')
+        // console.log('##### arc')
         current = translateCurrent(current, layers, parts, options)
         parts = []
         translateArc(obj, layers, options)
         break
       case 'circle':
-        console.log('##### circle')
+        // console.log('##### circle')
         current = translateCurrent(current, layers, parts, options)
         translateCircle(obj, layers, options)
         parts = []
         break
       case 'ellipse':
-        console.log('##### ellipse')
+        // console.log('##### ellipse')
         current = translateCurrent(current, layers, parts, options)
         parts = []
         translateEllipse(obj, layers, options)
         break
       case 'line':
-        console.log('##### line')
+        // console.log('##### line')
         current = translateCurrent(current, layers, parts, options)
         parts = []
         translateLine(obj, layers, options)
         break
       case 'polyline':
         if (current === null) {
-          console.log('##### start of polyline')
+          // console.log('##### start of polyline')
           current = getPolyType(obj)
           current['name'] = 'jscad' + numobjs
           numobjs = numobjs + 1
         }
         break
       case 'vertex':
-        //console.log('##### vertex')
+        // console.log('##### vertex')
         p = instantiateVector(obj)
         break
       case 'seqend':
@@ -810,15 +808,15 @@ const translateAsciiDxf = function (reader, options) {
 
       // 2D entities
       case 'lwpolyline':
-        console.log('##### lwpolyline')
+        // console.log('##### lwpolyline')
         current = translateCurrent(current, layers, parts, options)
         parts = []
         translatePath2D(obj, layers, options)
         break
 
       default:
-        console.log('##### ERROR')
-        console.log(obj.type)
+        // console.log('##### ERROR')
+        // console.log(obj.type)
         break
     }
     // accumlate polygons if necessary
