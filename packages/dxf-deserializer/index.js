@@ -20,7 +20,7 @@ const translateAsciiDxf = require('./translate')
 
 function handleError (reader, error) {
   if (reader.options.strict === true) {
-  // should this throw error?
+    throw error
   } else {
     console.log('error: line ' + error.line + ', column ' + error.column + ', bad character [' + error.c + ']')
   }
