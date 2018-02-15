@@ -18,14 +18,18 @@ const translateAsciiDxf = require('./translate')
 //
 // //////////////////////////////////////////
 
-function handleError (e) {
-  console.log('error: line ' + e.line + ', column ' + e.column + ', bad character [' + e.c + ']')
+function handleError (reader, error) {
+  if (reader.options.strict === true) {
+  // should this throw error?
+  } else {
+    console.log('error: line ' + error.line + ', column ' + error.column + ', bad character [' + error.c + ']')
+  }
 }
 function handleStart (reader, data) {
-  console.log('DXF reader started')
+  //console.log('DXF reader started')
 }
 function handleEnd (reader, data) {
-  console.log('DXF reader completed')
+  //console.log('DXF reader completed')
 }
 
 //
@@ -210,7 +214,6 @@ function handleEntity (reader, group, value) {
       // push on an anonymous object which does not have type / attributes / values
       obj = {}
       reader.objstack.push(obj)
-      // console.log('WARNING: Unknown DXF entity: '+value)
       break
   }
 }
@@ -575,7 +578,7 @@ const deserialize = function (src, filename, options) {
   const defaults = {
     version: '0.0.1',
     output: 'jscad',
-    strict: true,
+    strict: false,
     colorindex: colorIndex,
     dxf: {
       angdir: 0, // counter clockwise
