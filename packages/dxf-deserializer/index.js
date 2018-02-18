@@ -22,7 +22,7 @@ function handleError (reader, error) {
   if (reader.options.strict === true) {
     throw error
   } else {
-    console.log('error: line ' + error.line + ', column ' + error.column + ', bad character [' + error.c + ']')
+    console.log(`error: line ${error.line}, column ${error.column}, bad character [${error.c}]`)
   }
 }
 function handleStart (reader, data) {
@@ -554,11 +554,11 @@ function instantiate (src, filename, options) {
 function translate (src, filename, options) {
   let reader = createReader(src, options)
 
-  let code = ''
-  code += '// Produced by JSCAD IO Library : DXF Deserialization (' + options.version + ')\n'
+  let code = `// Produced by JSCAD IO Library : DXF Deserialization (${options.version})
+
+`
   // code += '// date: ' + (new Date()) + '\n'
   // code += '// source: ' + filename + '\n'
-  code += '\n'
   code += translateAsciiDxf(reader, options)
   return code
 }

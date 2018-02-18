@@ -22,7 +22,7 @@ function createVertex(vector) {
 // translate the give 2D vector to JSCAD script
 //
 function translateVector2D (vector) {
-  let script = 'new CSG.Vector2D(' + vector.x + ',' + vector.y + ')'
+  let script = `new CSG.Vector2D(${vector.x},${vector.y})`
   return script
 }
 
@@ -30,7 +30,7 @@ function translateVector2D (vector) {
 // translate the give 3D vector to JSCAD script
 //
 function translateVector3D (vector) {
-  let script = vector.x + ',' + vector.y + ',' + vector.z
+  let script = `${vector.x},${vector.y},${vector.z}`
   return script
 }
 
@@ -40,10 +40,9 @@ function translateVector3D (vector) {
 function translatePolygon (polygon) {
   let script = 'createPolygon(['
   for (let vertex of polygon.vertices) {
-    script += translateVertex(vertex) + ','
+    script += `${translateVertex(vertex)},`
   }
-  script += '],' + translateShared(polygon.shared) + ','
-  script += translatePlane(polygon.plane) + ')'
+  script += `],${translateShared(polygon.shared)},${translatePlane(polygon.plane)})`
   return script
 }
 
@@ -51,7 +50,7 @@ function translatePolygon (polygon) {
 // translate the given CSG.Plane to JSCAD script
 //
 function translatePlane (plane) {
-  let script = '[' + translateVector3D(plane.normal) + ',' + plane.w + ']'
+  let script = `[${translateVector3D(plane.normal)},${plane.w}]`
   return script
 }
 
@@ -62,7 +61,7 @@ function translateShared (shared) {
   let script = 'null'
   if (shared !== null && shared.color !== null) {
     let rgb = shared.color
-    script = '['+rgb[0]+','+rgb[1]+','+rgb[2]+','+rgb[3]+']'
+    script = `[${rgb[0]},${rgb[1]},${rgb[2]},${rgb[3]}]`
   }
   return script
 }
@@ -71,9 +70,7 @@ function translateShared (shared) {
 // translate the given CSG.Vertex to JSCAD script
 //
 function translateVertex (vertex) {
-  let script = '['
-  script += translateVector3D(vertex.pos)
-  script += ']'
+  let script = `[${translateVector3D(vertex.pos)}]`
   return script
 }
 
@@ -81,15 +78,18 @@ function translateVertex (vertex) {
 // translate the given DXF object (line) into 2D or 3D line
 //
 function translateLine (obj, layers, options) {
-  let script = '  let ' + obj['name'] + ' = '
+  let name = obj['name']
+  let script = ''
   if (obj['pptz'] === obj['sptz'] & obj['pptz'] === 0) {
     let p1 = new CSG.Vector2D([obj['pptx'], obj['ppty']])
     let p2 = new CSG.Vector2D([obj['sptx'], obj['spty']])
-    script += 'CSG.Line2D.fromPoints(' + translateVector2D(p1) + ',' + translateVector2D(p2) + ')\n'
+    script = `  let ${name} = CSG.Line2D.fromPoints(${translateVector2D(p1)},${translateVector2D(p2)})
+`
   } else {
     let p1 = new CSG.Vector3D([obj['pptx'], obj['ppty'], obj['pptz']])
     let p2 = new CSG.Vector3D([obj['sptx'], obj['spty'], obj['sptz']])
-    script += 'CSG.Line3D.fromPoints(' + translateVector3D(p1) + ',' + translateVector3D(p2) + ')\n'
+    script = `  let ${name} = CSG.Line3D.fromPoints(${translateVector3D(p1)},${translateVector3D(p2)})
+`
   }
   obj['script'] = script
   addToLayer(obj, layers)
@@ -101,7 +101,7 @@ function translateLine (obj, layers, options) {
 function translateSection (script, x1, y1, bulg, px, py) {
   if (bulg === 0) {
   // add straight line to the end of the path
-    script += '.appendPoint( [' + x1 + ',' + y1 + '] )'
+    script += `.appendPoint( [${x1},${y1}] )`
   } else {
   // add arc to the end of the path
     let prev = new CSG.Vector2D(px, py)
@@ -111,8 +111,9 @@ function translateSection (script, x1, y1, bulg, px, py) {
     let clockwise = (bulg < 0)
     let large = false // FIXME how to determine?
     let d = Math.atan(bulg) / (Math.PI / 180) * 4
-    // FIXME; add resolution
-    script += '.appendArc([' + x1 + ',' + y1 + '],{radius: ' + r + ',xaxisrotation: ' + d + ',clockwise: ' + clockwise + ',large: ' + large + '})'
+    // FIXME need to determine resolution from object/layer/variables
+    let res = CSG.defaultResolution2D
+    script += `.appendArc([${x1},${y1}],{radius: ${r},xaxisrotation: ${d},clockwise: ${clockwise},large: ${large},resolution: ${res}})`
   }
   return script
 }
@@ -132,10 +133,11 @@ function translatePath2D (obj, layers, options) {
   let  name = obj['name']
 
   // translation
-  let script = '  let ' + name + ' = new CSG.Path2D()\n'
+  let script = `  let ${name} = new CSG.Path2D()
+`
   let isclosed = ((flags & closed) === closed)
   if (vlen === pptxs.length && vlen === pptys.length && vlen === bulgs.length) {
-    script += '  ' + name + ' = ' + name
+    script += `  ${name} = ${name}` // sections appended below
     pptxs.forEach(function (item, index, array) {
       let bulg = 0
       let px = 0
@@ -158,8 +160,10 @@ function translatePath2D (obj, layers, options) {
     let px = pptxs[vlen - 1]
     let py = pptys[vlen - 1]
     script = translateSection(script, pptxs[0], pptys[0], bulg, px, py)
-    script += '\n  ' + name + ' = ' + name + '.close()\n'
-    script += '  ' + name + ' = CAG.fromPoints(' + name + '.points)\n'
+    script += `
+  ${name} = ${name}.close()
+  ${name} = CAG.fromPoints(${name}.points)
+`
   } else {
     script += '\n'
   }
@@ -184,7 +188,9 @@ function translateArc (obj, layers, options) {
   // convert to 2D object
   if (lthk === 0.0) {
   // FIXME need to determine resolution from object/layer/variables
-    let script = '  let ' + name + ' = CSG.Path2D.arc({center: [' + pptx + ',' + ppty + '],radius: ' + swid + ',startangle: ' + ang0 + ',endangle: ' + ang1 + ', resolution: CSG.defaultResolution2D})\n'
+    let res = CSG.defaultResolution2D
+    let script = `  let ${name} = CSG.Path2D.arc({center: [${pptx},${ppty}],radius: ${swid},startangle: ${ang0},endangle: ${ang1}, resolution: ${res}})
+`
     obj['script'] = script
     addToLayer(obj, layers)
     return
@@ -212,15 +218,16 @@ function translateCircle (obj, layers, options) {
 
   // convert to 2D object
   if (lthk === 0.0) {
-    let script = '  let ' + name + ' = CAG.circle({center: [' + pptx + ',' + ppty + '],radius: ' + swid + ',resolution: ' + res + '})\n'
+    let script = `  let ${name} = CAG.circle({center: [${pptx},${ppty}],radius: ${swid},resolution: ${res}})
+`
     obj['script'] = script
     addToLayer(obj, layers)
     return
   }
 
   // convert to 3D object
-  let script = '  let ' + name + ' = CAG.circle({center: [' + pptx + ',' + ppty + '],radius: ' + swid + ',resolution: ' + res + '})'
-  script += '.extrude({offset: [0,0,' + lthk + ']})\n'
+  let script = `  let ${name} = CAG.circle({center: [${pptx},${ppty}],radius: ${swid},resolution: ${res}).extrude({offset: [0,0,${lthk}]})
+`
   // FIXME need to use 210/220/230 for direction of rotation
   obj['script'] = script
   addToLayer(obj, layers)
@@ -251,7 +258,8 @@ function translateEllipse (obj, layers, options) {
     let angle = Math.atan2(spty, sptx) * 180 / Math.PI
     if (angle < CSG.EPS) angle = 0
     // FIXME add start and end angle when supported
-    let script = '  let ' + name + ' = CAG.ellipse({center: [0,0],radius: [' + rx + ',' + ry + '],resolution: ' + res + '}).rotateZ('+angle+').translate(['+pptx+','+ppty+'])\n'
+    let script = `  let ${name} = CAG.ellipse({center: [0,0],radius: [${rx},${ry}],resolution: ${res}}).rotateZ(${angle}).translate([${pptx},${ppty}])
+`
     obj['script'] = script
     addToLayer(obj, layers)
     return
@@ -344,12 +352,15 @@ function translateMesh (obj, layers, options) {
   // invalid vlen
   }
   // convert the polygons into a script
-  let script = '  const ' + obj['name'] + '_polygons = [\n'
+  let name = obj['name']
+  let script = `  const ${name}_polygons = [
+`
   for (let polygon of polygons) {
     script += '    ' + translatePolygon(polygon) + ',\n'
   }
-  script += '  ]\n'
-  script += '  let ' + obj['name'] + ' = CSG.fromPolygons(' + obj['name'] + '_polygons)\n'
+  script += `  ]
+  let ${name} = CSG.fromPolygons(${name}_polygons)
+`
   obj['script'] = script
   addToLayer(obj, layers)
   return null
@@ -430,7 +441,6 @@ function getColor (index, colorindex) {
 
   index = mod(index, colorindex.length)
   let rgba = colorindex[index-1]
-  // FIXME : colors should be cached and shared
   return new CSG.Polygon.Shared.fromColor([rgba[0]/255,rgba[1]/255,rgba[2]/255,rgba[3]/255])
 }
 
@@ -649,12 +659,15 @@ function translateCurrent (obj, layers, parts, options) {
     }
   }
   // convert the polygons into a script
-  let script = '  const ' + obj['name'] + '_polygons = [\n'
+  let name = obj['name']
+  let script = `  const ${name}_polygons = [
+`
   for (let polygon of parts) {
     script += '    ' + translatePolygon(polygon) + ',\n'
   }
-  script += '  ]\n'
-  script += '  let ' + obj['name'] + ' = CSG.fromPolygons(' + obj['name'] + '_polygons)\n'
+  script += `  ]
+  let ${name} = CSG.fromPolygons(${name}_polygons)
+`
   obj['script'] = script
   addToLayer(obj, layers)
   return null
@@ -666,14 +679,14 @@ function translateCurrent (obj, layers, parts, options) {
 function translateLayer (layer) {
   let name = layer['name'] || 'Unknown'
 
-  let script = 'function layer' + name + '() {\n'
+  let script = `function layer${name}() {
+`
   for (let object of layer['objects']) {
     script += object['script']
   }
   script += '  return ['
   for (let object of layer['objects']) {
-    script += object['name']
-    script += ','
+    script += object['name'] + ','
   }
   script += ']\n}\n'
   return script
@@ -843,27 +856,29 @@ const translateAsciiDxf = function (reader, options) {
   layers.forEach(
     function (layer) {
       let name = layer['name'] || 'Unknown'
-      script += 'layer' + name + '(),'
+      script += `layer${name}(),`
     }
   )
   script += '[])\n}\n'
 
   // add helper functions for polygons and lines
-  script += 'function createVertex(point) {\n'
-  script += '  return new CSG.Vertex(new CSG.Vector3D(point[0],point[1],point[2]))\n'
-  script += '}\n'
-  script += 'function createPlane(pointandw) {\n'
-  script += '  return new CSG.Plane(new CSG.Vector3D(pointandw[0],pointandw[1],pointandw[2]),pointandw[3])\n'
-  script += '}\n'
-  script += 'function createPolygon(listofpoints,color,pointandw) {\n'
-  script += '  let vertices = []\n'
-  script += '  for (let point of listofpoints) {\n'
-  script += '    vertices.push(createVertex(point))\n'
-  script += '  }\n'
-  script += '  let shared = new CSG.Polygon.Shared(color)\n'
-  script += '  let plane = createPlane(pointandw)\n'
-  script += '  return new CSG.Polygon(vertices,shared,plane)\n'
-  script += '}\n'
+  script += 
+`function createVertex(point) {
+  return new CSG.Vertex(new CSG.Vector3D(point[0],point[1],point[2]))
+}
+function createPlane(pointandw) {
+  return new CSG.Plane(new CSG.Vector3D(pointandw[0],pointandw[1],pointandw[2]),pointandw[3])
+}
+function createPolygon(listofpoints,color,pointandw) {
+  let vertices = []
+  for (let point of listofpoints) {
+    vertices.push(createVertex(point))
+  }
+  let shared = new CSG.Polygon.Shared(color)
+  let plane = createPlane(pointandw)
+  return new CSG.Polygon(vertices,shared,plane)
+}
+`
 
   layers.forEach(
     function (layer) {

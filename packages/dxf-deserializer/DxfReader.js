@@ -111,9 +111,10 @@ Thanks to @issacs for the sax js library, and inspiration for this reader
   function emiterror (reader, er) {
     // closeText(reader)
     if (reader.trackPosition) {
-      er += '\nLine: ' + reader.line +
-        '\nColumn: ' + reader.column +
-        '\nChar: ' + reader.c
+      er += `
+Line: ${reader.line}
+Column: ${reader.column}
+Char: ${reader.c}`
     }
     er = new Error(er)
     reader.error = er
