@@ -570,7 +570,7 @@ function translate (src, filename, options) {
  * @param {object} options (optional) anonymous object with:
  * @param {string} [options.version='0.0.1'] version number to add to the metadata
  * @param {string} [options.output='jscad'] either jscad or csg to set desired output
- * @param {boolean} [options.strict=True] obey strict DXF specifications
+ * @param {boolean} [options.strict=true] obey strict DXF specifications
  * @param {array} [options.colorindex=[]] list of colors (256) for use during rendering
  * @return {string|[objects]} a string (jscad script) or array of objects
  */
@@ -578,7 +578,7 @@ const deserialize = function (src, filename, options) {
   const defaults = {
     version: '0.0.1',
     output: 'jscad',
-    strict: false,
+    strict: true,
     colorindex: colorIndex,
     dxf: {
       angdir: 0, // counter clockwise
