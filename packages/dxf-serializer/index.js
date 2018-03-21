@@ -6,13 +6,14 @@ const mimeType = 'application/dxf'
 /**
  * Notes:
  * 1) TBD support binary output
- * 2) CAG conversion to:
+ * 2) TBD add color conversion, and translation for CSG
+ * 3) CAG conversion to:
  *      POLYLINE
  *      LWPOLYLINE
- * 3) CSG conversion to:
+ * 4) CSG conversion to:
  *      3DFACE
  *      POLYLINE (polyface mesh)
- * 4) Path2D conversion to:
+ * 5) Path2D conversion to:
  *      LWPOLYLINE
  */
 const serialize = function (objects, options) {
@@ -40,13 +41,17 @@ EOF
 const dxfEntities = function (objects, options) {
   objects = toArray(objects)
   let entityContents = objects.map(function(object, i) {
-    options.handle = i
     if (isCAG(object)) {
       let paths = object.getOutlinePaths()
       if (options.cagTo === 'polyline') {
         return PathsToPolyine(paths, options)
       }
       return PathsToLwpolyine(paths, options)
+    }
+    if (isCSG(object)) {
+      if (options.csgTo === 'polyline') {
+      }
+      return PolygonsTo3DFaces(object, options)
     }
   })
   let content = `  0
@@ -73,11 +78,10 @@ ENDSEC`
 //
 const PathsToLwpolyine = function (paths, options) {
   options.statusCallback && options.statusCallback({progress: 0})
-  const handle = options.handle.toString(16).toUpperCase()
   let str = ''
   paths.map(function (path, i) {
     let numpointsClosed = path.points.length + (path.closed ? 1 : 0)
-    str += '  0\nLWPOLYLINE\n  5\nCAD' + handle + '\n  100\nAcDbEntity\n  8\n0\n  67\n0\n  100\nAcDbPolyline\n  90\n' + numpointsClosed + '\n  70\n' + (path.closed ? 1 : 0) + '\n'
+    str += '  0\nLWPOLYLINE\n  5\n' + getEntityId() + '\n  100\nAcDbEntity\n  8\n0\n  67\n0\n  100\nAcDbPolyline\n  90\n' + numpointsClosed + '\n  70\n' + (path.closed ? 1 : 0) + '\n'
     for (let pointindex = 0; pointindex < numpointsClosed; pointindex++) {
       let pointindexwrapped = pointindex
       if (pointindexwrapped >= path.points.length) pointindexwrapped -= path.points.length
@@ -96,29 +100,58 @@ const PathsToLwpolyine = function (paths, options) {
 //
 const PathsToPolyine = function (paths, options) {
   options.statusCallback && options.statusCallback({progress: 0})
-  const handle = options.handle.toString(16).toUpperCase()
-  const edge = 'EEE' + handle
   let str = ''
   paths.map(function (path, i) {
     let numpointsClosed = path.points.length + (path.closed ? 1 : 0)
-    str += '  0\nPOLYLINE\n  5\nCAD' + handle + '\n  100\nAcDbEntity\n  8\n0\n  100\nAcDb2dPolyline\n'
+    str += '  0\nPOLYLINE\n  5\n' + getEntityId() + '\n  100\nAcDbEntity\n  8\n0\n  100\nAcDb2dPolyline\n'
     for (let pointindex = 0; pointindex < numpointsClosed; pointindex++) {
-      let edgehandle = edge + pointindex.toString(16).toUpperCase()
       let pointindexwrapped = pointindex
       if (pointindexwrapped >= path.points.length) pointindexwrapped -= path.points.length
       let point = path.points[pointindexwrapped]
-      str += '  0\nVERTEX\n  5\n' + edgehandle + '\n  100\nAcDbEntity\n  8\n0\n  100\nAcDbVertex\n  100\nAcDb2dVertex\n 10\n' + point.x + '\n 20\n' + point.y + '\n'
+      str += '  0\nVERTEX\n  5\n' + getEntityId() + '\n  100\nAcDbEntity\n  8\n0\n  100\nAcDbVertex\n  100\nAcDb2dVertex\n 10\n' + point.x + '\n 20\n' + point.y + '\n'
     }
-    str += '  0\nSEQEND\n  5\nCAE' + handle + '\n  100\nAcDbEntity\n'
+    str += '  0\nSEQEND\n  5\n' + getEntityId() + '\n  100\nAcDbEntity\n'
     options.statusCallback && options.statusCallback({progress: 100 * i / paths.length})
   })
   options.statusCallback && options.statusCallback({progress: 100})
   return [str]
 }
 
+const PolygonsTo3DFaces = function (csg, options) {
+  options.statusCallback && options.statusCallback({progress: 0})
+  let str = ''
+  options.statusCallback && options.statusCallback({progress: 100})
+  csg.polygons.map(function (polygon, i) {
+    str += '  0\n3DFACE\n  5\n' + getEntityId() + '\n  100\nAcDbEntity\n  8\n0\n  100\nAcDbFace\n  70\n0\n'
+    let corner = polygon.vertices[0].pos
+    str += '  10\n' + corner.x + '\n  20\n' + corner.y + '\n  30\n' + corner.z + '\n'
+    corner = polygon.vertices[1].pos
+    str += '  11\n' + corner.x + '\n  21\n' + corner.y + '\n  31\n' + corner.z + '\n'
+    corner = polygon.vertices[2].pos
+    str += '  12\n' + corner.x + '\n  22\n' + corner.y + '\n  32\n' + corner.z + '\n'
+    if (polygon.vertices.length > 3) {
+      corner = polygon.vertices[3].pos
+    }
+    str += '  13\n' + corner.x + '\n  23\n' + corner.y + '\n  33\n' + corner.z + '\n'
+  })
+  return [str]
+}
+
+var entityId = 0
+
+function getEntityId() {
+  entityId++
+  // add more zeros if the id needs to be larger
+  let padded = "00000" + entityId.toString(16).toUpperCase()
+  return 'CAD' + padded.substr(padded.length-5)
+}
+
 function toArray (data) {
   if (Array.isArray(data)) return data
   return [data]
+}
+
+function isPath (object) {
 }
 
 module.exports = {
