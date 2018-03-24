@@ -1,3 +1,17 @@
+/*
+AutoCAD DXF Content
+
+## License
+
+Copyright (c) 2018 Z3 Development https://github.com/z3dev
+
+All code released under MIT license
+*/
+
+// Important Variables
+//   ANGDIR = 0 : counter clockwise angles
+//   INSUNITS = 4 : millimeters
+//
 const dxfHeaders = function () {
   const content = `  0
 SECTION
