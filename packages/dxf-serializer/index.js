@@ -1,3 +1,13 @@
+/*
+JSCAD Object to AutoCAD DXF Entity Serialization
+
+## License
+
+Copyright (c) 2018 Z3 Development https://github.com/z3dev
+
+All code released under MIT license
+*/
+
 const {isCAG, isCSG} = require('@jscad/csg')
 const {dxfHeaders, dxfClasses, dxfTables, dxfBlocks, dxfObjects} = require('./autocad_AC2017')
 
@@ -12,14 +22,14 @@ const mimeType = 'application/dxf'
  *      LWPOLYLINE
  * 4) CSG conversion to:
  *      3DFACE
- *      POLYLINE (polyface mesh)
+ *      POLYLINE (face mesh)
  * 5) Path2D conversion to:
  *      LWPOLYLINE
  */
 const serialize = function (objects, options) {
   const defaults = {
-    cagTo: 'lwpolyline',
-    csgTo: '3dface',
+    cagTo: 'lwpolyline', // or polyline
+    csgTo: '3dface', // or polyline
     pathTo: 'lwpolyline',
     statusCallback: null
   }
@@ -53,18 +63,28 @@ const dxfEntities = function (objects, options) {
       }
       return PolygonsTo3DFaces(object, options)
     }
+    if (isPath(object)) {
+    // mimic a CAG outline path
+      let points = object.getPoints()
+      let closed = object.isClosed()
+      let path = {closed: closed, points: points}
+      return PathsToLwpolyine([path], options)
+    }
+    return ''
   })
-  let content = `  0
+  let section = `  0
 SECTION
   2
 ENTITIES
 `
-  entityContents.forEach(function(c) {
-    content += c
+  entityContents.forEach(function(content) {
+    if (content) {
+      section += content
+    }
   })
-  content += `  0
+  section += `  0
 ENDSEC`
-  return content
+  return section
 }
 
 //
@@ -80,6 +100,7 @@ const PathsToLwpolyine = function (paths, options) {
   options.statusCallback && options.statusCallback({progress: 0})
   let str = ''
   paths.map(function (path, i) {
+    if (path.points.length < 1) return
     let numpointsClosed = path.points.length + (path.closed ? 1 : 0)
     str += '  0\nLWPOLYLINE\n  5\n' + getEntityId() + '\n  100\nAcDbEntity\n  8\n0\n  67\n0\n  100\nAcDbPolyline\n  90\n' + numpointsClosed + '\n  70\n' + (path.closed ? 1 : 0) + '\n'
     for (let pointindex = 0; pointindex < numpointsClosed; pointindex++) {
@@ -117,6 +138,10 @@ const PathsToPolyine = function (paths, options) {
   return [str]
 }
 
+//
+// convert the given csg to DXF 3D face entities
+// @return array of strings
+//
 const PolygonsTo3DFaces = function (csg, options) {
   options.statusCallback && options.statusCallback({progress: 0})
   let str = ''
@@ -152,6 +177,10 @@ function toArray (data) {
 }
 
 function isPath (object) {
+  if (object && 'points' in object && Array.isArray(object.points)) {
+    return true
+  }
+  return false
 }
 
 module.exports = {
