@@ -60,6 +60,7 @@ const dxfEntities = function (objects, options) {
     }
     if (isCSG(object)) {
       if (options.csgTo === 'polyline') {
+        return PolygonsToPolyline(object, options)
       }
       return PolygonsTo3DFaces(object, options)
     }
@@ -91,6 +92,7 @@ ENDSEC`
 // convert the given paths (from CAG outlines) to DXF lwpolyline entities
 // @return array of strings
 //
+// Group Codes Used:
 // 5 - Handle, unique HEX value, e.g. 5C6
 // 8 - layer name (0 is default layer)
 // 67 (0 - model space, 1 - paper space)
@@ -139,13 +141,12 @@ const PathsToPolyine = function (paths, options) {
 }
 
 //
-// convert the given csg to DXF 3D face entities
+// convert the given CSG to DXF 3D face entities
 // @return array of strings
 //
 const PolygonsTo3DFaces = function (csg, options) {
   options.statusCallback && options.statusCallback({progress: 0})
   let str = ''
-  options.statusCallback && options.statusCallback({progress: 100})
   csg.polygons.map(function (polygon, i) {
     str += '  0\n3DFACE\n  5\n' + getEntityId() + '\n  100\nAcDbEntity\n  8\n0\n  100\nAcDbFace\n  70\n0\n'
     let corner = polygon.vertices[0].pos
@@ -159,7 +160,49 @@ const PolygonsTo3DFaces = function (csg, options) {
     }
     str += '  13\n' + corner.x + '\n  23\n' + corner.y + '\n  33\n' + corner.z + '\n'
   })
+  options.statusCallback && options.statusCallback({progress: 100})
   return [str]
+}
+
+// convert the given CSG to DXF POLYLINE (polyface mesh)
+// FIXME The entity types are wrong, resulting in imterpretation as a 3D lines, not faces
+// @return array of strings
+const PolygonsToPolyline = function (csg, options) {
+  options.statusCallback && options.statusCallback({progress: 100})
+  options.statusCallback && options.statusCallback({progress: 0})
+  let str = ''
+  let mesh = polygons2polyfaces(csg.polygons)
+  if (mesh.faces.length > 0) {
+    str += '  0\nPOLYLINE\n  5\n' + getEntityId() + '\n  100\nAcDbEntity\n  8\n0\n  100\nAcDb3dPolyline\n  70\n64\n'
+    str += '  71\n' + mesh.vertices.length + '\n  72\n' + mesh.faces.length + '\n'
+    mesh.vertices.forEach(function (vertex) {
+      str += '  0\nVERTEX\n  5\n' + getEntityId() + '\n  100\nAcDbEntity\n  8\n0\n  100\nAcDbVertex\n  100\nAcDb3dPolylineVertex\n  10\n' + vertex[0] + '\n  20\n' + vertex[1] + '\n  30\n' + vertex[2] + '\n  70\n192\n'
+    })
+    mesh.faces.forEach(function (face) {
+      str += '  0\nVERTEX\n  5\n' + getEntityId() + '\n  100\nAcDbEntity\n  8\n0\n  100\nAcDbVertex\n  100\nAcDb3dPolylineVertex\n  10\n0\n  20\n0\n  30\n0\n  70\n128\n'
+      str += '  71\n' + face[0] + '\n  72\n' + face[1] + '\n  73\n' + face[2] + '\n  74\n' + face[3] + '\n'
+    })
+  }
+  return [str]
+}
+
+// convert the given polygons (CSG) to polyfaces (DXF)
+// @return array of faces, array of vertices
+const polygons2polyfaces = function (polygons) {
+  var faces = []
+  var vertices = []
+  for(var i = 0; i < polygons.length; ++i) {
+    let polygon = polygons[i]
+    var face = []
+    for(var j = 0; j < polygon.vertices.length; ++j) {
+      var vv = polygon.vertices[j].pos;
+      vertices.push([vv.x, vv.y, vv.z]);
+      face.push(vertices.length)
+    }
+    while (face.length < 4) { face.push(0) }
+    faces.push(face);
+  }
+  return {faces: faces, vertices: vertices};
 }
 
 var entityId = 0
