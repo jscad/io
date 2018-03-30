@@ -15,16 +15,17 @@ const mimeType = 'application/dxf'
 
 /**
  * Notes:
- * 1) TBD support binary output
- * 2) TBD add color conversion, and translation for CSG
- * 3) CAG conversion to:
+ * 1) CAG conversion to:
  *      POLYLINE
  *      LWPOLYLINE
- * 4) CSG conversion to:
+ * 2) CSG conversion to:
  *      3DFACE
  *      POLYLINE (face mesh)
- * 5) Path2D conversion to:
+ * 3) Path2D conversion to:
  *      LWPOLYLINE
+ * TBD
+ * 1) support binary output
+ * 2) add color conversion, and translation for CSG
  */
 const serialize = function (objects, options) {
   const defaults = {
@@ -41,7 +42,7 @@ ${dxfHeaders(options)}
 ${dxfClasses(options)}
 ${dxfTables(options)}
 ${dxfBlocks(options)}
-${dxfEntities(objects,options)}
+${dxfEntities(objects, options)}
 ${dxfObjects(options)}
 EOF
 `
@@ -50,7 +51,7 @@ EOF
 
 const dxfEntities = function (objects, options) {
   objects = toArray(objects)
-  let entityContents = objects.map(function(object, i) {
+  let entityContents = objects.map(function (object, i) {
     if (isCAG(object)) {
       let paths = object.getOutlinePaths()
       if (options.cagTo === 'polyline') {
@@ -78,7 +79,7 @@ SECTION
   2
 ENTITIES
 `
-  entityContents.forEach(function(content) {
+  entityContents.forEach(function (content) {
     if (content) {
       section += content
     }
@@ -96,7 +97,7 @@ ENDSEC`
 // 5 - Handle, unique HEX value, e.g. 5C6
 // 8 - layer name (0 is default layer)
 // 67 (0 - model space, 1 - paper space)
-// 100 - 
+// 100 -
 //
 const PathsToLwpolyine = function (paths, options) {
   options.statusCallback && options.statusCallback({progress: 0})
@@ -191,27 +192,27 @@ const PolygonsToPolyline = function (csg, options) {
 const polygons2polyfaces = function (polygons) {
   var faces = []
   var vertices = []
-  for(var i = 0; i < polygons.length; ++i) {
+  for (var i = 0; i < polygons.length; ++i) {
     let polygon = polygons[i]
     var face = []
-    for(var j = 0; j < polygon.vertices.length; ++j) {
-      var vv = polygon.vertices[j].pos;
-      vertices.push([vv.x, vv.y, vv.z]);
+    for (var j = 0; j < polygon.vertices.length; ++j) {
+      var vv = polygon.vertices[j].pos
+      vertices.push([vv.x, vv.y, vv.z])
       face.push(vertices.length)
     }
     while (face.length < 4) { face.push(0) }
-    faces.push(face);
+    faces.push(face)
   }
-  return {faces: faces, vertices: vertices};
+  return {faces: faces, vertices: vertices}
 }
 
 var entityId = 0
 
-function getEntityId() {
+function getEntityId () {
   entityId++
   // add more zeros if the id needs to be larger
-  let padded = "00000" + entityId.toString(16).toUpperCase()
-  return 'CAD' + padded.substr(padded.length-5)
+  let padded = '00000' + entityId.toString(16).toUpperCase()
+  return 'CAD' + padded.substr(padded.length - 5)
 }
 
 function toArray (data) {

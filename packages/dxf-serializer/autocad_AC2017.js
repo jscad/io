@@ -1,6 +1,8 @@
 /*
 AutoCAD DXF Content
 
+These are the common headers, classes, tables, blocks, and objects required for AC2017 DXF files.
+
 ## License
 
 Copyright (c) 2018 Z3 Development https://github.com/z3dev
