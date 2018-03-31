@@ -6,6 +6,20 @@ JSCAD Object to AutoCAD DXF Entity Serialization
 Copyright (c) 2018 Z3 Development https://github.com/z3dev
 
 All code released under MIT license
+
+Notes:
+1) CAG conversion to:
+     POLYLINE
+     LWPOLYLINE
+2) CSG conversion to:
+     3DFACE
+     POLYLINE (face mesh)
+3) Path2D conversion to:
+     LWPOLYLINE
+TBD
+1) support binary output
+2) add color conversion, and translation for CSG
+
 */
 
 const {isCAG, isCSG} = require('@jscad/csg')
@@ -13,19 +27,10 @@ const {dxfHeaders, dxfClasses, dxfTables, dxfBlocks, dxfObjects} = require('./au
 
 const mimeType = 'application/dxf'
 
-/**
- * Notes:
- * 1) CAG conversion to:
- *      POLYLINE
- *      LWPOLYLINE
- * 2) CSG conversion to:
- *      3DFACE
- *      POLYLINE (face mesh)
- * 3) Path2D conversion to:
- *      LWPOLYLINE
- * TBD
- * 1) support binary output
- * 2) add color conversion, and translation for CSG
+/** Serialize the give objects to AutoCad DXF format.
+ * @param {Object|Array} objects - objects to serialize as DXF
+ * @param {Object} [options] - options for serialization
+ * @returns {Array} serialized contents, DXF format
  */
 const serialize = function (objects, options) {
   const defaults = {
@@ -49,6 +54,11 @@ EOF
   return [dxfContent]
 }
 
+/** Serialize the given objects as a DXF entity section
+ * @param {Array} objects - objects to serialize as DXF
+ * @param {Object} options - options for serialization
+ * @returns {Object} serialized contents, DXF format
+ */
 const dxfEntities = function (objects, options) {
   objects = toArray(objects)
   let entityContents = objects.map(function (object, i) {
@@ -206,6 +216,8 @@ const polygons2polyfaces = function (polygons) {
   return {faces: faces, vertices: vertices}
 }
 
+// get a unique id for a DXF entity
+// @return unique id string
 var entityId = 0
 
 function getEntityId () {
@@ -215,11 +227,16 @@ function getEntityId () {
   return 'CAD' + padded.substr(padded.length - 5)
 }
 
+// convert the given data to array if not already
+// @return array of data
 function toArray (data) {
   if (Array.isArray(data)) return data
   return [data]
 }
 
+// determin if the given object is a Path2D object
+// NOTE: Can be removed once CSG provides this functionality
+// @return true or false
 function isPath (object) {
   if (object && 'points' in object && Array.isArray(object.points)) {
     return true
