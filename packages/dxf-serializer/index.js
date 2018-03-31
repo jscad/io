@@ -115,12 +115,32 @@ const PathsToLwpolyine = function (paths, options) {
   paths.map(function (path, i) {
     if (path.points.length < 1) return
     let numpointsClosed = path.points.length + (path.closed ? 1 : 0)
-    str += '  0\nLWPOLYLINE\n  5\n' + getEntityId() + '\n  100\nAcDbEntity\n  8\n0\n  67\n0\n  100\nAcDbPolyline\n  90\n' + numpointsClosed + '\n  70\n' + (path.closed ? 1 : 0) + '\n'
+    str += `  0
+LWPOLYLINE
+  5
+${getEntityId()}
+  100
+AcDbEntity
+  8
+0
+  67
+0
+  100
+AcDbPolyline
+  90
+${numpointsClosed}
+  70
+${(path.closed ? 1 : 0)}
+`
     for (let pointindex = 0; pointindex < numpointsClosed; pointindex++) {
       let pointindexwrapped = pointindex
       if (pointindexwrapped >= path.points.length) pointindexwrapped -= path.points.length
       let point = path.points[pointindexwrapped]
-      str += '  10\n' + point.x + '\n  20\n' + point.y + '\n'
+      str += `  10
+${point.x}
+  20
+${point.y}
+`
     }
     options.statusCallback && options.statusCallback({progress: 100 * i / paths.length})
   })
@@ -137,14 +157,46 @@ const PathsToPolyine = function (paths, options) {
   let str = ''
   paths.map(function (path, i) {
     let numpointsClosed = path.points.length + (path.closed ? 1 : 0)
-    str += '  0\nPOLYLINE\n  5\n' + getEntityId() + '\n  100\nAcDbEntity\n  8\n0\n  100\nAcDb2dPolyline\n'
+    str += `  0
+POLYLINE
+  5
+${getEntityId()}
+  100
+AcDbEntity
+  8
+0
+  100
+AcDb2dPolyline
+`
     for (let pointindex = 0; pointindex < numpointsClosed; pointindex++) {
       let pointindexwrapped = pointindex
       if (pointindexwrapped >= path.points.length) pointindexwrapped -= path.points.length
       let point = path.points[pointindexwrapped]
-      str += '  0\nVERTEX\n  5\n' + getEntityId() + '\n  100\nAcDbEntity\n  8\n0\n  100\nAcDbVertex\n  100\nAcDb2dVertex\n 10\n' + point.x + '\n 20\n' + point.y + '\n'
+      str += `  0
+VERTEX
+  5
+${getEntityId()}
+  100
+AcDbEntity
+  8
+0
+  100
+AcDbVertex
+  100
+AcDb2dVertex
+ 10
+${point.x}
+ 20
+${point.y}
+`
     }
-    str += '  0\nSEQEND\n  5\n' + getEntityId() + '\n  100\nAcDbEntity\n'
+    str += `  0
+SEQEND
+  5
+${getEntityId()}
+  100
+AcDbEntity
+`
     options.statusCallback && options.statusCallback({progress: 100 * i / paths.length})
   })
   options.statusCallback && options.statusCallback({progress: 100})
@@ -159,17 +211,50 @@ const PolygonsTo3DFaces = function (csg, options) {
   options.statusCallback && options.statusCallback({progress: 0})
   let str = ''
   csg.polygons.map(function (polygon, i) {
-    str += '  0\n3DFACE\n  5\n' + getEntityId() + '\n  100\nAcDbEntity\n  8\n0\n  100\nAcDbFace\n  70\n0\n'
-    let corner = polygon.vertices[0].pos
-    str += '  10\n' + corner.x + '\n  20\n' + corner.y + '\n  30\n' + corner.z + '\n'
-    corner = polygon.vertices[1].pos
-    str += '  11\n' + corner.x + '\n  21\n' + corner.y + '\n  31\n' + corner.z + '\n'
-    corner = polygon.vertices[2].pos
-    str += '  12\n' + corner.x + '\n  22\n' + corner.y + '\n  32\n' + corner.z + '\n'
+    let corner10 = polygon.vertices[0].pos
+    let corner11 = polygon.vertices[1].pos
+    let corner12 = polygon.vertices[2].pos
+    let corner13 = polygon.vertices[2].pos
     if (polygon.vertices.length > 3) {
-      corner = polygon.vertices[3].pos
+      corner13 = polygon.vertices[3].pos
     }
-    str += '  13\n' + corner.x + '\n  23\n' + corner.y + '\n  33\n' + corner.z + '\n'
+    str += `  0
+3DFACE
+  5
+${getEntityId()}
+  100
+AcDbEntity
+  8
+0
+  100
+AcDbFace
+  70
+0
+  10
+${corner10.x}
+  20
+${corner10.y}
+  30
+${corner10.z}
+  11
+${corner11.x}
+  21
+${corner11.y}
+  31
+${corner11.z}
+  12
+${corner12.x}
+  22
+${corner12.y}
+  32
+${corner12.z}
+  13
+${corner13.x}
+  23
+${corner13.y}
+  33
+${corner13.z}
+`
   })
   options.statusCallback && options.statusCallback({progress: 100})
   return [str]
@@ -184,14 +269,76 @@ const PolygonsToPolyline = function (csg, options) {
   let str = ''
   let mesh = polygons2polyfaces(csg.polygons)
   if (mesh.faces.length > 0) {
-    str += '  0\nPOLYLINE\n  5\n' + getEntityId() + '\n  100\nAcDbEntity\n  8\n0\n  100\nAcDb3dPolyline\n  70\n64\n'
-    str += '  71\n' + mesh.vertices.length + '\n  72\n' + mesh.faces.length + '\n'
+    str += `  0
+POLYLINE
+  5
+${getEntityId()}
+  100
+AcDbEntity
+  8
+0
+  100
+AcDb3dPolyline
+  70
+64
+  71
+${mesh.vertices.length}
+  72
+${mesh.faces.length}
+`
     mesh.vertices.forEach(function (vertex) {
-      str += '  0\nVERTEX\n  5\n' + getEntityId() + '\n  100\nAcDbEntity\n  8\n0\n  100\nAcDbVertex\n  100\nAcDb3dPolylineVertex\n  10\n' + vertex[0] + '\n  20\n' + vertex[1] + '\n  30\n' + vertex[2] + '\n  70\n192\n'
+      str += `  0
+VERTEX
+  5
+${getEntityId()}
+  100
+AcDbEntity
+  8
+0
+  100
+AcDbVertex
+  100
+AcDb3dPolylineVertex
+  10
+${vertex[0]}
+  20
+${vertex[1]}
+  30
+${vertex[2]}
+  70
+192
+`
     })
     mesh.faces.forEach(function (face) {
-      str += '  0\nVERTEX\n  5\n' + getEntityId() + '\n  100\nAcDbEntity\n  8\n0\n  100\nAcDbVertex\n  100\nAcDb3dPolylineVertex\n  10\n0\n  20\n0\n  30\n0\n  70\n128\n'
-      str += '  71\n' + face[0] + '\n  72\n' + face[1] + '\n  73\n' + face[2] + '\n  74\n' + face[3] + '\n'
+      str += `  0
+VERTEX
+  5
+${getEntityId()}
+  100
+AcDbEntity
+  8
+0
+  100
+AcDbVertex
+  100
+AcDb3dPolylineVertex
+  10
+0
+  20
+0
+  30
+0
+  70
+128
+  71
+${face[0]}
+  72
+${face[1]}
+  73
+${face[2]}
+  74
+${face[3]}
+`
     })
   }
   return [str]
