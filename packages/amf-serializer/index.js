@@ -30,7 +30,7 @@ const mimeType = 'application/amf+xml'
  * @param {Object|Array} objects - objects to serialize as AMF
  * @returns {Array} serialized contents, AMF format
  */
-function serialize (options, ...objects) {
+const serialize = (options, ...objects) => {
   const defaults = {
     statusCallback: null,
     unit: 'millimeter', // millimeter, inch, feet, meter or micrometer
@@ -61,7 +61,7 @@ ${stringify(body)}`
   return [amf]
 }
 
-function translateObjects(objects, options) {
+const translateObjects = (objects, options) => {
   let contents = []
   objects.forEach(function (object, i) {
     if (isCSG(object) && object.polygons.length > 0) {
@@ -72,12 +72,12 @@ function translateObjects(objects, options) {
   return contents
 }
 
-function convertCSG (object, options) {
+const convertCSG = (object, options) => {
   var contents = ['object', {id: options.id}, convertToMesh(object, options)]
   return contents
 }
 
-function convertToMesh (object, options) {
+const convertToMesh = (object, options) => {
   var contents = ['mesh',{}, convertToVertices(object, options)]
   contents = contents.concat(convertToVolumes(object, options))
   return contents
@@ -87,7 +87,7 @@ function convertToMesh (object, options) {
  * This section converts each CSG object to a list of vertex / coordinates
  */
 
-function convertToVertices (object, options) {
+const convertToVertices = (object, options) => {
   var contents = ['vertices',{}]
 
   let vertices = []
@@ -100,12 +100,12 @@ function convertToVertices (object, options) {
   return contents.concat(vertices)
 }
 
-function convertToVertex (vertex, options) {
+const convertToVertex = (vertex, options) => {
   let contents = ['vertex',{}, convertToCoordinates(vertex, options)]
   return contents
 }
 
-function convertToCoordinates (vertex, options) {
+const convertToCoordinates = (vertex, options) => {
   let position = vertex.pos
   let contents = ['coordinates', {}, ['x', {}, position._x], ['y', {}, position._y], ['z', {}, position._z]]
   return contents
@@ -115,7 +115,7 @@ function convertToCoordinates (vertex, options) {
  * This section converts each CSG object to a list of volumes consisting of indexes into the list of vertices
  */
 
-function convertToVolumes (object, options) {
+const convertToVolumes = (object, options) => {
   let contents = []
 
   let n = 0
@@ -140,7 +140,7 @@ function convertToVolumes (object, options) {
   return contents
 }
 
-function convertToColor (polygon, options) {
+const convertToColor = (polygon, options) => {
   let color = null
   if (polygon.shared && polygon.shared.color) {
     color = polygon.shared.color
@@ -154,7 +154,7 @@ function convertToColor (polygon, options) {
   return null
 }
 
-function convertToTriangles (polygon, index) {
+const convertToTriangles = (polygon, index) => {
   let contents = []
 
   // making sure they are all triangles (triangular polygons)
