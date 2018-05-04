@@ -9,22 +9,22 @@ test('CAG to DXF LWPOLYLINE', t => {
   const cag1 = new CAG()
   t.is(cag1.sides.length,0)
 
-  const obs1 = serialize(cag1)
+  const obs1 = serialize({}, cag1)
   const exp1 = [empty]
   t.deepEqual(obs1,exp1)
 
   const cag2 = CAG.rectangle()
   t.is(cag2.sides.length,4)
 
-  const obs2 = serialize(cag2)
+  const obs2 = serialize({}, cag2)
   const exp2 = [lwpolyline0]
   t.deepEqual(obs2,exp2)
 
-  const obs3 = serialize([cag1,cag2], {cagTo: 'lwpolyline'})
+  const obs3 = serialize({cagTo: 'lwpolyline'}, cag1, cag2)
   const exp3 = [lwpolyline1]
   t.deepEqual(obs3,exp3)
 
-  const obs4 = serialize([cag2,cag2])
+  const obs4 = serialize({}, cag2, cag2)
   const exp4 = [lwpolylineByTwo]
   t.deepEqual(obs4,exp4)
 })
@@ -33,14 +33,14 @@ test('CAG to DXF POLYLINE', t => {
   const cag1 = new CAG()
   t.is(cag1.sides.length,0)
 
-  const obs1 = serialize(cag1, {cagTo: 'polyline'})
+  const obs1 = serialize({cagTo: 'polyline'}, cag1)
   const exp1 = [empty]
   t.deepEqual(obs1,exp1)
 
   const cag2 = CAG.rectangle()
   t.is(cag2.sides.length,4)
 
-  const obs2 = serialize(cag2,{cagTo: 'polyline'})
+  const obs2 = serialize({cagTo: 'polyline'}, cag2)
   const exp2 = [polyline1]
   t.deepEqual(obs2,exp2)
 })

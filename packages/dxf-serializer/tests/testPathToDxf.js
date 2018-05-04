@@ -9,14 +9,14 @@ test('Path2 to DXF LWPOLYLINE', t => {
   const path1 = new CSG.Path2D()
   t.is(path1.points.length,0)
 
-  const obs1 = serialize(path1)
+  const obs1 = serialize({}, path1)
   const exp1 = [empty]
   t.deepEqual(obs1,exp1)
 
   let path2 = CSG.Path2D.arc({center: [5,5],endangle: 45})
   t.is(path2.points.length,6)
 
-  const obs2 = serialize(path2)
+  const obs2 = serialize({}, path2)
   const exp2 = [lwpolyline0]
   t.deepEqual(obs2,exp2)
 
@@ -24,7 +24,7 @@ test('Path2 to DXF LWPOLYLINE', t => {
   path3 = path3.appendBezier([[10,-10],[25,-10],[25,-20]],{resolution: 8});
   t.is(path3.points.length,6)
 
-  const obs3 = serialize([path2,path3])
+  const obs3 = serialize({}, path2, path3)
   const exp3 = [lwpolyline1]
   t.deepEqual(obs3,exp3)
 })
