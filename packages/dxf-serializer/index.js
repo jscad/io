@@ -18,7 +18,8 @@ Notes:
      LWPOLYLINE
 TBD
 1) support binary output
-2) add color conversion, and translation for CSG
+2) add color conversion
+3) translation for CSG
 
 */
 
@@ -33,7 +34,7 @@ const mimeType = 'application/dxf'
  * @param {Object} [options] - options for serialization
  * @returns {Array} serialized contents, DXF format
  */
-const serialize = function (objects, options) {
+const serialize = (options, ...objects) => {
   const defaults = {
     cagTo: 'lwpolyline', // or polyline
     csgTo: '3dface', // or polyline
@@ -61,7 +62,7 @@ EOF
  * @param {Object} options - options for serialization
  * @returns {Object} serialized contents, DXF format
  */
-const dxfEntities = function (objects, options) {
+const dxfEntities = (objects, options) => {
   objects = toArray(objects)
   let entityContents = objects.map(function (object, i) {
     if (isCAG(object)) {
@@ -112,7 +113,7 @@ ENDSEC`
 // 67 (0 - model space, 1 - paper space)
 // 100 -
 //
-const PathsToLwpolyine = function (paths, options) {
+const PathsToLwpolyine = (paths, options) => {
   options.statusCallback && options.statusCallback({progress: 0})
   let str = ''
   paths.map(function (path, i) {
@@ -155,7 +156,7 @@ ${point.y}
 // convert the given paths (from CAG outlines) to DXF polyline (2D line) entities
 // @return array of strings
 //
-const PathsToPolyine = function (paths, options) {
+const PathsToPolyine = (paths, options) => {
   options.statusCallback && options.statusCallback({progress: 0})
   let str = ''
   paths.map(function (path, i) {
@@ -210,7 +211,7 @@ AcDbEntity
 // convert the given CSG to DXF 3D face entities
 // @return array of strings
 //
-const PolygonsTo3DFaces = function (csg, options) {
+const PolygonsTo3DFaces = (csg, options) => {
   options.statusCallback && options.statusCallback({progress: 0})
   let str = ''
   csg.polygons.map(function (polygon, i) {
@@ -290,7 +291,7 @@ ${corner13.z}
 // convert the given CSG to DXF POLYLINE (polyface mesh)
 // FIXME The entity types are wrong, resulting in imterpretation as a 3D lines, not faces
 // @return array of strings
-const PolygonsToPolyline = function (csg, options) {
+const PolygonsToPolyline = (csg, options) => {
   options.statusCallback && options.statusCallback({progress: 100})
   options.statusCallback && options.statusCallback({progress: 0})
   let str = ''
@@ -373,7 +374,7 @@ ${face[3]}
 
 // convert the given polygons (CSG) to polyfaces (DXF)
 // @return array of faces, array of vertices
-const polygons2polyfaces = function (polygons) {
+const polygons2polyfaces = (polygons) => {
   var faces = []
   var vertices = []
   for (var i = 0; i < polygons.length; ++i) {
@@ -394,7 +395,7 @@ const polygons2polyfaces = function (polygons) {
 // @return unique id string
 var entityId = 0
 
-function getEntityId () {
+const getEntityId = () => {
   entityId++
   // add more zeros if the id needs to be larger
   let padded = '00000' + entityId.toString(16).toUpperCase()
@@ -403,7 +404,7 @@ function getEntityId () {
 
 // convert the given data to array if not already
 // @return array of data
-function toArray (data) {
+const toArray = (data) => {
   if (Array.isArray(data)) return data
   return [data]
 }
@@ -411,7 +412,7 @@ function toArray (data) {
 // determin if the given object is a Path2D object
 // NOTE: Can be removed once CSG provides this functionality
 // @return true or false
-function isPath (object) {
+const isPath = (object) => {
   if (object && 'points' in object && Array.isArray(object.points)) {
     return true
   }
