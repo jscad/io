@@ -21,7 +21,6 @@ TBD
 
 const {CSG, isCSG} = require('@jscad/csg')
 const stringify = require('onml/lib/stringify')
-const { ensureManifoldness } = require('@jscad/io-utils')
 
 const mimeType = 'application/amf+xml'
 
@@ -39,8 +38,6 @@ const serialize = (options, ...objects) => {
   options = Object.assign({}, defaults, options)
 
   options.statusCallback && options.statusCallback({progress: 0})
-
-  let object = ensureManifoldness(objects[0])
 
   // construct the contents of the XML
   var body = ['amf',
