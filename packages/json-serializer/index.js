@@ -1,4 +1,23 @@
+/*
+JSCAD Object to JSON Format Serialization
+
+## License
+
+Copyright (c) 2018 JSCAD Organization https://github.com/jscad
+
+All code released under MIT license
+
+Notes:
+1) CAG conversion to:
+     none
+2) CSG conversion to:
+     JSON
+3) Path2D conversion to:
+     none
+*/
+
 const { ensureManifoldness } = require('@jscad/io-utils')
+const {isCSG, isCAG} = require('@jscad/csg')
 
 const mimeType = 'application/json'
 
@@ -10,11 +29,10 @@ function fromCAG (CAG, options) {
       str += comma
       str += JSON.stringify(side)
       comma = ','
-      options && options.statusCallback && options.statusCallback({progress: 100 * i / CAG.sides.length})
     }
   )
   str += '] }'
-  return [str]
+  return str
 }
 
 function fromCSG (CSG, options) {
@@ -25,21 +43,37 @@ function fromCSG (CSG, options) {
       str += comma
       str += JSON.stringify(polygon)
       comma = ','
-      options && options.statusCallback && options.statusCallback({progress: 100 * i / CSG.polygons.length})
     }
   )
   str += '],'
   str += '"isCanonicalized": ' + JSON.stringify(CSG.isCanonicalized) + ','
   str += '"isRetesselated": ' + JSON.stringify(CSG.isRetesselated)
   str += '}'
-  return [str]
+  return str
 }
 
-function serialize (data, options) {
-  options && options.statusCallback && options.statusCallback({progress: 0})
-  const result = 'sides' in data ? fromCAG(data, options) : fromCSG(ensureManifoldness(data), options)
-  options && options.statusCallback && options.statusCallback({progress: 100})
-  return result
+function serialize (options, ...objects) {
+  const defaults = {
+    statusCallback: null
+  }
+  options = Object.assign({}, defaults, options)
+
+  options.statusCallback && options.statusCallback({progress: 0})
+
+  let contents = []
+  objects.forEach(function (object, i) {
+    if (isCSG(object) && object.polygons.length > 0) {
+      let data = ensureManifoldness(object)
+      contents.push(fromCSG(data, options))
+    }
+    if (isCAG(object) && object.sides.length > 0) {
+      contents.push(fromCAG(object, options))
+    }
+    options.statusCallback && options.statusCallback({progress: 100 * i / objects.length})
+  })
+
+  options.statusCallback && options.statusCallback({progress: 100})
+  return contents
 }
 
 module.exports = {
