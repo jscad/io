@@ -19,7 +19,8 @@ TBD
 1) support zip output
 */
 
-const {CSG, isCSG} = require('@jscad/csg')
+const {isCSG} = require('@jscad/csg')
+const {ensureManifoldness} = require('@jscad/io-utils')
 const stringify = require('onml/lib/stringify')
 
 const mimeType = 'application/amf+xml'
@@ -62,6 +63,7 @@ const translateObjects = (objects, options) => {
   let contents = []
   objects.forEach(function (object, i) {
     if (isCSG(object) && object.polygons.length > 0) {
+      object = ensureManifoldness(object)
       options.id = i
       contents.push(convertCSG(object, options))
     }
