@@ -24,7 +24,6 @@ TBD
 */
 
 const {isCAG, isCSG} = require('@jscad/csg')
-const {ensureManifoldness} = require('@jscad/io-utils')
 const {dxfHeaders, dxfClasses, dxfTables, dxfBlocks, dxfObjects} = require('./autocad_AC2017')
 
 const mimeType = 'application/dxf'
@@ -73,7 +72,6 @@ const dxfEntities = (objects, options) => {
       return PathsToLwpolyine(paths, options)
     }
     if (isCSG(object)) {
-      object = ensureManifoldness(object)
       if (options.csgTo === 'polyline') {
         return PolygonsToPolyline(object, options)
       }
@@ -215,6 +213,7 @@ const PolygonsTo3DFaces = (csg, options) => {
   options.statusCallback && options.statusCallback({progress: 0})
   let str = ''
   csg.polygons.map(function (polygon, i) {
+<<<<<<< HEAD
     let triangles = polygonToTriangles(polygon)
     triangles.map(function (triangle, i) {
       str += triangleTo3DFaces(triangle, options)
@@ -249,6 +248,16 @@ const triangleTo3DFaces = (triangle, options) => {
   let corner12 = triangle[2].pos
   let corner13 = triangle[2].pos // same in DXF
   let str = `  0
+=======
+    let corner10 = polygon.vertices[0].pos
+    let corner11 = polygon.vertices[1].pos
+    let corner12 = polygon.vertices[2].pos
+    let corner13 = polygon.vertices[2].pos
+    if (polygon.vertices.length > 3) {
+      corner13 = polygon.vertices[3].pos
+    }
+    str += `  0
+>>>>>>> Reverted fixes to DXF serialize
 3DFACE
   5
 ${getEntityId()}
@@ -285,7 +294,9 @@ ${corner13.y}
   33
 ${corner13.z}
 `
-  return str
+  })
+  options.statusCallback && options.statusCallback({progress: 100})
+  return [str]
 }
 
 // convert the given CSG to DXF POLYLINE (polyface mesh)
