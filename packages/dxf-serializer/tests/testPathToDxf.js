@@ -24,7 +24,7 @@ test('Path2 to DXF LWPOLYLINE', t => {
   path3 = path3.appendBezier([[10, -10], [25, -10], [25, -20]], {resolution: 8})
   t.is(path3.points.length, 6)
 
-  const obs3 = serialize({}, path2, path3)
+  const obs3 = serialize({}, [path2, path3])
   const exp3 = [lwpolyline1]
   t.deepEqual(obs3, exp3)
 })

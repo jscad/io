@@ -21,6 +21,7 @@ TBD
 
 const {isCSG} = require('@jscad/csg')
 const {ensureManifoldness} = require('@jscad/io-utils')
+const {toArray} = require('@jscad/io-utils/arrays')
 const stringify = require('onml/lib/stringify')
 
 const mimeType = 'application/amf+xml'
@@ -30,7 +31,21 @@ const mimeType = 'application/amf+xml'
  * @param {Object|Array} objects - objects to serialize as AMF
  * @returns {Array} serialized contents, AMF format
  */
-const serialize = (options, ...objects) => {
+const serialize = (...params) => {
+  let options = {}
+  let objects
+  if (params.length === 0) {
+    throw new Error('no arguments supplied to serialize function !')
+  } else if (params.length === 1) {
+    // assumed to be object(s)
+    objects = Array.isArray(params[0]) ? params[0] : params
+  } else if (params.length > 1) {
+    options = params[0]
+    objects = params[1]
+  }
+  // make sure we always deal with arrays of objects as inputs
+  objects = toArray(objects)
+
   const defaults = {
     statusCallback: null,
     unit: 'millimeter', // millimeter, inch, feet, meter or micrometer
@@ -44,7 +59,7 @@ const serialize = (options, ...objects) => {
   var body = ['amf',
     {
       unit: options.unit,
-      version: '1.1',
+      version: '1.1'
     },
     ['metadata', {type: 'author'}, 'Created using JSCAD']
   ]
@@ -77,7 +92,7 @@ const convertCSG = (object, options) => {
 }
 
 const convertToMesh = (object, options) => {
-  var contents = ['mesh',{}, convertToVertices(object, options)]
+  var contents = ['mesh', {}, convertToVertices(object, options)]
   contents = contents.concat(convertToVolumes(object, options))
   return contents
 }
@@ -87,7 +102,7 @@ const convertToMesh = (object, options) => {
  */
 
 const convertToVertices = (object, options) => {
-  var contents = ['vertices',{}]
+  var contents = ['vertices', {}]
 
   let vertices = []
   object.polygons.forEach(function (polygon) {
@@ -100,7 +115,7 @@ const convertToVertices = (object, options) => {
 }
 
 const convertToVertex = (vertex, options) => {
-  let contents = ['vertex',{}, convertToCoordinates(vertex, options)]
+  let contents = ['vertex', {}, convertToCoordinates(vertex, options)]
   return contents
 }
 
@@ -123,7 +138,7 @@ const convertToVolumes = (object, options) => {
       return
     }
 
-    let volume = ['volume',{}]
+    let volume = ['volume', {}]
     let color = convertToColor(polygon, options)
     let triangles = convertToTriangles(polygon, n)
 

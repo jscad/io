@@ -18,7 +18,7 @@ test('serialize csg to stl (ascii)', function (t) {
   t.deepEqual(observed1, [expected1])
 
   const csg2 = csg1.translate([5,5,5]).setColor([1,0,0,1])
-  const observed2 = serializer.serialize({binary: false}, csg1, csg2)
+  const observed2 = serializer.serialize({binary: false}, [csg1, csg2])
   t.deepEqual(observed2, [expected2])
 })
 
@@ -29,7 +29,7 @@ test('progress status callback', function (t) {
     progresses.push(statusObj.progress);
   };
   const observed = serializer.serialize({statusCallback: statusCallback}, input)
-  
+
   t.deepEqual(0, progresses[0]);
   t.deepEqual(100, progresses[progresses.length - 1]);
 })

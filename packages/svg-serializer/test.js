@@ -8,13 +8,13 @@ test('serialize CAG objects to SVG paths', function (t) {
   const observed1 = serializer.serialize({}, cag1)
   t.deepEqual([expected1], observed1)
 
-  const cag2 = CAG.rectangle({radius: [5,10]})
+  const cag2 = CAG.rectangle({radius: [5, 10]})
   const observed2 = serializer.serialize({}, cag2)
   t.deepEqual([expected2], observed2)
 
-  const cag3 = cag2.translate([-30,-30])
-  const cag4 = cag2.translate([30,30])
-  const observed3 = serializer.serialize({}, cag3, cag4)
+  const cag3 = cag2.translate([-30, -30])
+  const cag4 = cag2.translate([30, 30])
+  const observed3 = serializer.serialize({}, [cag3, cag4])
   t.deepEqual([expected3], observed3)
 })
 

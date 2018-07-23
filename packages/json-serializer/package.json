@@ -35,5 +35,8 @@
   "dependencies": {
     "@jscad/csg": "^0.5.4",
     "@jscad/io-utils": "^0.1.2"
+  },
+  "devDependencies": {
+    "ava": "^0.19.1"
   }
 }

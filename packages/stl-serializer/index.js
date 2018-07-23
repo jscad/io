@@ -20,11 +20,26 @@ const {serializeBinary} = require('./CSGToStlb')
 const {serializeText} = require('./CSGToStla')
 
 const {ensureManifoldness} = require('@jscad/io-utils')
+const {toArray} = require('@jscad/io-utils/arrays')
 const {isCSG} = require('@jscad/csg')
 
 const mimeType = 'application/sla'
 
-const serialize = (options, ...objects) => {
+const serialize = (...params) => {
+  let options = {}
+  let objects
+  if (params.length === 0) {
+    throw new Error('no arguments supplied to serialize function !')
+  } else if (params.length === 1) {
+    // assumed to be object(s)
+    objects = Array.isArray(params[0]) ? params[0] : params
+  } else if (params.length > 1) {
+    options = params[0]
+    objects = params[1]
+  }
+  // make sure we always deal with arrays of objects as inputs
+  objects = toArray(objects)
+
   const defaults = {
     binary: true,
     statusCallback: null

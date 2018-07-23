@@ -16,7 +16,7 @@ test('CSG to DXF 3DFACE', t => {
   const csg2 = CSG.cube()
   t.is(csg2.polygons.length, 6)
 
-  const obs2 = serialize({}, csg2)
+  const obs2 = serialize(csg2)
   const exp2 = [threeface1]
   t.deepEqual(obs2, exp2)
 })

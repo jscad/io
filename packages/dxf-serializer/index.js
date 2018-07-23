@@ -25,16 +25,31 @@ TBD
 
 const {isCAG, isCSG} = require('@jscad/csg')
 const {ensureManifoldness} = require('@jscad/io-utils')
+const {toArray} = require('@jscad/io-utils/arrays')
 const {dxfHeaders, dxfClasses, dxfTables, dxfBlocks, dxfObjects} = require('./autocad_AC2017')
 
 const mimeType = 'application/dxf'
 
 /** Serialize the give objects to AutoCad DXF format.
- * @param {Object|Array} objects - objects to serialize as DXF
  * @param {Object} [options] - options for serialization
+ * @param {Object|Array} objects - objects to serialize as DXF
  * @returns {Array} serialized contents, DXF format
  */
-const serialize = (options, ...objects) => {
+const serialize = (...params) => {
+  let options = {}
+  let objects
+  if (params.length === 0) {
+    throw new Error('no arguments supplied to serialize function !')
+  } else if (params.length === 1) {
+    // assumed to be object(s)
+    objects = Array.isArray(params[0]) ? params[0] : params
+  } else if (params.length > 1) {
+    options = params[0]
+    objects = params[1]
+  }
+  // make sure we always deal with arrays of objects as inputs
+  objects = toArray(objects)
+
   const defaults = {
     cagTo: 'lwpolyline', // or polyline
     csgTo: '3dface', // or polyline
@@ -400,13 +415,6 @@ const getEntityId = () => {
   // add more zeros if the id needs to be larger
   let padded = '00000' + entityId.toString(16).toUpperCase()
   return 'CAD' + padded.substr(padded.length - 5)
-}
-
-// convert the given data to array if not already
-// @return array of data
-const toArray = (data) => {
-  if (Array.isArray(data)) return data
-  return [data]
 }
 
 // determin if the given object is a Path2D object

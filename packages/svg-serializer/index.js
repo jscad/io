@@ -9,7 +9,7 @@ All code released under MIT license
 
 Notes:
 1) CAG conversion to:
-     SVG GROUP containing a SVG PATH for each CAG outline path 
+     SVG GROUP containing a SVG PATH for each CAG outline path
 2) CSG conversion to:
      mesh
 3) Path2D conversion to:
@@ -20,17 +20,33 @@ TBD
 */
 
 const {isCAG} = require('@jscad/csg')
+const {toArray} = require('@jscad/io-utils/arrays')
 const stringify = require('onml/lib/stringify')
 
 const mimeType = 'image/svg+xml'
-
 
 /** Serialize the give objects to SVG format.
  * @param {Object} [options] - options for serialization
  * @param {Object|Array} objects - objects to serialize as SVG
  * @returns {Array} serialized contents, SVG format
  */
-const serialize = (options, ...objects) => {
+const serialize = (...params) => {
+  let options = {}
+  let objects
+  if (params.length === 0) {
+    throw new Error('no arguments supplied to serialize function !')
+  } else if (params.length === 1) {
+    // assumed to be object(s)
+    objects = Array.isArray(params[0]) ? params[0] : params
+  } else if (params.length > 1) {
+    options = params[0]
+    objects = params[1]
+  }
+  // make sure we always deal with arrays of objects as inputs
+  objects = toArray(objects)
+  console.log('params', params)
+  console.log('options', options)
+  console.log('objects', objects)
   const defaults = {
     statusCallback: null,
     unit: 'mm', // em | ex | px | in | cm | mm | pt | pc
@@ -59,7 +75,7 @@ const serialize = (options, ...objects) => {
       baseProfile: 'tiny',
       xmlns: 'http://www.w3.org/2000/svg',
       'xmlns:xlink': 'http://www.w3.org/1999/xlink'
-    },
+    }
   ]
   if (bounds) {
     body = body.concat(convertObjects(objects, bounds, options))

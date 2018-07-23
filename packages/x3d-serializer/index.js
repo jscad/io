@@ -22,6 +22,7 @@ TBD
 //const {ensureManifoldness} = require('@jscad/io-utils')
 const {isCSG} = require('@jscad/csg')
 const {ensureManifoldness} = require('@jscad/io-utils')
+const {toArray} = require('@jscad/io-utils/arrays')
 
 const stringify = require('onml/lib/stringify')
 
@@ -36,7 +37,21 @@ const mimeType = 'model/x3d+xml'
  * @param {Object|Array} objects - objects to serialize as X3D
  * @returns {Array} serialized contents, X3D format
  */
-const serialize = (options, ...objects) => {
+const serialize = (...params) => {
+  let options = {}
+  let objects
+  if (params.length === 0) {
+    throw new Error('no arguments supplied to serialize function !')
+  } else if (params.length === 1) {
+    // assumed to be object(s)
+    objects = Array.isArray(params[0]) ? params[0] : params
+  } else if (params.length > 1) {
+    options = params[0]
+    objects = params[1]
+  }
+  // make sure we always deal with arrays of objects as inputs
+  objects = toArray(objects)
+
   const defaults = {
     statusCallback: null,
     unit: 'millimeter', // millimeter, inch, feet, meter or micrometer
