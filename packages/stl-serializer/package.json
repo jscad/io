@@ -1,6 +1,6 @@
 {
   "name": "@jscad/stl-serializer",
-  "version": "0.1.2",
+  "version": "1.0.0-pre-V2.0",
   "description": "Stl serializer for jscad project",
   "repository": "https://github.com/jscad/io",
   "main": "index.js",
@@ -34,7 +34,7 @@
   "license": "MIT",
   "dependencies": {
     "@jscad/csg": "^0.5.4",
-    "@jscad/io-utils": "^0.1.2"
+    "@jscad/io-utils": "^1.0.0-pre-V2.0"
   },
   "devDependencies": {
     "ava": "^0.19.1"
