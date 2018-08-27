@@ -151,7 +151,8 @@ function path (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups) {
         }
         // close the previous path
         if (pi > 0 && pc === false) {
-          paths[pathName].expandToCAG(CSG.defaultResolution2D)
+          // Why do we turn a path into a CAG?
+          paths[pathName] =  paths[pathName].expandToCAG(CSG.defaultResolution2D)
           // code += indent + pathName + ' = ' + pathName + '.expandToCAG(' + r + ',CSG.defaultResolution2D);\n'
         }
         // open a new path
@@ -168,7 +169,7 @@ function path (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups) {
         while (pts.length >= 2) {
           cx = cx + parseFloat(pts.shift())
           cy = cy + parseFloat(pts.shift())
-          paths[pathName].appendPoint([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)])
+          paths[pathName] = paths[pathName].appendPoint([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)])
         }
         break
       case 'M': // absolute move to X,Y
@@ -190,7 +191,7 @@ function path (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups) {
         while (pts.length >= 2) {
           cx = parseFloat(pts.shift())
           cy = parseFloat(pts.shift())
-          paths[pathName].appendPoint([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)])
+          paths[pathName] = paths[pathName].appendPoint([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)])
         }
         break
       case 'a': // relative elliptical arc
@@ -202,7 +203,7 @@ function path (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups) {
           let sf = (pts.shift() === '1')
           cx = cx + parseFloat(pts.shift())
           cy = cy + parseFloat(pts.shift())
-          paths[pathName].appendArc([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)], {xradius: svg2cagX(rx, svgUnitsPmm), yradius: svg2cagY(ry, svgUnitsPmm), xaxisrotation: ro, clockwise: sf, large: lf})
+          paths[pathName] = paths[pathName].appendArc([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)], {xradius: svg2cagX(rx, svgUnitsPmm), yradius: svg2cagY(ry, svgUnitsPmm), xaxisrotation: ro, clockwise: sf, large: lf})
         }
         break
       case 'A': // absolute elliptical arc
@@ -214,7 +215,7 @@ function path (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups) {
           let sf = (pts.shift() === '1')
           cx = parseFloat(pts.shift())
           cy = parseFloat(pts.shift())
-          paths[pathName].appendArc([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)], {xradius: svg2cagX(rx, svgUnitsPmm), yradius: svg2cagY(ry, svgUnitsPmm), xaxisrotation: ro, clockwise: sf, large: lf})
+          paths[pathName] = paths[pathName].appendArc([svg2cagX(cx, svgUnitsPmm), svg2cagY(cy, svgUnitsPmm)], {xradius: svg2cagX(rx, svgUnitsPmm), yradius: svg2cagY(ry, svgUnitsPmm), xaxisrotation: ro, clockwise: sf, large: lf})
         }
         break
       case 'c': // relative cubic Bézier
@@ -357,8 +358,17 @@ function path (obj, svgUnitsPmm, svgUnitsX, svgUnitsY, svgUnitsV, svgGroups) {
         break
       case 'z': // close current line
       case 'Z':
-        paths[pathName] = paths[pathName].close().innerToCAG()
-        pathCag = pathCag.union(paths[pathName])
+        let closedpath = paths[pathName].close();
+        paths[pathName] = closedpath.innerToCAG();
+        switch (closedpath.getTurn()) {
+          default:
+          case 'clockwise':
+            pathCag = pathCag.union(paths[pathName])
+            break;
+          case 'counter-clockwise':
+            pathCag = pathCag.subtract(paths[pathName])
+            break;
+        }
         cx = sx
         cy = sy // return to the starting point
         pc = true
