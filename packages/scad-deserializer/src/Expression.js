@@ -77,7 +77,6 @@ Expression.prototype.evaluate = function (context) {
       if (_.isUndefined(c1) || _.isUndefined(c2) || _.isNaN(c1) || _.isNaN(c2)) {
         return undefined
       }
-
       if (_.isArray(c1) || _.isArray(c2)) {
         var v1 = getValueObject(c1)
         var v2 = getValueObject(c2)
