@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+<a name="0.2.0"></a>
+# [0.2.0](https://github.com/jscad/io/compare/@jscad/json-serializer@0.1.2...@jscad/json-serializer@0.2.0) (2018-11-25)
+
+
+### Features
+
+* **scad-deserializer:** added old openscad-openjscad-translator to the packages ([#75](https://github.com/jscad/io/issues/75)) ([0a20323](https://github.com/jscad/io/commit/0a20323))
+
+
+
+
 <a name="0.1.2"></a>
 ## [0.1.2](https://github.com/jscad/io/compare/@jscad/json-serializer@0.1.1...@jscad/json-serializer@0.1.2) (2018-09-02)
 
