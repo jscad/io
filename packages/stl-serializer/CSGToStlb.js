@@ -54,17 +54,17 @@ const serializeBinary = (objects, options) => {
     object.polygons.forEach(function (polygon) {
       let numvertices = polygon.vertices.length
       for (let i = 0; i < numvertices - 2; i++) {
-        let normal = polygon.plane.normal
-        triangleFloat32array[0] = normal._x
-        triangleFloat32array[1] = normal._y
-        triangleFloat32array[2] = normal._z
+        let normal = polygon.plane
+        triangleFloat32array[0] = normal[0]
+        triangleFloat32array[1] = normal[1]
+        triangleFloat32array[2] = normal[2]
         let arindex = 3
         for (let v = 0; v < 3; v++) {
           let vv = v + ((v > 0) ? i : 0)
-          let vertexpos = polygon.vertices[vv].pos
-          triangleFloat32array[arindex++] = vertexpos._x
-          triangleFloat32array[arindex++] = vertexpos._y
-          triangleFloat32array[arindex++] = vertexpos._z
+          let vertexpos = polygon.vertices[vv]
+          triangleFloat32array[arindex++] = vertexpos[0]
+          triangleFloat32array[arindex++] = vertexpos[1]
+          triangleFloat32array[arindex++] = vertexpos[2]
         }
         triangleUint16array[0] = 0
         // copy the triangle into allTrianglesBuffer:

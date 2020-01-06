@@ -31,11 +31,11 @@ const convertToFacets = (object, options) => {
 }
 
 const vector3DtoStlString = (v) => {
-  return `${v._x} ${v._y} ${v._z}`
+  return `${v[0]} ${v[1]} ${v[2]}`
 }
 
 const vertextoStlString = (vertex) => {
-  return `vertex ${vector3DtoStlString(vertex.pos)}`
+  return `vertex ${vector3DtoStlString(vertex)}`
 }
 
 const convertToFacet = (polygon) => {
@@ -44,7 +44,7 @@ const convertToFacet = (polygon) => {
     // STL requires triangular polygons. If our polygon has more vertices, create multiple triangles:
     let firstVertexStl = vertextoStlString(polygon.vertices[0])
     for (let i = 0; i < polygon.vertices.length - 2; i++) {
-      let facet = `facet normal ${vector3DtoStlString(polygon.plane.normal)}
+      let facet = `facet normal ${vector3DtoStlString(polygon.plane)}
 outer loop
 ${firstVertexStl}
 ${vertextoStlString(polygon.vertices[i + 1])}
