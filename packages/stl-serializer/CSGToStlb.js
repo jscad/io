@@ -36,16 +36,16 @@ function serialize (CSG, options) {
   // and one uint16:
   var triangleUint16array = new Uint16Array(triangleBuffer, 48, 1)
   var byteoffset = 0
-  CSG.polygons.map(function (p, i) {
+  CSG.polygons.map(function (p,i) {
     var numvertices = p.vertices.length
-    for (var i = 0; i < numvertices - 2; i++) {
+    for (var j = 0; j < numvertices - 2; j++) {
       var normal = p.plane.normal
       triangleFloat32array[0] = normal._x
       triangleFloat32array[1] = normal._y
       triangleFloat32array[2] = normal._z
       var arindex = 3
       for (var v = 0; v < 3; v++) {
-        var vv = v + ((v > 0) ? i : 0)
+        var vv = v + ((v > 0) ? j : 0)
         var vertexpos = p.vertices[vv].pos
         triangleFloat32array[arindex++] = vertexpos._x
         triangleFloat32array[arindex++] = vertexpos._y
